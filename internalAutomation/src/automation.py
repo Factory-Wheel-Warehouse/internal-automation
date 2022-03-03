@@ -34,6 +34,7 @@ class InternalAutomation():
         self.sourceList = self.generateSourceList()
         self.trackingChecker = TrackingChecker()
         self.unfulfilledOrders = self.magento.getPendingOrders()
+        self.LKQStock = self.getLKQStock()
 
     def close(self):
 
@@ -544,6 +545,22 @@ class InternalAutomation():
         sourceList.pop(len(sourceList) - 1)
         return sourceList
 
+    def getLKQStock(self):
+        return self.ftpServer.getCSVAsList(
+            "/lkq/Factory Wheel Warehouse_837903.csv"
+        )
+
+    def checkLKQQTY(self, partNumber):
+        qty = 0
+        for i in range(len(self.LKQStock)):
+            if partNumber[-1] != "N":
+                if self.LKQStock[i][2] in [partNumber, partNumber[:9]]:
+                    qty += int(self.LKQStock[i][27])
+            else:
+                if self.LKQStock[i][2] == partNumber:
+                    qty += int(self.LKQStock[i][27])
+        return qty
+
     def sortOrder(self, order) -> None:
         
         """
@@ -561,15 +578,17 @@ class InternalAutomation():
         
         sourced = False
         warehouseQTY = self.fishbowl.checkProductQTY(order.hollander)
+        lkqQTY = self.checkLKQQTY(order.hollander)
         if warehouseQTY and warehouseQTY >= order.qty:
             self.ordersByVendor["Warehouse"].append(order)
             sourced = True
+        if lkqQTY and lkqQTY >= order.qty:
+            self.ordersByVendor["Coast"]
+            sourced = True
         else:
             for row in self.sourceList:
+                if sourced: break
                 if row[0] == order.hollander:
-                    if int(row[2]) + int(row[6]) >= order.qty and not sourced:
-                        self.ordersByVendor["Coast"].append(order)
-                        sourced = True
                     if int(row[5]) + int(row[9]) >= order.qty and not sourced:
                         self.ordersByVendor["Perfection"].append(order)
                         sourced = True

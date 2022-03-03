@@ -1,4 +1,6 @@
 from zeep import Client
+from dotenv import load_dotenv
+import os
 
 wsdl = "https://lkqintegrationqc.ekeyconnect.com/Ordering.svc?wsdl"
 
@@ -22,5 +24,39 @@ checkDropShipAvailability = {
         ]
     }
 }
+
+class LKQConnection():
+
+    def __init__(self):
+        load_dotenv()
+        self.client = Client(
+            "https://lkqintegrationqc.ekeyconnect.com/Ordering.svc?wsdl"
+        )
+        self._password = os.getenv("LKQ-PW")
+        self._verificationCode = os.getenv("LKQ-VC")
+    
+
+    def checkAvailability(self, partNumber, qty):
+        request = {
+            "request": {
+                "UserRequestInfo": {
+                    "AccountNumber": "837903",
+                    "BusinessTypeForAccountNumber": "Salvage",
+                    "UserName": "837903.factorywheel",
+                    "UserPassword": self._password,
+                    "VerificationCode": self._verificationCode
+                },
+                "PartsWithQuantity": [
+                    {
+                        "PartWithQuantityRequest": {
+                            "PartNumber": partNumber,
+                            "Quantity": qty
+                        }
+                    }
+                ]
+            }
+        }
+        return self.client.service.CheckDropShipAvailability(**request)
+
 # can pass in dictionaries to methods
-print(client.service.CheckDropShipAvailability(**checkDropShipAvailability))
+print(type(client.service.CheckDropShipAvailability(**checkDropShipAvailability).json))

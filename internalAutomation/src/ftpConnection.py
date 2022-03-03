@@ -13,7 +13,7 @@ class FTPConnection():
     
     def getFile(self, relativePath):
         file = BytesIO()
-        self.server.retrbinary(f"RETR {relativePath}", file.write)
+        self.server.retrbinary(f"RETR {filePath}", file.write)
         file.seek(0)
         return file
     
