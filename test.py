@@ -1,7 +1,9 @@
-from internalAutomation.src.automation import InternalAutomation
+from app import orderImportNewThread
+from internalAutomation.src.automation import InternalAutomation, orderImport
 
 try:
     automation = InternalAutomation()
-    print(automation.checkRoadReadyQTY("ALY64111U35"))
+    print(automation.unfulfilledOrders)
 finally:
     automation.close()
+    pass

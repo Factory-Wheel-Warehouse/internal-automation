@@ -419,10 +419,9 @@ class InternalAutomation():
             orderDetails = self.magento.getOrderDetails(orderID)
             address = self.getMagentoAddress(orderDetails)
             order = self.buildMagentoOrder(orderDetails, orderID, address)
-            if order:
+            if order and not self.fishbowl.isSO(order.customerPO):
                 self.setOrderType(order)
-                if not self.fishbowl.isSO(order.customerPO):
-                    self.sortOrder(order)
+                self.sortOrder(order)
     
     def getOrders(self):
 
@@ -614,6 +613,7 @@ def orderImport(test = True):
     automation = InternalAutomation()
     try:
         automation.getOrders()
+        print(automation.ordersByVendor)
         if not test:
             automation.importOrders()
         for vendor in automation.ordersByVendor:
