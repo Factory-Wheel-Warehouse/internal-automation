@@ -419,9 +419,11 @@ class InternalAutomation():
             orderDetails = self.magento.getOrderDetails(orderID)
             address = self.getMagentoAddress(orderDetails)
             order = self.buildMagentoOrder(orderDetails, orderID, address)
-            if order and not self.fishbowl.isSO(order.customerPO):
+            if order:
                 self.setOrderType(order)
-                self.sortOrder(order)
+                if not self.fishbowl.isSO(order.customerPO):
+                    self.sortOrder(order)
+
     
     def getOrders(self):
 
@@ -594,11 +596,11 @@ class InternalAutomation():
             self.ordersByVendor["Warehouse"].append(order)
             sourced = True
         if lkqQTY and lkqQTY >= order.qty:
-            self.ordersByVendor["Coast"]
+            self.ordersByVendor["Coast"].append(order)
             sourced = True
         else:
-            for row in self.sourceList:
-                if sourced: break
+            row = 0
+            while not sourced:
                 if row[0] == order.hollander:
                     if int(row[5]) + int(row[10]) >= order.qty and not sourced:
                         self.ordersByVendor["Perfection"].append(order)
@@ -606,6 +608,7 @@ class InternalAutomation():
                     if int(row[3]) + int(row[8]) >= order.qty and not sourced:
                         self.ordersByVendor["Jante"].append(order)
                         sourced = True
+                row += 1
         if not sourced:
             self.ordersByVendor["No vendor"].append(order)
 
