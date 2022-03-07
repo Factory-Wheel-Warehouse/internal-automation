@@ -35,6 +35,7 @@ class InternalAutomation():
         self.trackingChecker = TrackingChecker()
         self.unfulfilledOrders = self.magento.getPendingOrders()
         self.LKQStock = self.getLKQStock()
+        self.RRStock = self.getLKQStock()
 
     def close(self):
 
@@ -137,15 +138,10 @@ class InternalAutomation():
                 # Should delete after adding, but delete request keeps 
                 # returning server error for some reason
                 self.magento.addOrderTracking(customerPO, trackingNumber)
-                print(f'{customerPO}\nPayload: ', end = "")
             else:
                 carrier = self.magento.getCarrier(trackingNumber)
                 status = self.checkTrackingStatus(
                     trackingNumber, carrier, customerPO
-                )
-                print(
-                    f'{customerPO}\nStatus: {status}\nTracking \
-                        Payload: ', end = ""
                 )
                 if status == "transit":
                     self.magento.addOrderTracking(customerPO, trackingNumber)
@@ -550,6 +546,11 @@ class InternalAutomation():
             "/lkq/Factory Wheel Warehouse_837903.csv"
         )
 
+    def getRoadReadyStock(self):
+        return self.ftpServer.getCSVAsList(
+            "/roadreadywheels/roadready.csv"
+        )
+
     def checkLKQQTY(self, partNumber):
         qty = 0
         for i in range(len(self.LKQStock)):
@@ -559,6 +560,17 @@ class InternalAutomation():
             else:
                 if self.LKQStock[i][2] == partNumber:
                     qty += int(self.LKQStock[i][27])
+        return qty
+
+    def checkRoadReadyQTY(self, partNumber):
+        qty = 0
+        for i in range(len(self.RRStock)):
+            if partNumber[-1] != "N":
+                if self.RRStock[i][2] in [partNumber, partNumber[:9]]:
+                    qty += int(self.RRStock[i][27])
+            else:
+                if self.RRStock[i][2] == partNumber:
+                    qty += int(self.RRStock[i][27])
         return qty
 
     def sortOrder(self, order) -> None:
@@ -589,10 +601,10 @@ class InternalAutomation():
             for row in self.sourceList:
                 if sourced: break
                 if row[0] == order.hollander:
-                    if int(row[5]) + int(row[9]) >= order.qty and not sourced:
+                    if int(row[5]) + int(row[10]) >= order.qty and not sourced:
                         self.ordersByVendor["Perfection"].append(order)
                         sourced = True
-                    if int(row[3]) + int(row[7]) >= order.qty and not sourced:
+                    if int(row[3]) + int(row[8]) >= order.qty and not sourced:
                         self.ordersByVendor["Jante"].append(order)
                         sourced = True
         if not sourced:
