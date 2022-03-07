@@ -35,7 +35,7 @@ class InternalAutomation():
         self.trackingChecker = TrackingChecker()
         self.unfulfilledOrders = self.magento.getPendingOrders()
         self.LKQStock = self.getLKQStock()
-        self.RRStock = self.getLKQStock()
+        self.RRStock = self.getRoadReadyStock()
 
     def close(self):
 
