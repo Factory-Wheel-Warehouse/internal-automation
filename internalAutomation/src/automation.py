@@ -371,6 +371,8 @@ class InternalAutomation():
                     address, sku, item["qty_ordered"], 
                     item["price"], customerPO = orderID
                 )
+        if self.magento.isEbayOrder(orderID):
+            orderID = orderID[1:]
         if not self.fishbowl.isSO(orderID):
             self.exceptionOrders.append(
                 f"Order #{orderID}\n\n"
