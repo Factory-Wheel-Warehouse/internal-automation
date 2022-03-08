@@ -595,7 +595,7 @@ class InternalAutomation():
         if warehouseQTY and warehouseQTY >= order.qty:
             self.ordersByVendor["Warehouse"].append(order)
             sourced = True
-        if lkqQTY and lkqQTY >= order.qty:
+        if lkqQTY and lkqQTY >= order.qty and not sourced:
             self.ordersByVendor["Coast"].append(order)
             sourced = True
         else:
