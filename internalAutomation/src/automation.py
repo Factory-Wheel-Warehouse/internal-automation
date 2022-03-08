@@ -599,8 +599,8 @@ class InternalAutomation():
             self.ordersByVendor["Coast"].append(order)
             sourced = True
         else:
-            row = 0
-            while not sourced:
+            for row in self.sourceList:
+                if sourced: break
                 if row[0] == order.hollander:
                     if int(row[5]) + int(row[10]) >= order.qty and not sourced:
                         self.ordersByVendor["Perfection"].append(order)
@@ -608,7 +608,6 @@ class InternalAutomation():
                     if int(row[3]) + int(row[8]) >= order.qty and not sourced:
                         self.ordersByVendor["Jante"].append(order)
                         sourced = True
-                row += 1
         if not sourced:
             self.ordersByVendor["No vendor"].append(order)
 
