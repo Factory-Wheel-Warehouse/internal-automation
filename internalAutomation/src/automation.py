@@ -464,7 +464,7 @@ class InternalAutomation():
                 emailBody += exceptionOrder
             self.outlook.sendMail(
                 "danny@factorywheelwarehouse.com",
-                "Multiline Orders", emailBody
+                "Multiline/Exception Orders", emailBody
             )
 
     def importSalesOrders(self):
