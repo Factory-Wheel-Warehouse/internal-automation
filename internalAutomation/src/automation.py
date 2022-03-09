@@ -383,7 +383,6 @@ class InternalAutomation():
         """ Reads in facebook orders using the shopify API connection """
         
         orderIDs = self.facebook.getPendingOrders()
-        print(orderIDs)
         processedOrderIDs = []
         for orderID in orderIDs:
             orderDetails = self.facebook.getOrderDetails(orderID)
