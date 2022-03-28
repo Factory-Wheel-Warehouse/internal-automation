@@ -3,6 +3,7 @@ import re
 import json
 import traceback
 from dotenv import load_dotenv
+import internalAutomation.src.wheelSourcing.wheelSourcing as wheelSourcing
 from internalAutomation.src.ftpConnection import FTPConnection
 from internalAutomation.src.address import Address
 from internalAutomation.src.facebook import ShopifyConnection
@@ -22,6 +23,7 @@ class InternalAutomation():
             "Coast" : [],
             "Perfection" : [],
             "Jante" : [],
+            "Road Ready": [],
             "No vendor" : []
         }
         self.exceptionOrders = []
@@ -31,11 +33,9 @@ class InternalAutomation():
         self.outlook = self.connectOutlook()
         self.facebook = self.connectFacebook()
         self.magento = self.connectMagento()
-        self.sourceList = self.generateSourceList()
+        self.sourceList = wheelSourcing.buildVendorInventory(self.ftpServer)
         self.trackingChecker = TrackingChecker()
         self.unfulfilledOrders = self.magento.getPendingOrders()
-        self.LKQStock = self.getLKQStock()
-        self.RRStock = self.getRoadReadyStock()
 
     def close(self):
 
@@ -426,7 +426,6 @@ class InternalAutomation():
                 if not self.fishbowl.isSO(order.customerPO):
                     self.sortOrder(order)
 
-    
     def getOrders(self):
 
         """Organizes orders from each selling avenue into ordersByVendor."""
@@ -545,12 +544,12 @@ class InternalAutomation():
         return sourceList
 
     def getLKQStock(self):
-        return self.ftpServer.getCSVAsList(
+        return self.ftpServer.getFileAsList(
             "/lkq/Factory Wheel Warehouse_837903.csv"
         )
 
     def getRoadReadyStock(self):
-        return self.ftpServer.getCSVAsList(
+        return self.ftpServer.getFileAsList(
             "/roadreadywheels/roadready.csv"
         )
 
@@ -591,27 +590,26 @@ class InternalAutomation():
             Name of the vendor (str) if any else None
         """
         
-        sourced = False
-        warehouseQTY = self.fishbowl.checkProductQTY(order.hollander)
-        lkqQTY = self.checkLKQQTY(order.hollander)
-        if warehouseQTY and warehouseQTY >= order.qty:
-            self.ordersByVendor["Warehouse"].append(order)
-            sourced = True
-        if lkqQTY and lkqQTY >= order.qty and not sourced:
-            self.ordersByVendor["Coast"].append(order)
-            sourced = True
-        else:
-            for row in self.sourceList:
-                if sourced: break
-                if row[0] == order.hollander:
-                    if int(row[5]) + int(row[10]) >= order.qty and not sourced:
-                        self.ordersByVendor["Perfection"].append(order)
-                        sourced = True
-                    if int(row[3]) + int(row[8]) >= order.qty and not sourced:
-                        self.ordersByVendor["Jante"].append(order)
-                        sourced = True
-        if not sourced:
-            self.ordersByVendor["No vendor"].append(order)
+        vendor = None
+        inventoryQTY = self.fishbowl.checkProductQTY(order.hollander)
+        if inventoryQTY and inventoryQTY >= order.qty:
+            vendor = "Warehouse"
+        if not vendor:
+            vendor = wheelSourcing.assignCheapestVendor(
+                order.hollander, order.qty, self.sourceList
+            )
+        if not vendor and order.hollander[-1] != "N":
+            vendor = wheelSourcing.assignCheapestVendor(
+                order.hollander[:9], order.qty, self.sourceList
+            )
+        if not vendor and order.hollander[-1] == "N":
+            if wheelSourcing.checkJanteStock(
+                self.janteStock, order.hollander, order.qty
+            ):
+                vendor = "Jante"
+        if not vendor:
+            vendor = "No vendor"
+        self.ordersByVendor[vendor].append(order)
 
 def orderImport(test = True):
     automation = InternalAutomation()
