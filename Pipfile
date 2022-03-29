@@ -11,6 +11,8 @@ zeep = "*"
 twilio = "*"
 flask = "*"
 gunicorn = "*"
+msal = "*"
+openpyxl = "*"
 
 [dev-packages]
 
