@@ -73,6 +73,18 @@
 					"to" : "danny@factorywheelwarehouse.com",
 					"cc" : ""
 				}
+			},
+			"Road Ready" : {
+				"Name" : "ROAD READY WHEELS",
+				"Address" : "PO BOX 578584",
+				"City" : "CHICAGO",
+				"State" : "IL",
+				"Zipcode" : "60657",
+				"Country" : "UNITED STATES",
+				"Email" : {
+					"to" : "danny@factorywheelwarehouse.com",
+					"cc" : ""
+				}
 			}
 		},
 		"Customers" : {

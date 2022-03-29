@@ -59,7 +59,7 @@ class OutlookConnection():
         self.accessToken = self.getAccessToken(app, self.data)
         if self.accessToken:
             self.headers = {'Authorization': f'Bearer {self.accessToken}'}
-        print("Outlook connection successful.")
+            print("Outlook connection successful.")
 
     def getEmailAttachment(self, emailID):
         attachments = requests.get(

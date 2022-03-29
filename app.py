@@ -1,10 +1,10 @@
-import os
 from threading import Thread
 from flask import Flask, request
 from twilio.rest import Client
 from twilio.twiml.messaging_response import MessagingResponse
-from coreBuyer import checkSales
-import internalAutomation.src.automation as automation
+import internalprocesses.corepricer.checkSales as checkSales
+import internalprocesses.automation.automation as automation
+
 app = Flask(__name__)
 priceList = checkSales.buildPriceDict() #3268 entries
 

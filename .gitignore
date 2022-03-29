@@ -1,2 +1,5 @@
 .env
 *.py[cod]
+test.py
+notMappedSkus.txt
+__pycache__/

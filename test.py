@@ -1,10 +1,3 @@
-from app import orderImportNewThread
-from internalAutomation.src.automation import InternalAutomation, orderImport
+from internalprocesses.automation.automation import orderImport, trackingUpload
 
-try:
-    # automation = InternalAutomation()
-    # print(automation.unfulfilledOrders)
-    orderImport()
-finally:
-    # automation.close()
-    pass
+print(trackingUpload())

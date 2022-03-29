@@ -1,8 +1,6 @@
 from ftplib import FTP
 from io import BytesIO
-from pandas import read_csv
-
-filePath = r"/lkq/Factory Wheel Warehouse_837903.csv"
+from pandas import read_csv, read_excel
 
 class FTPConnection():
     
@@ -13,13 +11,17 @@ class FTPConnection():
     
     def getFile(self, relativePath):
         file = BytesIO()
-        self.server.retrbinary(f"RETR {filePath}", file.write)
+        self.server.retrbinary(f"RETR {relativePath}", file.write)
         file.seek(0)
         return file
     
-    def getCSVAsList(self, relativePath):
+    def getFileAsList(self, relativePath):
         file = self.getFile(relativePath)
-        return read_csv(file).values.tolist()
+        extension = relativePath[relativePath.find("."):]
+        if extension == ".csv":
+            return read_csv(file).values.tolist()
+        elif extension == ".xlsx":
+            return read_excel(file).values.tolist()
     
     def close(self):
         self.server.close()

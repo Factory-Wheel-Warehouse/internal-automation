@@ -1,7 +1,5 @@
-from h11 import Data
-from itsdangerous import json
+import json
 import requests
-from typing import Union, List
 
 class TrackingChecker():
 
