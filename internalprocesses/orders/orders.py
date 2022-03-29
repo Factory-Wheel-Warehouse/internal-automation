@@ -156,10 +156,3 @@ class WebsiteOrder(Order):
             customerPO
         )
         self.avenue = "Website"
-
-# order = Order(None, "aksdbf", 4, 100.4)
-# print(type(order))
-# order.__class__ = AmazonOrder
-# order.avenue = "Amazon"
-# order.customerPO = "success"
-# print(type(order), order.avenue)

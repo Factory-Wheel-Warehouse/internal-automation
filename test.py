@@ -1,3 +1,7 @@
-from internalprocesses.automation.automation import orderImport, trackingUpload
+from internalprocesses.automation.automation import InternalAutomation
 
-print(trackingUpload())
+automation = InternalAutomation()
+
+print(automation.getPerfectionTracking("26752"))
+
+automation.close()

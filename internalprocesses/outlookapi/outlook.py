@@ -114,6 +114,7 @@ class OutlookConnection():
             endpoint,
             headers = self.headers
         ).json()["value"]
+        print(response)
         if len(response) > 0:
             return response[0]
 
@@ -167,32 +168,3 @@ class OutlookConnection():
             self.addCCRecipients(jsonData, cc)
         resp = requests.post(url=url, json=jsonData, headers=headers)
         return resp
-
-# def run():
-#     app, jsonData = getClientApp()
-#     accessToken = getAccessToken(app, jsonData)
-#     if accessToken != None:
-#         headers = {'Authorization': 'Bearer {}'.format(accessToken)}
-#         unreadInvoices = getUnreadInvoices(accessToken, headers, jsonData)
-#         trackingInfo = getTrackingInfo(unreadInvoices, jsonData, headers)
-#         pprint(trackingInfo)
-#         print(len(trackingInfo))
-
-# if __name__ == "__main__":
-#     run()
-# 
-# outlook = OutlookConnection()
-# pprint(outlook.getUnreadInvoices())
-
-
-"""
-Connect to eBay api to pull orders with no tracking info
-
-Add to watch list
-
-Check invoice POs in fishbowl DB to see if eBay order. If not eBay order
-do NOT mark as read and leave it alone.
-
-https://login.microsoftonline.com/bfe22315-f429-405a-b29e-44f08d06631f/oauth2/v2.0/authorize?client_id=37dee6bf-ece2-45f4-bc23-07cae6d86e73&response_type=code&response_mode=query&scope=mail.send%20mail.readwrite&state=12345
-
-"""

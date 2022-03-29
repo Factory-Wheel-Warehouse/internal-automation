@@ -887,18 +887,3 @@ class FBConnection():
             description = "Unknown FOB _________."
         self.statusCode = statusCode
         self.statusDescription = description
-
-# customerPOs = [6863575871187, 6863575105229, 5863559768993, 5863559449248, 5863534704884, 4863515268173, 4863500722241, 4863491249603, 3863498695103, 3863497093731, 3863484527075, 3863484343992, 3863470891990, 2863468930058, 2863453818471, 1863437949089, 1863437088871, 1863425143704, 1863410672967, 5863314087287, 5863314011357]
-# po = []
-# so = []
-# fishbowl = FBConnection("danny", "Wheels57", "factorywheelwarehouse.myfishbowl.com")
-# for customerPO in customerPOs:
-#     poNum = fishbowl.getPONum(customerPO)
-#     soNum = fishbowl.getSONum(customerPO)
-#     if poNum:
-#         po.append(f"{poNum} - {customerPO}")
-#     else:
-#         so.append(f"{soNum} - {customerPO}")
-# print(",".join(po))
-# print()
-# print(",".join(so))

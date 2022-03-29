@@ -41,6 +41,7 @@ class MagentoConnection():
             headers = self.headers,
             params = params
         )
+        print("request")
         return [order["increment_id"] for order in response.json()["items"]]
     
     def getOrder(self, incrementID):
@@ -55,10 +56,12 @@ class MagentoConnection():
             headers = self.headers,
             params = params
         )
+        print("request")
         return response.json()
 
     def getOrderDetails(self, incrementID):
         order = self.getOrder(incrementID)
+        print("request")
         return order["items"][0]
 
     def isAmazonOrder(self, incrementID):
@@ -143,15 +146,3 @@ class MagentoConnection():
             )
         else:
             print("No Tracking uploaded at this time")
-    
-# cd = os.path.dirname(__file__)
-# configFile= os.path.join(cd, r"..\config\config.json")
-# config = json.load(open(configFile))
-# magentoConfig = config["APIConfig"]["Magento"]
-# magento = MagentoConnection(magentoConfig)
-# orders = magento.getPendingOrders()
-# print(len(orders))
-
-# Sales avenue -> ["payment"]["additional_information"][0]
-# or ["payment_additional_info"][0][value]              ^
-# channel_order id is index [2]  ^ right there or       | there

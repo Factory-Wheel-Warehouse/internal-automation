@@ -90,7 +90,7 @@ class InternalAutomation():
         if email:
             body = email["body"]["content"]
             # Mark as read
-            return re.search(r"1Z[a-z|A-Z|0-9]{8}[0-9]{8}", body).group()
+            return re.findall(r"1Z[a-z|A-Z|0-9]{8}[0-9]{8}", body)[0]
         
     def getJanteTracking(self, poNum):
         """
@@ -103,6 +103,19 @@ class InternalAutomation():
             body = email["body"]["content"]
             # Mark as read
             return re.findall(r"[0-9]{12}", body)[0]
+
+    def getPerfectionTracking(self, poNum):
+        searchQuery = '?$search="subject:UPS Ship Notification, Tracking '
+        searchQuery += f'Number AND body:{poNum}"'
+        email = self.outlook.searchMessages(searchQuery)
+        if email:
+            body = email["body"]["content"]
+            # Mark as read
+            return re.findall(r"1Z[a-z|A-Z|0-9]{8}[0-9]{8}", body)[0]
+
+    def getBlackburnsTracking(self, poNum):
+        searchQuery = f''
+        pass
 
     def getTracking(self, customerPO):
         """Checks for a tracking number for the customerPO passed in"""
@@ -149,12 +162,12 @@ class InternalAutomation():
             print('\n')
 
     def trackingNumberSearch(self, poNum):
-        coastResults = self.getCoastTracking(poNum)
-        janteResults = self.getJanteTracking(poNum)
-        if coastResults:
-            return coastResults
-        if janteResults:
-            return janteResults
+        trackingNum = self.getCoastTracking(poNum)
+        if not trackingNum:
+            trackingNum = self.getJanteTracking(poNum)
+        if not trackingNum:
+            trackingNum = self.getPerfectionTracking(poNum)
+        return trackingNum
 
     def connectFacebook(self):
 

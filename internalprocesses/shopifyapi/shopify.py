@@ -46,11 +46,3 @@ class ShopifyConnection():
             params = params
         )
         return response.json()["order"]
-
-# cd = os.path.dirname(__file__)
-# configFile= os.path.join(cd, r"..\config\config.json")
-# config = json.load(open(configFile))
-# shopifyConfig = config["APIConfig"]["Shopify"]
-# facebook = ShopifyConnection(shopifyConfig)
-# pendingOrders = facebook.getPendingOrders()
-# print(len(pendingOrders))

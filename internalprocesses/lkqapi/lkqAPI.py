@@ -94,8 +94,9 @@ class LKQConnection():
             }
         }
 
-lkq = LKQConnection()
-lkq.checkAvailability("ALY64108U45", 2)
+if __name__ == "__main__":
+    lkq = LKQConnection()
+    lkq.checkAvailability("ALY64108U45", 2)
 
-# can pass in dictionaries to methods
-print((client.service.CreateOrder(**createOrder)))
+    # can pass in dictionaries to methods
+    print((client.service.CreateOrder(**createOrder)))
