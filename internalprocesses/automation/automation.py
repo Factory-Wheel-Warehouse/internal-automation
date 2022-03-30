@@ -35,6 +35,7 @@ class InternalAutomation():
         self.facebook = self.connectFacebook()
         self.magento = self.connectMagento()
         self.sourceList = wheelsourcing.buildVendorInventory(self.ftpServer)
+        self.janteStock = wheelsourcing.buildJanteInventory(self.ftpServer)
         self.trackingChecker = TrackingChecker()
         self.unfulfilledOrders = self.magento.getPendingOrders()
 
