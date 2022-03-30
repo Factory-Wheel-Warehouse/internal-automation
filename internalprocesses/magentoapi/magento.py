@@ -41,7 +41,6 @@ class MagentoConnection():
             headers = self.headers,
             params = params
         )
-        print("request")
         return [order["increment_id"] for order in response.json()["items"]]
     
     def getOrder(self, incrementID):
@@ -56,12 +55,10 @@ class MagentoConnection():
             headers = self.headers,
             params = params
         )
-        print("request")
         return response.json()
 
     def getOrderDetails(self, incrementID):
         order = self.getOrder(incrementID)
-        print("request")
         return order["items"][0]
 
     def isAmazonOrder(self, incrementID):
@@ -138,11 +135,8 @@ class MagentoConnection():
         carrier, title = self.trackingNumberCarrier(trackingNumber)
         payload = self.buildShipmentUploadPayload(carrier, title, trackingNumber, order)
         if payload and payload["items"] and payload['tracks']:
-            print(f'{payload}')
             return requests.post(
                 url = self.baseRequest + f"order/{orderID}/ship",
                 headers = self.headers,
                 json = payload
             )
-        else:
-            print("No Tracking uploaded at this time")

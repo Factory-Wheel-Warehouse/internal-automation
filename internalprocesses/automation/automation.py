@@ -165,7 +165,6 @@ class InternalAutomation():
                 )
                 if status == "transit":
                     self.magento.addOrderTracking(customerPO, trackingNumber)
-            print('\n')
 
     def trackingNumberSearch(self, poNum):
         trackingNum = self.getCoastTracking(poNum)
@@ -465,7 +464,6 @@ class InternalAutomation():
             orders : list
                 orders to be drop shipped from coast to coast
         """
-        print(f"Emailing {vendor} orders.")
         emailBody = ""
         for i in range(len(orders)):
             if i > 0:
@@ -478,7 +476,6 @@ class InternalAutomation():
             "sales@factorywheelwarehouse.com",
             f"{vendor} Orders", emailBody
         )
-        print("Email sent.")
 
     def emailExceptionOrders(self):
         if self.exceptionOrders:
@@ -637,7 +634,6 @@ def orderImport(test = True):
     automation = InternalAutomation()
     try:
         automation.getOrders()
-        print(automation.ordersByVendor)
         if not test:
             automation.importOrders()
         for vendor in automation.ordersByVendor:
@@ -646,10 +642,6 @@ def orderImport(test = True):
                     automation.ordersByVendor[vendor], vendor
                 )
                 automation.emailExceptionOrders()
-            else:
-                print(vendor.upper(), "\n")
-                for order in automation.ordersByVendor[vendor]:
-                    print(f"\n\n{order}\n\n")
         if test:
             print(automation.ordersByVendor)
             print(automation.exceptionOrders)

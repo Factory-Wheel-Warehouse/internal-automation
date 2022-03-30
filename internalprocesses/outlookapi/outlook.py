@@ -19,7 +19,6 @@ class OutlookConnection():
     """
 
     def __init__(self, data, password, clientSecret):
-        print("Initializing Outlook connection.")
         self.password = password
         self.clientSecret = clientSecret
         self.data = data
@@ -59,7 +58,7 @@ class OutlookConnection():
         self.accessToken = self.getAccessToken(app, self.data)
         if self.accessToken:
             self.headers = {'Authorization': f'Bearer {self.accessToken}'}
-            print("Outlook connection successful.")
+            print("Outlook connected")
 
     def getEmailAttachment(self, emailID):
         attachments = requests.get(
@@ -114,7 +113,6 @@ class OutlookConnection():
             endpoint,
             headers = self.headers
         ).json()["value"]
-        print(response)
         if len(response) > 0:
             return response[0]
 
