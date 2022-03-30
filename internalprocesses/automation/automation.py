@@ -115,8 +115,13 @@ class InternalAutomation():
             return re.findall(r"1Z[a-z|A-Z|0-9]{8}[0-9]{8}", body)[0]
 
     def getBlackburnsTracking(self, poNum):
-        searchQuery = f''
-        pass
+        searchQuery = '?$search="subject:FedEx Shipment '
+        searchQuery += f'AND body:{poNum}"'
+        email = self.outlook.searchMessages(searchQuery)
+        if email:
+            body = email["body"]["content"]
+            # Mark as read
+            return re.findall(r"[0-9]{12}", body)[0]
 
     def getTracking(self, customerPO):
         """Checks for a tracking number for the customerPO passed in"""
@@ -168,6 +173,8 @@ class InternalAutomation():
             trackingNum = self.getJanteTracking(poNum)
         if not trackingNum:
             trackingNum = self.getPerfectionTracking(poNum)
+        if not trackingNum:
+            trackingNum = self.getBlackburnsTracking(poNum)
         return trackingNum
 
     def connectFacebook(self):
