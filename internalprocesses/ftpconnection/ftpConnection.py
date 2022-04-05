@@ -1,5 +1,6 @@
+import io
+import csv
 from ftplib import FTP
-from io import BytesIO
 from pandas import read_csv, read_excel
 
 class FTPConnection():
@@ -9,19 +10,26 @@ class FTPConnection():
         self.server.connect(host, port)
         self.server.login(username, password)
     
-    def getFile(self, relativePath):
-        file = BytesIO()
+    def getFileAsBinary(self, relativePath):
+        file = io.BytesIO()
         self.server.retrbinary(f"RETR {relativePath}", file.write)
         file.seek(0)
         return file
     
     def getFileAsList(self, relativePath):
-        file = self.getFile(relativePath)
+        file = self.getFileAsBinary(relativePath)
         extension = relativePath[relativePath.find("."):]
         if extension == ".csv":
             return read_csv(file).values.tolist()
         elif extension == ".xlsx":
             return read_excel(file).values.tolist()
+    
+    def writeListAsCSV(self, outputFilePath, inputList):
+        csvFile = io.StringIO()
+        writer = csv.writer(csvFile)
+        writer.writerows(inputList)
+        fileAsBytes = io.BytesIO(csvFile.getvalue().encode())
+        self.server.storbinary(f"STOR {outputFilePath}", fileAsBytes)
     
     def close(self):
         self.server.close()

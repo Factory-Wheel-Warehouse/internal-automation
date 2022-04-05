@@ -34,8 +34,9 @@ class InternalAutomation():
         self.outlook = self.connectOutlook()
         self.facebook = self.connectFacebook()
         self.magento = self.connectMagento()
-        self.sourceList = wheelsourcing.buildVendorInventory(self.ftpServer)
-        self.janteStock = wheelsourcing.buildJanteInventory(self.ftpServer)
+        self.sourceList = wheelsourcing.buildVendorInventory(
+            self.ftpServer, self.fishbowl
+        )
         self.trackingChecker = TrackingChecker()
         self.unfulfilledOrders = self.magento.getPendingOrders()
 
@@ -609,23 +610,13 @@ class InternalAutomation():
             Name of the vendor (str) if any else None
         """
         
-        vendor = None
-        inventoryQTY = self.fishbowl.checkProductQTY(order.hollander)
-        if inventoryQTY and inventoryQTY >= order.qty:
-            vendor = "Warehouse"
-        if not vendor:
-            vendor = wheelsourcing.assignCheapestVendor(
-                order.hollander, order.qty, self.sourceList
-            )
+        vendor = wheelsourcing.assignCheapestVendor(
+            order.hollander, order.qty, self.sourceList
+        )
         if not vendor and order.hollander[-1] != "N":
             vendor = wheelsourcing.assignCheapestVendor(
                 order.hollander[:9], order.qty, self.sourceList
             )
-        if not vendor and order.hollander[-1] == "N":
-            if wheelsourcing.checkJanteStock(
-                self.janteStock, order.hollander, order.qty
-            ):
-                vendor = "Jante"
         if not vendor:
             vendor = "No vendor"
         self.ordersByVendor[vendor].append(order)

@@ -392,9 +392,9 @@ class FBConnection():
         return False
 
     def checkProductQTY(self, hollander):
-        query = f"SELECT SUM(QTY) FROM PRODUCT, QOHVIEW WHERE (PRODUCT.num = "
-        query += f"'{hollander}' OR PRODUCT.num LIKE '{hollander[:9]}__*CORE')"
-        query += f" AND PRODUCT.partid = QOHVIEW.PARTID "
+        query = f"SELECT SUM(QTY) FROM PART, QOHVIEW WHERE (PART.num = "
+        query += f"'{hollander}' OR PART.num LIKE '{hollander[:9]}__*CORE')"
+        query += f" AND Part.id = QOHVIEW.PARTID "
         query += "AND (QOHVIEW.LOCATIONID BETWEEN 612 AND 1053 OR "
         query += "QOHVIEW.LOCATIONID BETWEEN 1062 AND 1477);"
         response = self.sendQueryRequest(query)
@@ -462,6 +462,26 @@ class FBConnection():
             ["Rows"]["Row"][1]
             if len(shipID) > 1:
                 return tracking.strip('"')
+
+    def getPartsOnHand(self):
+        query = "SELECT STOCK.NUM, STOCK.QTY, PARTCOST.avgCost "
+        query += "FROM ( "
+        query += "    SELECT PART.id as id, PART.num as NUM, QOHVIEW.QTY as QTY "
+        query += "    FROM QOHVIEW "
+        query += "    LEFT JOIN PART "
+        query += "    ON QOHVIEW.PARTID = PART.id "
+        query += "    WHERE QOHVIEW.QTY > 0 "
+        query += "    AND ( "
+        query += "        QOHVIEW.LOCATIONID BETWEEN 612 AND 1053 "
+        query += "        OR QOHVIEW.LOCATIONID BETWEEN 1062 AND 1477 "
+        query += "    )"
+        query += ") as STOCK "
+        query += "LEFT JOIN PARTCOST "
+        query += "ON STOCK.id = PARTCOST.id; "
+        response = self.sendQueryRequest(query)
+        return response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"]\
+            ["Rows"]["Row"]
+        pass
 
     def setStatus(self, statusCode):
 

@@ -140,3 +140,15 @@ class MagentoConnection():
                 headers = self.headers,
                 json = payload
             )
+    
+    def productSearch(self, partNum):
+        params = {} 
+        self.buildSearchCriteria(
+            params = params, field = "sku", 
+            value = f"{partNum}__", condition_type = "like"
+        )
+        return requests.get(
+            self.baseRequest + f"products",
+            headers = self.headers,
+            params = params
+        ).json()

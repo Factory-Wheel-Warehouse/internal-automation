@@ -4,6 +4,7 @@ from twilio.rest import Client
 from twilio.twiml.messaging_response import MessagingResponse
 import internalprocesses.corepricer.checkSales as checkSales
 import internalprocesses.automation.automation as automation
+from internalprocesses.masterinventory.mergeinventory import uploadInventoryToFTP
 
 app = Flask(__name__)
 priceList = checkSales.buildPriceDict() #3268 entries
@@ -46,11 +47,20 @@ def trackingUpload():
     trackingUpload.start()
     return "Success"
 
+@app.route("/inventory-upload")
+def inventoryUpload():
+    inventoryUpload = Thread(target=inventoryUploadNewThread)
+    inventoryUpload.start()
+    return "Success"
+
 def trackingUploadNewThread():
     automation.trackingUpload()
 
 def orderImportNewThread(test = True):
     automation.orderImport(test = test)
+
+def inventoryUploadNewThread():
+    uploadInventoryToFTP()
 
 if __name__ == "__main__":
     app.run()
