@@ -22,7 +22,7 @@ def _setVendorStock(vendorDetails):
     return [warehouse, coast, perfection, jante, roadReady]
 
 def convertInventoryToList(ftpServer, fishbowl):
-    combinedInventoryList = [["Part Number", "Total Quantity", "Lowest Cost", "Highest Cost", "Warehouse", "Coast", "Perfection", "Jante", "Road Ready"]]
+    combinedInventoryList = [["Part Number","Magento Quantity", "Total Quantity", "Lowest Cost", "Highest Cost", "Warehouse", "Coast", "Perfection", "Jante", "Road Ready"]]
     inventoryDict = buildVendorInventory(ftpServer, fishbowl)
     total = 0
     for partNum, value in inventoryDict.items():
@@ -30,11 +30,17 @@ def convertInventoryToList(ftpServer, fishbowl):
             totalQty = sum(
                 [vendorDetails[0] for vendorDetails in value.values()]
             )
-            minPrice = min([vendorDetails[1] for vendorDetails in value.values()])
-            maxPrice = max([vendorDetails[1] for vendorDetails in value.values()])
+            magentoQty = totalQty if totalQty < 5 else 5
+            minPrice = min(
+                [vendorDetails[1] for vendorDetails in value.values()]
+            )
+            maxPrice = max(
+                [vendorDetails[1] for vendorDetails in value.values()]
+            )
             vendorStock = _setVendorStock(value)
             if totalQty:
-                row = [partNum, totalQty, minPrice, maxPrice] + vendorStock
+                row = [partNum, magentoQty, totalQty, minPrice, maxPrice] 
+                row += vendorStock
                 combinedInventoryList.append(row)
                 total += totalQty
         except TypeError:
