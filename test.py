@@ -19,8 +19,9 @@ fishbowl = FBConnection("danny", fbPassword, "factorywheelwarehouse.myfishbowl.c
 try:
     masterInventoryList = convertInventoryToList(ftpServer, fishbowl)
     path = "Factory_Wheel_Warehouse/MergedVendorInventory.csv"
-    ftpServer.writeListAsCSV(path, masterInventoryList)
-    print("Success")
+    with open("testOutput.csv", "w", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerows(masterInventoryList)
 except:
     print(traceback.print_exc())
 finally:

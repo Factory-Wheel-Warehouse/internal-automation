@@ -5,6 +5,7 @@ from math import inf
 FINISHPATTERN = r"(ALY|STL|FWC)[0-9]{5}[A-Z]{1}[0-9]{2}$"
 REPLICAPATTERN = r"(ALY|STL|FWC)[0-9]{5}[A-Z]{1}[0-9]{2}N{1}$"
 COREPATTERN = r"(ALY|STL|FWC)[0-9]{5}[A-Z]{1}$"
+ROADREADYREPLICAPATTERN = r"(ALY|STL|FWC)[0-9]{6}[A-Z]{1}[0-9]{2}N{1}$"
 FWWCOREPATTERN = r"(ALY|STL|FWC)[0-9]{5}[A-Z]{1}[0-9]{2}\*CORE$"
 
 CORE_MIN_QTY = 5
@@ -43,6 +44,8 @@ def _addPartAndCost(
 ):
     for row in vendorInventory:
         partNum = row[partColumn]
+        if re.match(ROADREADYREPLICAPATTERN, partNum) and partNum[3] == "0":
+            partNum = partNum[:3] + partNum[4:]
         minRequiredQty = 0
         if (
             re.match(FINISHPATTERN, partNum) or 

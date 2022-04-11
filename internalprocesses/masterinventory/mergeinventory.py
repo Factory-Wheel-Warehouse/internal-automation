@@ -8,21 +8,29 @@ from internalprocesses.wheelsourcing.wheelsourcing import *
 from internalprocesses.magentoapi.magento import MagentoConnection
 
 def _setVendorStock(vendorDetails):
-    warehouse, coast, perfection, jante, roadReady = 0, 0, 0, 0, 0
+    warehouse, coast, perfection = [0, 0], [0, 0], [0, 0]
+    jante, roadReady = [0, 0], [0, 0]
     if "Warehouse" in vendorDetails:
-        warehouse += vendorDetails["Warehouse"][0]
+        warehouse = vendorDetails["Warehouse"]
     if "Perfection" in vendorDetails:
-        perfection += vendorDetails["Perfection"][0]
+        perfection = vendorDetails["Perfection"]
     if "Coast" in vendorDetails:
-        coast += vendorDetails["Coast"][0]
+        coast = vendorDetails["Coast"]
     if "Jante" in vendorDetails:
-        jante += vendorDetails["Jante"][0]
+        jante = vendorDetails["Jante"]
     if "Road Ready" in vendorDetails:
-        roadReady += vendorDetails["Road Ready"][0]
-    return [warehouse, coast, perfection, jante, roadReady]
+        roadReady = vendorDetails["Road Ready"]
+    return warehouse + coast + perfection + jante + roadReady
 
 def convertInventoryToList(ftpServer, fishbowl):
-    combinedInventoryList = [["Part Number","Magento Quantity", "Total Quantity", "Lowest Cost", "Highest Cost", "Warehouse", "Coast", "Perfection", "Jante", "Road Ready"]]
+    combinedInventoryList = [
+        [
+            "Part Number","Magento Quantity", "Total Quantity", "Lowest Cost", 
+            "Highest Cost", "Warehouse", "Warehouse Cost", "Coast", 
+            "Coast Cost", "Perfection", "Perfection Cost", "Jante", 
+            "Jante Cost", "Road Ready", "Road Ready Cost"
+        ]
+    ]
     inventoryDict = buildVendorInventory(ftpServer, fishbowl)
     total = 0
     for partNum, value in inventoryDict.items():
