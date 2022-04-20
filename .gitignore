@@ -5,3 +5,5 @@ notMappedSkus.txt
 __pycache__/
 UnmappedPerfectionSkus_*.csv
 mergedInventory.csv
+invalidWarehousePartNumbers.csv
+test.py

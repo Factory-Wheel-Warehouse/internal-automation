@@ -1,11 +1,13 @@
+from gzip import READ
 import io
+import re
 import os
+from trace import CoverageResults
 import traceback
 import dotenv
 from internalprocesses.ftpconnection.ftpConnection import FTPConnection
 from internalprocesses.fishbowlclient.fishbowl import FBConnection
-from internalprocesses.wheelsourcing.wheelsourcing import *
-from internalprocesses.magentoapi.magento import MagentoConnection
+from internalprocesses.wheelsourcing.wheelsourcing import COREPATTERN, buildVendorInventory
 
 def _setVendorStock(vendorDetails):
     warehouse, coast, perfection = [0, 0], [0, 0], [0, 0]
@@ -22,37 +24,75 @@ def _setVendorStock(vendorDetails):
         roadReady = vendorDetails["Road Ready"]
     return warehouse + coast + perfection + jante + roadReady
 
+def _getCoreToFinishMap(ftpServer):
+    coreToFinishMap = {}
+    magentoSkus = ftpServer.getFileAsList(
+        "/Factory_Wheel_Warehouse/combine_inventory/COMBINE_SHEET.csv"
+    )
+    for row in magentoSkus:
+        sku = row[0]
+        core = sku[:9]
+        if sku[-1] != "N" or int(sku[9:11]) > 80:
+            if core not in coreToFinishMap:
+                coreToFinishMap[core] = [sku]
+            else:
+                coreToFinishMap[core].append(sku)
+    return coreToFinishMap
+
+def _convertCoresToFinished(ftpServer, coreInventory):
+    output = {}
+    coreToFinishMap = _getCoreToFinishMap(ftpServer)
+    for core, vendorDetails in coreInventory.items():
+        if core in coreToFinishMap:
+            for finish in coreToFinishMap[core]:
+                if finish not in output:
+                    output[finish] = vendorDetails
+                else:
+                    for vendor, stock in vendorDetails.items():
+                        if vendor in output[finish]:
+                            output[finish][vendor][0] += stock[0]
+                        else:
+                            output[finish][vendor] = stock
+    return output
+
 def convertInventoryToList(ftpServer, fishbowl):
     combinedInventoryList = [
         [
-            "Part Number","Magento Quantity", "Total Quantity", "Lowest Cost", 
-            "Highest Cost", "Warehouse", "Warehouse Cost", "Coast", 
-            "Coast Cost", "Perfection", "Perfection Cost", "Jante", 
+            "Part Number","Magento Quantity", "Core", "Total Quantity",
+            "Lowest Cost", "Highest Cost", "Warehouse", "Warehouse Cost",
+            "Coast", "Coast Cost", "Perfection", "Perfection Cost", "Jante", 
             "Jante Cost", "Road Ready", "Road Ready Cost"
         ]
     ]
     inventoryDict = buildVendorInventory(ftpServer, fishbowl)
+    inventoryDict["Core"] = _convertCoresToFinished(
+        ftpServer, inventoryDict["Core"]
+    )
     total = 0
-    for partNum, value in inventoryDict.items():
-        try:
-            totalQty = sum(
-                [vendorDetails[0] for vendorDetails in value.values()]
-            )
-            magentoQty = totalQty if totalQty < 5 else 5
-            minPrice = min(
-                [vendorDetails[1] for vendorDetails in value.values()]
-            )
-            maxPrice = max(
-                [vendorDetails[1] for vendorDetails in value.values()]
-            )
-            vendorStock = _setVendorStock(value)
-            if totalQty:
-                row = [partNum, magentoQty, totalQty, minPrice, maxPrice] 
-                row += vendorStock
-                combinedInventoryList.append(row)
-                total += totalQty
-        except TypeError:
-            print(f"Incompatible data types for {partNum}: {traceback.print_exc()}")
+    for inventoryType, value in inventoryDict.items():
+        core = False
+        if inventoryType == "Core":
+            core = True
+        for partNum, value in value.items():
+            try:
+                totalQty = sum(
+                    [vendorDetails[0] for vendorDetails in value.values()]
+                )
+                magentoQty = totalQty if totalQty < 5 else 5
+                minPrice = min(
+                    [vendorDetails[1] for vendorDetails in value.values()]
+                )
+                maxPrice = max(
+                    [vendorDetails[1] for vendorDetails in value.values()]
+                )
+                vendorStock = _setVendorStock(value)
+                if totalQty:
+                    row = [partNum, magentoQty, core, totalQty, minPrice, maxPrice] 
+                    row += vendorStock
+                    combinedInventoryList.append(row)
+                    total += totalQty
+            except:
+                print(partNum, value)
     return combinedInventoryList
 
 def uploadInventoryToFTP():
