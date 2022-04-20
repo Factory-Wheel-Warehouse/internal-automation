@@ -456,7 +456,7 @@ class InternalAutomation():
         self.readMagentoOrders()
         self.readFacebookOrders()
     
-    def emailDropships(self, orders, vendor):
+    def emailDropships(self, orders, vendor, emailAddress):
 
         """
         Drop ships orders from Coast to Coast.
@@ -474,18 +474,15 @@ class InternalAutomation():
             if i < len(orders) - 1:
                 emailBody += "\n\n"
                 emailBody += "-" * 44
-        self.outlook.sendMail( 
-            "sales@factorywheelwarehouse.com",
-            f"{vendor} Orders", emailBody
-        )
+        self.outlook.sendMail(emailAddress, f"{vendor} Orders", emailBody)
 
-    def emailExceptionOrders(self):
+    def emailExceptionOrders(self, emailAddress):
         if self.exceptionOrders:
             emailBody = ""
             for exceptionOrder in self.exceptionOrders:
                 emailBody += exceptionOrder
             self.outlook.sendMail(
-                "danny@factorywheelwarehouse.com",
+                emailAddress,
                 "Multiline/Exception Orders", emailBody
             )
 
@@ -627,12 +624,22 @@ def orderImport(test = True):
         for vendor in automation.ordersByVendor:
             if automation.ordersByVendor[vendor] and not test:
                 automation.emailDropships(
-                    automation.ordersByVendor[vendor], vendor
+                    automation.ordersByVendor[vendor], vendor, 
+                    "sales@factorywheelwarehouse.com"
                 )
-                automation.emailExceptionOrders()
-        if test:
-            print(automation.ordersByVendor)
-            print(automation.exceptionOrders)
+                automation.emailExceptionOrders(
+                    "sales@factorywheelwarehouse.com"
+                )
+            if automation.ordersByVendor[vendor] and test:
+                automation.emailDropships(
+                    automation.ordersByVendor[vendor], vendor, 
+                    "danny@factorywheelwarehouse.com"
+                )
+                automation.emailExceptionOrders(
+                    "danny@factorywheelwarehouse.com"
+                )
+        print(automation.ordersByVendor)
+        print(automation.exceptionOrders)
     except Exception:
         print(traceback.print_exc())
     finally:
