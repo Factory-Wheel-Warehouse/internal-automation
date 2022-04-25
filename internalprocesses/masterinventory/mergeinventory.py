@@ -11,7 +11,7 @@ from internalprocesses.wheelsourcing.wheelsourcing import COREPATTERN, buildVend
 
 def _setVendorStock(vendorDetails):
     warehouse, coast, perfection = [0, 0], [0, 0], [0, 0]
-    jante, roadReady = [0, 0], [0, 0]
+    jante, roadReady, blackburns = [0, 0], [0, 0], [0, 0]
     if "Warehouse" in vendorDetails:
         warehouse = vendorDetails["Warehouse"]
     if "Perfection" in vendorDetails:
@@ -22,7 +22,9 @@ def _setVendorStock(vendorDetails):
         jante = vendorDetails["Jante"]
     if "Road Ready" in vendorDetails:
         roadReady = vendorDetails["Road Ready"]
-    return warehouse + coast + perfection + jante + roadReady
+    if "Blackburns" in vendorDetails:
+        blackburns = vendorDetails["Blackburns"]
+    return warehouse + coast + perfection + jante + roadReady + blackburns
 
 def _getCoreToFinishMap(ftpServer):
     coreToFinishMap = {}
@@ -58,10 +60,11 @@ def _convertCoresToFinished(ftpServer, coreInventory):
 def convertInventoryToList(ftpServer, fishbowl):
     combinedInventoryList = [
         [
-            "Part Number","Magento Quantity", "Core", "Total Quantity",
-            "Lowest Cost", "Highest Cost", "Warehouse", "Warehouse Cost",
-            "Coast", "Coast Cost", "Perfection", "Perfection Cost", "Jante", 
-            "Jante Cost", "Road Ready", "Road Ready Cost"
+            "Part Number", "Hollander", "U-Code", "Magento Quantity", "Core", 
+            "Total Quantity", "Lowest Cost", "Highest Cost", "Warehouse",
+            "Warehouse Cost", "Coast", "Coast Cost", "Perfection",
+            "Perfection Cost", "Jante", "Jante Cost", "Road Ready", 
+            "Road Ready Cost", "Blackburns", "Blackburns Cost"
         ]
     ]
     inventoryDict = buildVendorInventory(ftpServer, fishbowl)
@@ -87,7 +90,10 @@ def convertInventoryToList(ftpServer, fishbowl):
                 )
                 vendorStock = _setVendorStock(value)
                 if totalQty:
-                    row = [partNum, magentoQty, core, totalQty, minPrice, maxPrice] 
+                    row = [
+                        partNum, partNum[:8], partNum[8:], magentoQty, core, 
+                        totalQty, minPrice, maxPrice
+                        ] 
                     row += vendorStock
                     combinedInventoryList.append(row)
                     total += totalQty

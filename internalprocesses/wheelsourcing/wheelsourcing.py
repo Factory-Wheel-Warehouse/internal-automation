@@ -191,7 +191,7 @@ def buildVendorInventory(ftp, fishbowl):
 
 def assignCheapestVendor(partNumber, qty, vendorInventory):
     finishedAvailability = vendorInventory["Finished"].get(partNumber)
-    coreAvailability = vendorInventory["Core"].get(partNumber)
+    coreAvailability = vendorInventory["Core"].get(partNumber[:9])
     vendor = None
     if finishedAvailability:
         min_ = inf
@@ -203,10 +203,10 @@ def assignCheapestVendor(partNumber, qty, vendorInventory):
             vendorInventory["Finished"][partNumber][vendor][0] -= qty
     if not vendor and coreAvailability:
         min_ = inf
-        for vendorName, partInfo in finishedAvailability.items():
+        for vendorName, partInfo in coreAvailability.items():
             if partInfo[0] >= qty and partInfo[1] < min_:
                 min_ = partInfo[1]
                 vendor = vendorName
         if vendor:
-            vendorInventory["Core"][partNumber][vendor][0] -= qty
+            vendorInventory["Core"][partNumber[:9]][vendor][0] -= qty
     return vendor
