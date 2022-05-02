@@ -193,21 +193,24 @@ def assignCheapestVendor(partNumber, qty, vendorInventory, orderSource):
     finishedAvailability = vendorInventory["Finished"].get(partNumber)
     coreAvailability = vendorInventory["Core"].get(partNumber[:9])
     vendor = None
-    if finishedAvailability:
+    if coreAvailability and not re.match(REPLICAPATTERN, partNumber):
+        warehouseCore = coreAvailability.get("Warehouse")
+        paintCode = int(partNumber[9:11])
+        if warehouseCore and paintCode < 80:
+            vendorInventory["Core"][partNumber[:9]]["Warehouse"][0] -= qty
+            vendor = "Warehouse"
+    if not vendor and finishedAvailability:
         min_ = inf
         for vendorName, partInfo in finishedAvailability.items():
             if partInfo[0] >= qty and partInfo[1] < min_:
                 min_ = partInfo[1]
                 vendor = vendorName
-        if vendor and (
-            (vendor == "Blackburns" and orderSource == "Ebay Albany") or 
-            vendor != "Blackburns"
-        ):
+        if vendor and vendor != "Blackburns":
             vendorInventory["Finished"][partNumber][vendor][0] -= qty
         else:
             vendor = None
     if (
-        not (vendor or coreAvailability) and 
+        not vendor and coreAvailability and 
         not re.match(REPLICAPATTERN, partNumber)
     ):
         min_ = inf
@@ -217,4 +220,10 @@ def assignCheapestVendor(partNumber, qty, vendorInventory, orderSource):
                 vendor = vendorName
         if vendor:
             vendorInventory["Core"][partNumber[:9]][vendor][0] -= qty
+    if not vendor:
+        if finishedAvailability:
+            blackburnsAvailability = finishedAvailability.get("Blackburns")
+            if blackburnsAvailability:
+                vendorInventory["Finished"][partNumber]["Blackburns"][0] -= qty
+                vendor = "Blackburns"
     return vendor
