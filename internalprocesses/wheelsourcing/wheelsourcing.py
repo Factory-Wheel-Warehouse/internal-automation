@@ -189,7 +189,7 @@ def buildVendorInventory(ftp, fishbowl):
     _addBlackburnsInventory(ftp, finishedInventory)
     return {"Core": coreInventory, "Finished": finishedInventory}
 
-def assignCheapestVendor(partNumber, qty, vendorInventory):
+def assignCheapestVendor(partNumber, qty, vendorInventory, orderSource):
     finishedAvailability = vendorInventory["Finished"].get(partNumber)
     coreAvailability = vendorInventory["Core"].get(partNumber[:9])
     vendor = None
@@ -199,9 +199,17 @@ def assignCheapestVendor(partNumber, qty, vendorInventory):
             if partInfo[0] >= qty and partInfo[1] < min_:
                 min_ = partInfo[1]
                 vendor = vendorName
-        if vendor:
+        if vendor and (
+            (vendor == "Blackburns" and orderSource == "Ebay Albany") or 
+            vendor != "Blackburns"
+        ):
             vendorInventory["Finished"][partNumber][vendor][0] -= qty
-    if not vendor and coreAvailability:
+        else:
+            vendor = None
+    if (
+        not (vendor or coreAvailability) and 
+        not re.match(REPLICAPATTERN, partNumber)
+    ):
         min_ = inf
         for vendorName, partInfo in coreAvailability.items():
             if partInfo[0] >= qty and partInfo[1] < min_:

@@ -481,7 +481,6 @@ class FBConnection():
         response = self.sendQueryRequest(query)
         return response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"]\
             ["Rows"]["Row"]
-        pass
 
     def setStatus(self, statusCode):
 

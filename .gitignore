@@ -7,3 +7,4 @@ UnmappedPerfectionSkus_*.csv
 mergedInventory.csv
 invalidWarehousePartNumbers.csv
 test.py
+inventoryChecker.py

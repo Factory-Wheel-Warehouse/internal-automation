@@ -609,7 +609,7 @@ class InternalAutomation():
         """
         
         vendor = wheelsourcing.assignCheapestVendor(
-            order.hollander, order.qty, self.sourceList
+            order.hollander, order.qty, self.sourceList, order.avenue
         )
         if not vendor:
             vendor = "No vendor"
