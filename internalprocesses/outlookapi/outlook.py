@@ -112,9 +112,7 @@ class OutlookConnection():
         response = requests.get(
             endpoint,
             headers = self.headers
-        ).json()
-        print(response)
-        response = response["value"]
+        ).json()["value"]
         if len(response) > 0:
             return response[0]
 
