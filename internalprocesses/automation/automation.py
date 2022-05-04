@@ -88,7 +88,7 @@ class InternalAutomation():
         Searches the connected outlook address for an email from coast to 
         coast containing the order tracking number
         """
-        searchQuery = f'?$search="body:\"Customer P/O {poNum} Tracking\""'
+        searchQuery = rf'?$search="body:\"Customer P/O {poNum} Tracking\""'
         email = self.outlook.searchMessages(searchQuery)
         if email:
             body = email["body"]["content"]
@@ -100,7 +100,7 @@ class InternalAutomation():
         Searches the connected outlook address for an email from jante wheels
         containing the order invoice and tracking number
         """
-        searchQuery = f'?$search="subject:\"New Invoice - Customer PO {poNum}\""'
+        searchQuery = rf'?$search="subject:\"New Invoice - Customer PO {poNum}\""'
         email = self.outlook.searchMessages(searchQuery)
         if email:
             body = email["body"]["content"]
@@ -108,8 +108,8 @@ class InternalAutomation():
             return re.findall(r"[0-9]{12}", body)[0]
 
     def getPerfectionTracking(self, poNum):
-        searchQuery = '?$search="subject:UPS Ship Notification, Tracking '
-        searchQuery += f'Number AND body:{poNum}"'
+        searchQuery = r'?$search="subject:\"UPS Ship Notification, Tracking '
+        searchQuery += rf'Number\" AND body:{poNum}"'
         email = self.outlook.searchMessages(searchQuery)
         if email:
             body = email["body"]["content"]
@@ -117,7 +117,7 @@ class InternalAutomation():
             return re.findall(r"1Z[a-z|A-Z|0-9]{8}[0-9]{8}", body)[0]
 
     def getBlackburnsTracking(self, poNum):
-        searchQuery = '?$search="subject:FedEx Shipment '
+        searchQuery = r'?$search="subject:\"FedEx Shipment \"'
         searchQuery += f'AND body:{poNum}"'
         email = self.outlook.searchMessages(searchQuery)
         if email:
