@@ -19,13 +19,11 @@ try:
     inventory = buildVendorInventory(ftpServer, fishbowl)
     print(f"Available finished ALY75161U20: {inventory['Finished'].get('ALY75161U20')}")
     print(f"Available core ALY75161U20: {inventory['Core'].get('ALY75161U')}")
-    print(assignCheapestVendor("ALY64098U45", 4, inventory))
     masterInventoryList = convertInventoryToList(ftpServer, fishbowl)
     path = "Factory_Wheel_Warehouse/MergedVendorInventory.csv"
     with open("testOutput.csv", "w", newline="") as file:
         writer = csv.writer(file)
         writer.writerows(masterInventoryList)
-    print(orderImport(test=True))
 except:
     print(traceback.print_exc())
 finally:
