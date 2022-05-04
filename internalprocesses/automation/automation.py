@@ -108,7 +108,7 @@ class InternalAutomation():
             return re.findall(r"[0-9]{12}", body)[0]
 
     def getPerfectionTracking(self, poNum):
-        searchQuery = '?$search="subject:\UPS Ship Notification, Tracking '
+        searchQuery = '?$search="subject:UPS Ship Notification, Tracking '
         searchQuery += f'Number AND body:{poNum}"'
         email = self.outlook.searchMessages(searchQuery)
         if email:
