@@ -75,12 +75,14 @@ class MagentoConnection():
             return "Main Ebay"
         elif self.isEbayOrder(incrementID) and incrementID[0] == "B":
             return "Ebay Albany"
+        elif self.isEbayOrder(incrementID) and incrementID[0] == "C":
+            return "OED"
         
     def isWalmartOrder(self, incrementID):
         return bool(re.match(r"[0-9]{13}", incrementID))
     
     def isWebsiteOrder(self, incrementID):
-        return bool(re.match(r"100000[0-9]{4}", incrementID))
+        return bool(re.match(r"[0-9]{10}", incrementID))
     
     def getCarrier(self, trackingNumber):
         if re.findall(r"1Z[a-z|A-Z|0-9]{8}[0-9]{8}", trackingNumber):

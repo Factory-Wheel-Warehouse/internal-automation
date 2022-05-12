@@ -156,3 +156,15 @@ class WebsiteOrder(Order):
             customerPO
         )
         self.avenue = "Website"
+
+class OEDOrder(Order):
+
+    def __init__(
+        self, address, hollander, qty, price,
+        customerPO = None
+    ):
+        super().__init__(
+            address, hollander, qty, price,
+            customerPO
+        )
+        self.avenue = "OED"

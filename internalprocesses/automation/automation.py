@@ -6,8 +6,7 @@ from dotenv import load_dotenv
 from internalprocesses.ftpconnection.ftpConnection import FTPConnection
 from internalprocesses.wheelsourcing import wheelsourcing
 from internalprocesses.orders.address import Address
-from internalprocesses.orders.orders import AmazonOrder, EbayAlbanyOrder, FacebookOrder, \
-    MainEbayOrder, Order, WalmartOrder, WebsiteOrder
+from internalprocesses.orders.orders import *
 from internalprocesses.shopifyapi.shopify import ShopifyConnection
 from internalprocesses.fishbowlclient.fishbowl import FBConnection
 from internalprocesses.magentoapi.magento import MagentoConnection
@@ -437,9 +436,11 @@ class InternalAutomation():
             elif ebayAccount == "Ebay Albany":
                 order.__class__ = EbayAlbanyOrder
                 order.avenue = "Ebay Albany"
+            elif ebayAccount == "OED":
+                order.__class__ = OEDOrder
+                order.avenue = "OED"
 
     def readMagentoOrders(self):
-
         for orderID in self.unfulfilledOrders:
             orderDetails = self.magento.getOrderDetails(orderID)
             address = self.getMagentoAddress(orderDetails)
