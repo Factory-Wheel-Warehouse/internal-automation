@@ -1,5 +1,6 @@
 import requests
 import msal
+import json
 from datetime import date
 
 class OutlookConnection():
@@ -10,7 +11,7 @@ class OutlookConnection():
     Attributes
     ----------
 
-    data : dict
+    data: dict
         config data
     
     Methods
@@ -44,14 +45,17 @@ class OutlookConnection():
             )
         if not token:
             token = app.acquire_token_by_username_password(
-                data["username"], 
-                self.password,
-                scopes=data["scope"]
+                username = data["username"], 
+                password = self.password,
+                scopes = data["scope"]
             )
         if 'access_token' in token:
             return token['access_token']
         else:
-            return None
+            description = token.get("error_description")
+            if not description:
+                description = "No error description provided"
+            raise Exception(f"Outlook authentication error.\n{description}")
 
     def login(self):
         app = self.getClientApp()
@@ -129,40 +133,53 @@ class OutlookConnection():
         if isinstance(cc, list):
             for recipient in cc:
                 formattedRecipient = {
-                    "emailAddress" : {
-                        "address" : recipient
+                    "emailAddress": {
+                        "address": recipient
                     }
                 }
-                jsonData["message"]["toRecipients"].append(formattedRecipient)
+                jsonData["message"]["ccRecipients"].append(formattedRecipient)
         elif isinstance(cc, str):
             formattedRecipient = {
-                "emailAddress" : {
-                    "address" : cc
+                "emailAddress": {
+                    "address": cc
                 }
             }
-            jsonData["message"]["toRecipients"].append(formattedRecipient)
+            jsonData["message"]["ccRecipients"].append(formattedRecipient)
             
-    def sendMail(self, to, subject, body, cc = None):
+    def sendMail(
+        self, to, subject, body, cc = None, attachment = None, 
+        attachmentName = None
+    ):
         url = 'https://graph.microsoft.com/v1.0/me/sendMail'
         headers = self.headers
         jsonData = {
-            "message" : {
-                "subject" : subject,
-                "body" : {
-                    "contentType" : "text",
-                    "content" : body
+            "message": {
+                "subject": subject,
+                "body": {
+                    "contentType": "text",
+                    "content": body
                 },
-                "toRecipients" : [
+                "toRecipients": [
                     {
-                        "emailAddress" : {
-                            "address" : to
+                        "emailAddress": {
+                            "address": to
                         }
                     }
                 ],
+                "ccRecipients": [],
+                "attachments": []
             },
-            "saveToSentItems" : True
+            "saveToSentItems": True
         }
         if cc:
             self.addCCRecipients(jsonData, cc)
+        if attachment:
+            jsonData["message"]["attachments"].append(
+                {
+                    "@odata.type": "#microsoft.graph.fileAttachment",
+                    "name": attachmentName,
+                    "contentBytes": attachment
+                }
+            )
         resp = requests.post(url=url, json=jsonData, headers=headers)
         return resp
