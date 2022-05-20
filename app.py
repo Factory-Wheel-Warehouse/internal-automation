@@ -4,7 +4,11 @@ from twilio.rest import Client
 from twilio.twiml.messaging_response import MessagingResponse
 import internalprocesses.corepricer.checkSales as checkSales
 import internalprocesses.automation.automation as automation
-from internalprocesses.masterinventory.mergeinventory import uploadInventoryToFTP
+from internalprocesses.fishbowlclient import FBConnection
+from internalprocesses.masterinventory.mergeinventory import (
+    uploadInventoryToFTP, emailInventorySheet
+)
+from internalprocesses import emailQuantitySoldReport
 
 app = Flask(__name__)
 priceList = checkSales.buildPriceDict() #3268 entries
@@ -31,36 +35,51 @@ def reply():
 
 @app.route("/import-orders")
 def orderImport():
-    orderImport = Thread(target=orderImportNewThread, args = (False, ))
-    orderImport.start()
+    orderImportThread = Thread(target=orderImportNewThread, args = (False, ))
+    orderImportThread.start()
     return "Success"
 
 @app.route("/import-orders-test")
 def orderImportTest():
-    orderImport = Thread(target=orderImportNewThread)
-    orderImport.start()
+    orderImportThread = Thread(target=automation.orderImport)
+    orderImportThread.start()
     return "Success"
 
 @app.route("/upload-tracking")
 def trackingUpload():
-    trackingUpload = Thread(target=trackingUploadNewThread)
-    trackingUpload.start()
+    trackingUploadThread = Thread(target=trackingUploadNewThread)
+    trackingUploadThread.start()
     return "Success"
 
 @app.route("/inventory-upload")
 def inventoryUpload():
-    inventoryUpload = Thread(target=inventoryUploadNewThread)
-    inventoryUpload.start()
+    inventoryUploadThread = Thread(target=inventoryUploadNewThread)
+    inventoryUploadThread.start()
+    return "Success"
+
+@app.route("/email-inventory-file")
+def emailInventoryFile():
+    emailInventoryFileThread = Thread(target=emailInventorySheetNewThread)
+    emailInventoryFileThread.start()
+    return "Success"
+
+@app.route("/yearly-sold-report")
+def emailSoldReport():
+    emailSoldReportThread = Thread(target=emailQuantitySoldReport)
+    emailSoldReportThread.start()
     return "Success"
 
 def trackingUploadNewThread():
     automation.trackingUpload()
 
 def orderImportNewThread(test = True):
-    automation.orderImport(test = test)
+    automation.orderImport(test=test)
 
 def inventoryUploadNewThread():
     uploadInventoryToFTP()
 
+def emailInventorySheetNewThread():
+    emailInventorySheet()
+
 if __name__ == "__main__":
-    app.run()
+    app.run(debug = True)

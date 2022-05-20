@@ -1,13 +1,15 @@
-from gzip import READ
 import io
-import re
+import json
 import os
-from trace import CoverageResults
 import traceback
-import dotenv
-from internalprocesses.ftpconnection.ftpConnection import FTPConnection
+from base64 import b64encode
+from dotenv import load_dotenv
 from internalprocesses.fishbowlclient.fishbowl import FBConnection
-from internalprocesses.wheelsourcing.wheelsourcing import COREPATTERN, buildVendorInventory
+from internalprocesses.ftpconnection.ftpConnection import FTPConnection
+from internalprocesses.outlookapi.outlook import OutlookConnection
+from internalprocesses.wheelsourcing.wheelsourcing import (
+    COREPATTERN, buildVendorInventory)
+
 
 def _setVendorStock(vendorDetails):
     warehouse, coast, perfection = [0, 0], [0, 0], [0, 0]
@@ -41,12 +43,35 @@ def _getCoreToFinishMap(ftpServer):
                 coreToFinishMap[core].append(sku)
     return coreToFinishMap
 
+def _coastCorePricing(ftpServer):
+    priceList = ftpServer.getFileAsList(
+        "/lkq/Factory Wheel Warehouse_837903.csv"
+    )
+    priceDict = {}
+    for row in priceList:
+        priceDict[row[2]] = row[26]
+    return priceDict
+
 def _convertCoresToFinished(ftpServer, coreInventory):
     output = {}
+    coastPriceDict = _coastCorePricing(ftpServer)
     coreToFinishMap = _getCoreToFinishMap(ftpServer)
     for core, vendorDetails in coreInventory.items():
         if core in coreToFinishMap:
             for finish in coreToFinishMap[core]:
+                finishedCost = coastPriceDict.get(finish)
+                coastDetails = vendorDetails.get("Coast")
+                if coastDetails:
+                    cost = int(vendorDetails["Coast"][1])
+                    if finishedCost:
+                        finishedCost = int(finishedCost)
+                        if cost < finishedCost:
+                            type_ = finish[:3]
+                            finishedCost += 12.5 if type_ == "ALY" else 17.5
+                            vendorDetails["Coast"][1] = finishedCost
+                    else:
+                        if cost <= 0:
+                            vendorDetails["Coast"][1] = -1
                 if finish not in output:
                     output[finish] = vendorDetails
                 else:
@@ -102,7 +127,7 @@ def convertInventoryToList(ftpServer, fishbowl):
     return combinedInventoryList
 
 def uploadInventoryToFTP():
-    dotenv.load_dotenv()
+    load_dotenv()
     ftpPassword = os.getenv("FTP-PW")
     fbPassword = os.getenv("FISHBOWL-PW")
     ftpServer = FTPConnection("54.211.94.170", 21, "danny", ftpPassword)
@@ -117,3 +142,33 @@ def uploadInventoryToFTP():
         print(traceback.print_exc())
     finally:
         fishbowl.close()
+
+def emailInventorySheet():
+    try:
+        load_dotenv()
+        ftpPassword = os.getenv("FTP-PW")
+        outlookPassword = os.getenv("OUTLOOK-PW")
+        outlookCS = os.getenv("OUTLOOK-CS")
+        with open(
+            os.path.join(
+                os.path.dirname(__file__), "..", "..", "data/config.json"
+            )
+        ) as configFile:
+            outlookConfig = json.load(configFile)["APIConfig"]["Outlook"]["Danny"]
+        outlook = OutlookConnection(outlookConfig, outlookPassword, outlookCS)
+        ftpServer = FTPConnection("54.211.94.170", 21, "danny", ftpPassword)
+        inventoryFileBinary = ftpServer.getFileAsBinary(
+            "Factory_Wheel_Warehouse/MergedVendorInventory.csv"
+        ).read()
+        inventoryFileEDMBinary = b64encode(inventoryFileBinary).decode()
+        subject = "Merged Inventory Sheet"
+        body = "The merged vendor inventory sheet is attached to this email."
+        outlook.sendMail(
+            "sales@factorywheelwarehouse.com", subject, body,
+            attachment = inventoryFileEDMBinary, 
+            attachmentName = "MergedVendorInventory.csv"
+        )
+    except:
+        print(traceback.print_exc())
+    finally:
+        ftpServer.close()
