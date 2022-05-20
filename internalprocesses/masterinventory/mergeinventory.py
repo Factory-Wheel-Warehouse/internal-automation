@@ -3,7 +3,9 @@ import json
 import os
 import traceback
 from base64 import b64encode
+from urllib import response
 from dotenv import load_dotenv
+from h11 import Data
 from internalprocesses.fishbowlclient.fishbowl import FBConnection
 from internalprocesses.ftpconnection.ftpConnection import FTPConnection
 from internalprocesses.outlookapi.outlook import OutlookConnection
@@ -82,12 +84,28 @@ def _convertCoresToFinished(ftpServer, coreInventory):
                             output[finish][vendor] = stock
     return output
 
+def _getFishbowlProductPriceDict(fishbowl):
+    priceDict = {}
+    data = fishbowl.sendQueryRequest(
+        "SELECT num as SKU, price as Price FROM PRODUCT"
+    )["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"]["Rows"]["Row"]
+    for row in data[1:]:
+        strippedRow = [value.strip('"') for value in row.split(",")]
+        sku = strippedRow[0]
+        price = strippedRow[1]
+        if sku and price:
+            price = round(float(price), 2)
+            priceDict[sku] = price
+        else:
+            print(f"Exception: {row}")
+    return priceDict
+
 def convertInventoryToList(ftpServer, fishbowl):
     combinedInventoryList = [
         [
-            "Part Number", "Hollander", "U-Code", "Magento Quantity", "Core", 
-            "Total Quantity", "Lowest Cost", "Highest Cost", "Warehouse",
-            "Warehouse Cost", "Coast", "Coast Cost", "Perfection",
+            "Part Number", "Price", "Hollander", "U-Code", "Magento Quantity", 
+            "Core", "Total Quantity", "Lowest Cost", "Highest Cost",
+            "Warehouse", "Warehouse Cost", "Coast", "Coast Cost", "Perfection",
             "Perfection Cost", "Jante", "Jante Cost", "Road Ready", 
             "Road Ready Cost", "Blackburns", "Blackburns Cost"
         ]
@@ -97,12 +115,16 @@ def convertInventoryToList(ftpServer, fishbowl):
         ftpServer, inventoryDict["Core"]
     )
     total = 0
+    fishbowlPriceDict = _getFishbowlProductPriceDict(fishbowl)
     for inventoryType, value in inventoryDict.items():
         core = False
         if inventoryType == "Core":
             core = True
         for partNum, value in value.items():
             try:
+                price = fishbowlPriceDict.get(partNum)
+                if price == None:
+                    price = -1
                 totalQty = sum(
                     [vendorDetails[0] for vendorDetails in value.values()]
                 )
@@ -116,14 +138,15 @@ def convertInventoryToList(ftpServer, fishbowl):
                 vendorStock = _setVendorStock(value)
                 if totalQty:
                     row = [
-                        partNum, partNum[:8], partNum[8:], magentoQty, core, 
-                        totalQty, minPrice, maxPrice
+                        partNum, price, partNum[:8], partNum[8:], magentoQty, 
+                        core, totalQty, minPrice, maxPrice
                         ] 
                     row += vendorStock
                     combinedInventoryList.append(row)
                     total += totalQty
             except:
                 print(partNum, value)
+                raise Exception()
     return combinedInventoryList
 
 def uploadInventoryToFTP():
