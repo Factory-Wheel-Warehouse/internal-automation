@@ -3,9 +3,7 @@ import json
 import os
 import traceback
 from base64 import b64encode
-from urllib import response
 from dotenv import load_dotenv
-from h11 import Data
 from internalprocesses.fishbowlclient.fishbowl import FBConnection
 from internalprocesses.ftpconnection.ftpConnection import FTPConnection
 from internalprocesses.outlookapi.outlook import OutlookConnection
