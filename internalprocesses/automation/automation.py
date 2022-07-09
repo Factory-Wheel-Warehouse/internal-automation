@@ -448,7 +448,6 @@ class InternalAutomation():
             if order:
                 self.setOrderType(order)
                 if not self.fishbowl.isSO(order.customerPO):
-                    print(order)
                     self.sortOrder(order)
 
     def getOrders(self):
