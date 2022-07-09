@@ -66,7 +66,7 @@ class MagentoConnection():
     
     def isEbayOrder(self, incrementID):
         return bool(
-            re.match(r"[AB]{1}[0-9]{2}-[0-9]{5}-[0-9]{5}", incrementID) or 
+            re.match(r"[A-Z]{1}[0-9]{2}-[0-9]{5}-[0-9]{5}", incrementID) or 
             re.match(r"[0-9]{2}-[0-9]{5}-[0-9]{5}", incrementID)
         )
 
