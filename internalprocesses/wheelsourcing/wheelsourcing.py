@@ -107,7 +107,7 @@ def _addPerfectionStock(ftp, coreInventory, finishedInventory):
                     partNum = skuMap[row[1]]
                     if re.match(FINISHPATTERN, partNum):
                         _addToInventory(
-                            coreInventory, partNum, "Perfection", qty, cost
+                            finishedInventory, partNum, "Perfection", qty, cost
                         )
         except:
             filename = None

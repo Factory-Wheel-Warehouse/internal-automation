@@ -613,9 +613,8 @@ def orderImport(test = True):
                     "danny@factorywheelwarehouse.com"
                 )
         print(automation.ordersByVendor)
-        print(automation.exceptionOrders)
     except Exception:
-        print(traceback.print_exc())
+        traceback.print_exc()
     finally:
         automation.close()
 
@@ -624,9 +623,6 @@ def trackingUpload():
     try:
         automation.addTracking()
     except Exception:
-        print(traceback.print_exc())
+        traceback.print_exc()
     finally:
         automation.close()
-
-if __name__ == "__main__":
-    print("Imports Successful!")
