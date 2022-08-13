@@ -11,6 +11,7 @@ FWWCOREPATTERN = r"(ALY|STL|FWC)[0-9]{5}[A-Z]{1}[0-9]{2}\*CORE$"
 CORE_MIN_QTY = 5
 FINISHED_MIN_QTY = 3
 
+
 def _formatWarehouseSKU(partNum):
     partNum = partNum.upper()
     if re.match(FINISHPATTERN, partNum):
@@ -20,6 +21,7 @@ def _formatWarehouseSKU(partNum):
     if re.match(FWWCOREPATTERN, partNum):
         return partNum[:9]
 
+
 def _addToInventory(inventoryDictionary, partNum, vendor, qty, cost):
     if partNum not in inventoryDictionary:
         inventoryDictionary[partNum] = {vendor: [qty, cost]}
@@ -28,6 +30,7 @@ def _addToInventory(inventoryDictionary, partNum, vendor, qty, cost):
             inventoryDictionary[partNum][vendor] = [qty, cost]
         else:
             inventoryDictionary[partNum][vendor][0] += qty
+
 
 def _addWarehouseInventory(fishbowl, coreInventory, finishedInventory):
     warehouseInventory = fishbowl.getPartsOnHand()
@@ -50,6 +53,7 @@ def _addWarehouseInventory(fishbowl, coreInventory, finishedInventory):
                 _addToInventory(
                     finishedInventory, partNum, "Warehouse", qty, avgCost
                 )
+
 
 def _addPartAndCost(
     partColumn, costColumn, qtyColumn, vendorInventory,
@@ -79,6 +83,7 @@ def _addPartAndCost(
                     coreInventory, partNum, vendorName, qty, cost
                 )
 
+
 def _buildPerfectionSKUMap(ftp):
     skuMap = {}
     for row in ftp.getFileAsList(r"/perfection/PerfectionFWWMap.csv"):
@@ -88,6 +93,7 @@ def _buildPerfectionSKUMap(ftp):
         if not result:
             skuMap[perfectionNum] = FWWNum
     return skuMap
+
 
 def _addPerfectionStock(ftp, coreInventory, finishedInventory):
     perfectionStock = ftp.getFileAsList(r"/perfection/perfection_inventory.xlsx")
@@ -110,6 +116,10 @@ def _addPerfectionStock(ftp, coreInventory, finishedInventory):
                             finishedInventory, partNum, "Perfection", qty, cost
                         )
         except:
+            pass
+            '''
+            Consider this logic for logging later on. 
+            
             filename = None
             if row[1].count(".") == 3:
                 filename = "UnmappedPerfectionSkus_Finished.csv"
@@ -119,6 +129,8 @@ def _addPerfectionStock(ftp, coreInventory, finishedInventory):
                 with open(filename, "a", newline='') as file:
                     writer = csv.writer(file)
                     writer.writerow([row[1]])
+            '''
+
 
 def _addJanteInventory(ftp, finishedInventory):
     jante = ftp.getFileAsList(r"/jante/wheelInventory.csv")
@@ -141,6 +153,7 @@ def _addJanteInventory(ftp, finishedInventory):
                 except KeyError:
                     print(f"{partNum} has no cost")
 
+
 def _buildBlackburnsSKUMap(ftp):
     skuMap = {}
     for row in ftp.getFileAsList(r"/blackburns/BlackburnsFWWMap.csv")[2:]:
@@ -154,6 +167,7 @@ def _buildBlackburnsSKUMap(ftp):
         if not result:
             skuMap[blackburnsNum] = FWWNum
     return skuMap
+
 
 def _addBlackburnsInventory(ftp, finishedInventory):
     blackburns = ftp.getFileAsList(r"/blackburns/BlackburnInventory.csv")
@@ -176,6 +190,7 @@ def _addBlackburnsInventory(ftp, finishedInventory):
                 except KeyError:
                     print(f"{partNum} not mapped")
 
+
 def buildVendorInventory(ftp, fishbowl):
     coreInventory = {}
     finishedInventory = {}
@@ -188,6 +203,7 @@ def buildVendorInventory(ftp, fishbowl):
     _addJanteInventory(ftp, finishedInventory)
     _addBlackburnsInventory(ftp, finishedInventory)
     return {"Core": coreInventory, "Finished": finishedInventory}
+
 
 def assignCheapestVendor(partNumber, qty, vendorInventory, orderSource):
     finishedAvailability = vendorInventory["Finished"].get(partNumber)

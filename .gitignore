@@ -8,3 +8,4 @@ mergedInventory.csv
 invalidWarehousePartNumbers.csv
 test.py
 inventoryChecker.py
+.idea/
