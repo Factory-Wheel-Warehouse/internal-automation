@@ -160,9 +160,9 @@ def _addBlackburnsInventory(ftp, finishedInventory):
     blackburnsSKUMap = _buildBlackburnsSKUMap(ftp)
     for row in blackburns:
         blackburnsPartNum = row[3]
-        grade = row[7]
-        qty = int(row[8])
-        cost = float(int(row[11]))
+        grade = str(row[5])
+        qty = int(row[0])
+        cost = float(int(row[4]))
         if grade.lower()[0] == "r":
             if qty >= FINISHED_MIN_QTY:
                 try:

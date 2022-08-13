@@ -20,7 +20,7 @@ class FTPConnection():
         file = self.getFileAsBinary(relativePath)
         extension = relativePath[relativePath.find("."):]
         if extension == ".csv":
-            return read_csv(file).values.tolist()
+            return read_csv(file, on_bad_lines="skip").values.tolist()
         elif extension == ".xlsx":
             return read_excel(file).values.tolist()
     
