@@ -7,7 +7,6 @@ from internalprocesses.ftpconnection.ftpConnection import FTPConnection
 from internalprocesses.wheelsourcing import wheelsourcing
 from internalprocesses.orders.address import Address
 from internalprocesses.orders.orders import *
-from internalprocesses.shopifyapi.shopify import ShopifyConnection
 from internalprocesses.fishbowlclient.fishbowl import FBConnection
 from internalprocesses.magentoapi.magento import MagentoConnection
 from internalprocesses.outlookapi.outlook import OutlookConnection
@@ -32,7 +31,6 @@ class InternalAutomation():
         self.ftpServer = self.connectFTPServer()
         self.fishbowl = self.connectFishbowl()
         self.outlook = self.connectOutlook()
-        self.facebook = self.connectFacebook()
         self.magento = self.connectMagento()
         self.sourceList = wheelsourcing.buildVendorInventory(
             self.ftpServer, self.fishbowl
@@ -176,14 +174,6 @@ class InternalAutomation():
         if not trackingNum:
             trackingNum = self.getBlackburnsTracking(poNum)
         return trackingNum
-
-    def connectFacebook(self):
-
-        """ Connects to the shopify API to manage Facebook Orders """
-        password = os.getenv("SHOPIFY-PW")
-        apiKey = os.getenv("SHOPIFY-APIKEY")
-        config = self.config["APIConfig"]["Shopify"]
-        return ShopifyConnection(config, password, apiKey)
 
     def connectMagento(self):
         accessToken = os.getenv("MAGENTO-AT")
