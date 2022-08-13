@@ -400,22 +400,6 @@ class InternalAutomation():
                 f"Order #{orderID}\n\n"
             )
 
-    def readFacebookOrders(self):
-
-        """ Reads in facebook orders using the shopify API connection """
-        
-        orderIDs = self.facebook.getPendingOrders()
-        processedOrderIDs = []
-        for orderID in orderIDs:
-            orderDetails = self.facebook.getOrderDetails(orderID)
-            lineItems = orderDetails["line_items"]
-            if lineItems and len(lineItems) == 1:
-                order = self.buildFacebookOrder(orderDetails)
-                if (order.customerPO not in processedOrderIDs and not
-                self.fishbowl.isSO(order.customerPO)):
-                    self.sortOrder(order)
-                    processedOrderIDs.append(order.customerPO)
-
     def setOrderType(self, order):
 
         if self.magento.isAmazonOrder(order.customerPO):
@@ -455,7 +439,6 @@ class InternalAutomation():
         """Organizes orders from each selling avenue into ordersByVendor."""
 
         self.readMagentoOrders()
-        self.readFacebookOrders()
     
     def emailDropships(self, orders, vendor, emailAddress):
 
