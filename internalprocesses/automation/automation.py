@@ -24,6 +24,7 @@ class InternalAutomation():
             "Jante" : [],
             "Road Ready": [],
             "Blackburns" : [],
+            "Wheelership": [],
             "No vendor" : []
         }
         self.exceptionOrders = []
@@ -583,7 +584,7 @@ class InternalAutomation():
         """
         
         vendor = wheelsourcing.assignCheapestVendor(
-            order.hollander, order.qty, self.sourceList, order.avenue
+            order.hollander, order.qty, self.sourceList
         )
         if not vendor:
             vendor = "No vendor"

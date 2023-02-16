@@ -97,6 +97,18 @@
 					"to" : "danny@factorywheelwarehouse.com",
 					"cc" : ""
 				}
+			},
+			"Wheelership" : {
+				"Name" : "Wheelership",
+				"Address" : "Wheelership",
+				"City" : " ",
+				"State" : " ",
+				"Zipcode" : " ",
+				"Country" : " ",
+				"Email" : {
+					"to" : "danny@factorywheelwarehouse.com",
+					"cc" : ""
+				}
 			}
 		},
 		"Customers" : {

@@ -1,5 +1,4 @@
 import re
-import csv
 from math import inf
 
 FINISHPATTERN = r"(ALY|STL|FWC)[0-9]{5}[A-Z]{1}[0-9]{2}$"
@@ -10,7 +9,6 @@ FWWCOREPATTERN = r"(ALY|STL|FWC)[0-9]{5}[A-Z]{1}[0-9]{2}\*CORE$"
 
 CORE_MIN_QTY = 5
 FINISHED_MIN_QTY = 3
-
 
 def _formatWarehouseSKU(partNum):
     partNum = partNum.upper()
@@ -61,7 +59,10 @@ def _addPartAndCost(
 ):
     for row in vendorInventory:
         partNum = row[partColumn]
-        cost, qty = float(row[costColumn]), int(row[qtyColumn])
+        try:
+            cost, qty = float(row[costColumn]), int(row[qtyColumn])
+        except ValueError:
+            continue
         if vendorName == "Coast":
             if str(partNum)[:3] == "ALY":
                 cost += 12.50
@@ -82,7 +83,6 @@ def _addPartAndCost(
                 _addToInventory(
                     coreInventory, partNum, vendorName, qty, cost
                 )
-
 
 def _buildPerfectionSKUMap(ftp):
     skuMap = {}
@@ -179,16 +179,15 @@ def _addBlackburnsInventory(ftp, finishedInventory):
         cost = float(int(row[4]))
         if grade.lower()[0] == "r":
             if qty >= FINISHED_MIN_QTY:
-                try:
-                    partNum = blackburnsSKUMap.get(blackburnsPartNum)
-                    if partNum:
-                        partNumExists = finishedInventory.get(partNum)
-                        if partNumExists:
-                            finishedInventory[partNum]["Blackburns"] = [qty, cost]
-                        else:
-                            finishedInventory[partNum] = {"Blackburns": [qty, cost]}
-                except KeyError:
-                    print(f"{partNum} not mapped")
+                partNum = blackburnsSKUMap.get(blackburnsPartNum)
+                if partNum:
+                    partNumExists = finishedInventory.get(partNum)
+                    if partNumExists:
+                        finishedInventory[partNum]["Blackburns"] = [qty, cost]
+                    else:
+                        finishedInventory[partNum] = {"Blackburns": [qty, cost]}
+                else:
+                    print(f"{blackburnsPartNum} not mapped")
 
 
 def buildVendorInventory(ftp, fishbowl):
@@ -196,16 +195,21 @@ def buildVendorInventory(ftp, fishbowl):
     finishedInventory = {}
     roadReadyInv = ftp.getFileAsList(r"/roadreadywheels/roadready.csv")
     coastInv = ftp.getFileAsList(r"/lkq/Factory Wheel Warehouse_837903.csv")
+    awrsInv = ftp.getFileAsList(r"/AWRS/searchresults.csv")
+    wheelershipInv = ftp.getFileAsList(rf"/wheelership/WS-inventory-2023-02-14.csv")
     _addWarehouseInventory(fishbowl, coreInventory, finishedInventory)
     _addPartAndCost(0, 3, 2, roadReadyInv, "Road Ready", coreInventory, finishedInventory)
     _addPartAndCost(2, 26, 27, coastInv, "Coast", coreInventory, finishedInventory)
+    _addPartAndCost(0, 6, 5, awrsInv, "AWRS", coreInventory, finishedInventory)
+    _addPartAndCost(0, 3, 2, wheelershipInv, "Wheelership", coreInventory, finishedInventory)
     _addPerfectionStock(ftp, coreInventory, finishedInventory)
     _addJanteInventory(ftp, finishedInventory)
     _addBlackburnsInventory(ftp, finishedInventory)
     return {"Core": coreInventory, "Finished": finishedInventory}
 
 
-def assignCheapestVendor(partNumber, qty, vendorInventory, orderSource):
+# Transition to delegating structure with case-process pairings?
+def assignCheapestVendor(partNumber, qty, vendorInventory):
     finishedAvailability = vendorInventory["Finished"].get(partNumber)
     coreAvailability = vendorInventory["Core"].get(partNumber[:9])
     vendor = None

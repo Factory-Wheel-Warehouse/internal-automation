@@ -9,3 +9,4 @@ invalidWarehousePartNumbers.csv
 test.py
 inventoryChecker.py
 .idea/
+.vscode/
