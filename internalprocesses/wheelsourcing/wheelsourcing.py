@@ -196,7 +196,7 @@ def buildVendorInventory(ftp, fishbowl):
     roadReadyInv = ftp.getFileAsList(r"/roadreadywheels/roadready.csv")
     coastInv = ftp.getFileAsList(r"/lkq/Factory Wheel Warehouse_837903.csv")
     awrsInv = ftp.getFileAsList(r"/AWRS/searchresults.csv")
-    wheelershipInv = ftp.getFileAsList(rf"/wheelership/WS-inventory-2023-02-14.csv")
+    wheelershipInv = ftp.getDirectoryMostRecentFile("wheelership")
     _addWarehouseInventory(fishbowl, coreInventory, finishedInventory)
     _addPartAndCost(0, 3, 2, roadReadyInv, "Road Ready", coreInventory, finishedInventory)
     _addPartAndCost(2, 26, 27, coastInv, "Coast", coreInventory, finishedInventory)
@@ -206,7 +206,6 @@ def buildVendorInventory(ftp, fishbowl):
     _addJanteInventory(ftp, finishedInventory)
     _addBlackburnsInventory(ftp, finishedInventory)
     return {"Core": coreInventory, "Finished": finishedInventory}
-
 
 # Transition to delegating structure with case-process pairings?
 def assignCheapestVendor(partNumber, qty, vendorInventory):

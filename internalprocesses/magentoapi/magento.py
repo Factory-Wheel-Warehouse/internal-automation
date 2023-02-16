@@ -62,12 +62,12 @@ class MagentoConnection():
         return order["items"][0]
 
     def isAmazonOrder(self, incrementID):
-        return bool(re.match(r"[0-9]{3}-[0-9]{7}-[0-9]{7}", incrementID))
+        return bool(re.match(r"[0-9]{3}-[0-9]{7}-[0-9]{7}$", incrementID))
     
     def isEbayOrder(self, incrementID):
         return bool(
-            re.match(r"[A-Z]{1}[0-9]{2}-[0-9]{5}-[0-9]{5}", incrementID) or 
-            re.match(r"[0-9]{2}-[0-9]{5}-[0-9]{5}", incrementID)
+            re.match(r"[A-Z]{1}[0-9]{2}-[0-9]{5}-[0-9]{5}$", incrementID) or 
+            re.match(r"[0-9]{2}-[0-9]{5}-[0-9]{5}$", incrementID)
         )
 
     def getEbayAccount(self, incrementID):
@@ -79,15 +79,15 @@ class MagentoConnection():
             return "OED"
         
     def isWalmartOrder(self, incrementID):
-        return bool(re.match(r"[0-9]{13}", incrementID))
+        return bool(re.match(r"[0-9]{13}$", incrementID))
     
     def isWebsiteOrder(self, incrementID):
-        return bool(re.match(r"[0-9]{10}", incrementID))
+        return bool(re.match(r"[0-9]{10}$", incrementID))
     
     def getCarrier(self, trackingNumber):
-        if re.findall(r"1Z[a-z|A-Z|0-9]{8}[0-9]{8}", trackingNumber):
+        if re.findall(r"1Z[a-z|A-Z|0-9]{8}[0-9]{8}$", trackingNumber):
             return "ups"
-        elif re.findall(r"[0-9]{12}", trackingNumber):
+        elif re.findall(r"[0-9]{12}$", trackingNumber):
             return "fedex"
 
     def trackingNumberCarrier(self, trackingNumber):
