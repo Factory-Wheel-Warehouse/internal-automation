@@ -2,6 +2,7 @@ import io
 import csv
 from ftplib import FTP
 from pandas import read_csv, read_excel
+import os
 
 class FTPConnection():
     
@@ -31,5 +32,29 @@ class FTPConnection():
         fileAsBytes = io.BytesIO(csvFile.getvalue().encode())
         self.server.storbinary(f"STOR {outputFilePath}", fileAsBytes)
     
+    def getDirectoryMostRecentFile(self, directory):
+        newestFile = None
+        maxDate = 0
+        for file in ftp.server.mlsd(directory, facts=["modify", "type"]):
+            fileName, date, type_ = file[0], file[1]["modify"], file[1]["type"]
+            if type_ == "file":
+                if int(date) > maxDate:
+                    newestFile = fileName
+        return self.getFileAsList(f"{directory}/{newestFile}")
+        
     def close(self):
         self.server.close()
+
+host = "54.211.94.170"
+username = "danny"
+password = os.getenv("FTP-PW")
+port = 21
+ftp = FTPConnection(host, port, username, password)
+newestFile = None
+maxDate = 0
+for file in ftp.server.mlsd("wheelership", facts=["modify", "type"]):
+    fileName, date, type_ = file[0], file[1]["modify"], file[1]["type"]
+    if type_ == "file":
+        if int(date) > maxDate:
+            newestFile = fileName
+print(ftp.getFileAsList(f"wheelership/{newestFile}"))
