@@ -1,7 +1,6 @@
 import re
 import requests
 from datetime import date, timedelta
-import os
 
 class MagentoConnection():
 
