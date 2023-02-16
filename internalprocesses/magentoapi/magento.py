@@ -1,6 +1,7 @@
 import re
 import requests
 from datetime import date, timedelta
+import os
 
 class MagentoConnection():
 
@@ -101,7 +102,7 @@ class MagentoConnection():
     def buildShipmentUploadPayload(self, carrier, title, trackingNumber, order):
         payload = {
             "items": [],
-            "notify" : True,
+            "notify" : self.isWebsiteOrder(order["increment_id"]),
             "tracks" : []
         }
         if carrier:
