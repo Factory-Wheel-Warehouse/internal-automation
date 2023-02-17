@@ -35,7 +35,7 @@ class FTPConnection():
     def getDirectoryMostRecentFile(self, directory):
         newestFile = None
         maxDate = 0
-        for file in ftp.server.mlsd(directory, facts=["modify", "type"]):
+        for file in self.server.mlsd(directory, facts=["modify", "type"]):
             fileName, date, type_ = file[0], file[1]["modify"], file[1]["type"]
             if type_ == "file":
                 if int(date) > maxDate:
