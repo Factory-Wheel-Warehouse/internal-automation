@@ -200,7 +200,6 @@ class FBConnection():
         self.stream.send(message)
         responseString = self.getResponse()
         responseJson = self.parseResponse(responseString)
-        print(responseJson)
         self.setStatus(responseJson["FbiJson"]["FbiMsgsRs"]["statusCode"])
         return responseJson
 
