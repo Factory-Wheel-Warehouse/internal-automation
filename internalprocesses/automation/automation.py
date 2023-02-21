@@ -2,6 +2,8 @@ import os
 import re
 import json
 import traceback
+from pypdf import PdfReader
+from io import BytesIO
 from dotenv import load_dotenv
 from internalprocesses.ftpconnection.ftpConnection import FTPConnection
 from internalprocesses.wheelsourcing import wheelsourcing
@@ -123,6 +125,19 @@ class InternalAutomation():
             # Mark as read
             return re.findall(r"[0-9]{12}", body)[0]
 
+    def getAwrsTracking(self, poNum):
+        email = self.outlook.searchMessages(f"?$search=\"{poNum}\"")
+        if email:
+            attachment = self.outlook.getEmailAttachment(email["id"])
+            if attachment:
+                try:
+                    reader = PdfReader(BytesIO(attachment.content))
+                    text = reader.pages[0].extract_text(0)
+                    matches = re.findall(r"\s[0-9]{12}\s", text)
+                    return matches[0].strip()
+                except:
+                    return None
+
     def getTracking(self, customerPO):
         """Checks for a tracking number for the customerPO passed in"""
         if self.magento.isEbayOrder(customerPO):
@@ -174,6 +189,8 @@ class InternalAutomation():
             trackingNum = self.getPerfectionTracking(poNum)
         if not trackingNum:
             trackingNum = self.getBlackburnsTracking(poNum)
+        if not trackingNum:
+            trackingNum = self.getAwrsTracking(poNum)
         return trackingNum
 
     def connectMagento(self):

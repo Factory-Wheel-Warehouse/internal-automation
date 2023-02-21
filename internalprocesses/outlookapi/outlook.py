@@ -69,7 +69,10 @@ class OutlookConnection():
                 self.endpoint + "/messages/" + emailID + "/attachments",
                 headers=self.headers
             ).json()
-        attachmentID = attachments["value"][0]["id"]
+        try:
+            attachmentID = attachments["value"][0]["id"]
+        except:
+            return None
         attachment = requests.get(
                 self.endpoint + "/messages/" + emailID + \
                     "/attachments/" + attachmentID + "/$value",
