@@ -27,6 +27,7 @@ class InternalAutomation():
             "Road Ready": [],
             "Blackburns" : [],
             "Wheelership": [],
+            "AWRS": [],
             "No vendor" : []
         }
         self.exceptionOrders = []
