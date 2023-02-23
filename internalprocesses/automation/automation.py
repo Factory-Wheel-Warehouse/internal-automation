@@ -505,6 +505,7 @@ class InternalAutomation():
                         ["Customers"][order.avenue]
                     soData += self.buildSOData(customer, order, vendor)
         response = self.fishbowl.importSalesOrder(soData)
+        print(response)
         for vendor in self.ordersByVendor:
             for order in self.ordersByVendor[vendor]:
                 order.soNum = self.fishbowl.getSONum(order.customerPO)

@@ -115,6 +115,19 @@
 					"cc" : ""
 				},
 				"Carrier": "UPS"
+			},
+			"AWRS" : {
+				"Name" : "AWRS CLAIMS WORLD OF WHEELS",
+				"Address" : "3100 Medlock Bridge Road\nSUITE 321",
+				"City" : "NORCROSS",
+				"State" : "GA",
+				"Zipcode" : "30071",
+				"Country" : "UNITED STATES",
+				"Email" : {
+					"to" : "danny@factorywheelwarehouse.com",
+					"cc" : ""
+				},
+				"Carrier": "UPS"
 			}
 		},
 		"Customers" : {
