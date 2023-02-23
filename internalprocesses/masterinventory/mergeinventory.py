@@ -6,7 +6,7 @@ from base64 import b64encode
 from dotenv import load_dotenv
 from internalprocesses.fishbowlclient.fishbowl import FBConnection
 from internalprocesses.ftpconnection.ftpConnection import FTPConnection
-from internalprocesses.outlookapi.outlook import OutlookConnection
+from internalprocesses.outlookapi.outlook import OutlookClient
 from internalprocesses.wheelsourcing.wheelsourcing import (
     COREPATTERN, buildVendorInventory)
 
@@ -28,6 +28,7 @@ def _setVendorStock(vendorDetails):
         blackburns = vendorDetails["Blackburns"]
     return warehouse + coast + perfection + jante + roadReady + blackburns
 
+
 def _getCoreToFinishMap(ftpServer):
     coreToFinishMap = {}
     magentoSkus = ftpServer.getFileAsList(
@@ -43,6 +44,7 @@ def _getCoreToFinishMap(ftpServer):
                 coreToFinishMap[core].append(sku)
     return coreToFinishMap
 
+
 def _coastCorePricing(ftpServer):
     priceList = ftpServer.getFileAsList(
         "/lkq/Factory Wheel Warehouse_837903.csv"
@@ -51,6 +53,7 @@ def _coastCorePricing(ftpServer):
     for row in priceList:
         priceDict[row[2]] = row[26]
     return priceDict
+
 
 def _convertCoresToFinished(ftpServer, coreInventory):
     output = {}
@@ -82,6 +85,7 @@ def _convertCoresToFinished(ftpServer, coreInventory):
                             output[finish][vendor] = stock
     return output
 
+
 def _getFishbowlProductPriceDict(fishbowl):
     priceDict = {}
     data = fishbowl.sendQueryRequest(
@@ -98,13 +102,14 @@ def _getFishbowlProductPriceDict(fishbowl):
             print(f"Exception: {row}")
     return priceDict
 
+
 def convertInventoryToList(ftpServer, fishbowl):
     combinedInventoryList = [
         [
-            "Part Number", "Price", "Hollander", "U-Code", "Magento Quantity", 
+            "Part Number", "Price", "Hollander", "U-Code", "Magento Quantity",
             "Core", "Total Quantity", "Lowest Cost", "Highest Cost",
             "Warehouse", "Warehouse Cost", "Coast", "Coast Cost", "Perfection",
-            "Perfection Cost", "Jante", "Jante Cost", "Road Ready", 
+            "Perfection Cost", "Jante", "Jante Cost", "Road Ready",
             "Road Ready Cost", "Blackburns", "Blackburns Cost"
         ]
     ]
@@ -136,9 +141,9 @@ def convertInventoryToList(ftpServer, fishbowl):
                 vendorStock = _setVendorStock(value)
                 if totalQty:
                     row = [
-                        partNum, price, partNum[:8], partNum[8:], magentoQty, 
+                        partNum, price, partNum[:8], partNum[8:], magentoQty,
                         core, totalQty, minPrice, maxPrice
-                        ] 
+                    ]
                     row += vendorStock
                     combinedInventoryList.append(row)
                     total += totalQty
@@ -146,6 +151,7 @@ def convertInventoryToList(ftpServer, fishbowl):
                 print(partNum, value)
                 raise Exception()
     return combinedInventoryList
+
 
 def uploadInventoryToFTP():
     load_dotenv()
@@ -164,6 +170,7 @@ def uploadInventoryToFTP():
     finally:
         fishbowl.close()
 
+
 def emailInventorySheet():
     try:
         load_dotenv()
@@ -171,12 +178,13 @@ def emailInventorySheet():
         outlookPassword = os.getenv("OUTLOOK-PW")
         outlookCS = os.getenv("OUTLOOK-CS")
         with open(
-            os.path.join(
-                os.path.dirname(__file__), "..", "..", "data/config.json"
-            )
+                os.path.join(
+                    os.path.dirname(__file__), "..", "..", "data/config.json"
+                )
         ) as configFile:
-            outlookConfig = json.load(configFile)["APIConfig"]["Outlook"]["Danny"]
-        outlook = OutlookConnection(outlookConfig, outlookPassword, outlookCS)
+            outlookConfig = json.load(configFile)["APIConfig"]["Outlook"][
+                "Danny"]
+        outlook = OutlookClient(outlookConfig, outlookPassword, outlookCS)
         ftpServer = FTPConnection("54.211.94.170", 21, "danny", ftpPassword)
         inventoryFileBinary = ftpServer.getFileAsBinary(
             "Factory_Wheel_Warehouse/MergedVendorInventory.csv"
@@ -186,8 +194,8 @@ def emailInventorySheet():
         body = "The merged vendor inventory sheet is attached to this email."
         outlook.sendMail(
             "sales@factorywheelwarehouse.com", subject, body,
-            attachment = inventoryFileEDMBinary, 
-            attachmentName = "MergedVendorInventory.csv"
+            attachment=inventoryFileEDMBinary,
+            attachmentName="MergedVendorInventory.csv"
         )
     except:
         print(traceback.print_exc())

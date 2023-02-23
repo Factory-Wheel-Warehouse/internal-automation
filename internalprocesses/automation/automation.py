@@ -11,24 +11,27 @@ from internalprocesses.orders.address import Address
 from internalprocesses.orders.orders import *
 from internalprocesses.fishbowlclient.fishbowl import FBConnection
 from internalprocesses.magentoapi.magento import MagentoConnection
-from internalprocesses.outlookapi.outlook import OutlookConnection
-from internalprocesses.tracktry.tracker import TrackingChecker
+from internalprocesses.outlookapi.outlook import OutlookClient
+from internalprocesses.vendortracking import (
+    get_tracking_from_outlook, TRACKING_PATTERNS, TrackingChecker
+)
 
-class InternalAutomation():
+
+class InternalAutomation:
 
     def __init__(self):
         load_dotenv()
         self.config = self.readConfig()
         self.ordersByVendor = {
-            "Warehouse" : [],
-            "Coast" : [],
-            "Perfection" : [],
-            "Jante" : [],
+            "Warehouse": [],
+            "Coast": [],
+            "Perfection": [],
+            "Jante": [],
             "Road Ready": [],
-            "Blackburns" : [],
+            "Blackburns": [],
             "Wheelership": [],
             "AWRS": [],
-            "No vendor" : []
+            "No vendor": []
         }
         self.exceptionOrders = []
         self.customers = self.config["Main Settings"]["Customers"]
@@ -54,7 +57,7 @@ class InternalAutomation():
         """Returns the loaded config.json file."""
 
         cd = os.path.dirname(__file__)
-        configFile= os.path.join(cd, "..", "..", "data/config.json")
+        configFile = os.path.join(cd, "..", "..", "data/config.json")
         return json.load(open(configFile))
 
     def connectFTPServer(self) -> FTPConnection:
@@ -77,110 +80,36 @@ class InternalAutomation():
             config["Username"], password, config["Host"],
             config["Port"]
         )
-    
-    def connectOutlook(self) -> OutlookConnection:
+
+    def connectOutlook(self) -> OutlookClient:
 
         """Returns an instance of OutlookConnection to use the Outlook API."""
 
         config = self.config["APIConfig"]["Outlook"]["Danny"]
         password = os.getenv("OUTLOOK-PW")
         consumerSecret = os.getenv("OUTLOOK-CS")
-        return OutlookConnection(config, password, consumerSecret)
-
-    def getCoastTracking(self, poNum: str) -> str | None:
-        
-        """
-        Searches the connected outlook address for an email from coast to 
-        coast containing the order tracking number
-        """
-        
-        searchQuery = rf'?$search="body:\"Customer P/O {poNum} Tracking\""'
-        email = self.outlook.searchMessages(searchQuery)
-        if email:
-            body = email["body"]["content"]
-            # Mark as read
-            return re.findall(r"1Z[a-z|A-Z|0-9]{8}[0-9]{8}", body)[0]
-        
-    def getJanteTracking(self, poNum: str) -> str | None:
-        
-        """
-        Searches the connected outlook address for an email from jante wheels
-        containing the order invoice and tracking number
-        """
-        
-        searchQuery = rf'?$search="subject:\"New Invoice - Customer PO {poNum}\""'
-        email = self.outlook.searchMessages(searchQuery)
-        if email:
-            body = email["body"]["content"]
-            # Mark as read
-            return re.findall(r"[0-9]{12}", body)[0]
-
-    def getPerfectionTracking(self, poNum: str) -> str | None:
-        
-        """
-        Searches the connected outlook address for an email containing the 
-        order tracking number from Perfection Wheel
-        """
-        
-        searchQuery = r'?$search="subject:\"UPS Ship Notification, Tracking '
-        searchQuery += rf'Number\" AND body:{poNum}"'
-        email = self.outlook.searchMessages(searchQuery)
-        if email:
-            body = email["body"]["content"]
-            # Mark as read
-            return re.findall(r"1Z[a-z|A-Z|0-9]{8}[0-9]{8}", body)[0]
-
-    def getBlackburnsTracking(self, poNum: str) -> str | None:
-
-        """
-        Searches the connected outlook account for a tracking number from 
-        blackburns
-        """
-
-        searchQuery = r'?$search="subject:\"FedEx Shipment \"'
-        searchQuery += f'AND body:{poNum}"'
-        email = self.outlook.searchMessages(searchQuery)
-        if email:
-            body = email["body"]["content"]
-            # Mark as read
-            return re.findall(r"[0-9]{12}", body)[0]
-
-    def getAwrsTracking(self, poNum: str) -> str | None:
-
-        """
-        Searches the connected outlook account for a tracking number from 
-        AWRS
-        """
-
-        email = self.outlook.searchMessages(f"?$search=\"{poNum}\"")
-        if email:
-            attachment = self.outlook.getEmailAttachment(email["id"])
-            if attachment:
-                try:
-                    reader = PdfReader(BytesIO(attachment.content))
-                    text = reader.pages[0].extract_text(0)
-                    matches = re.findall(r"\s[0-9]{12}\s", text)
-                    return matches[0].strip()
-                except:
-                    return None
+        return OutlookClient(config, password, consumerSecret)
 
     def getTracking(self, customerPO: str) -> str | None:
 
         """Checks for a tracking number for the customerPO passed in"""
-
         if self.magento.isEbayOrder(customerPO):
             customerPO = customerPO[1:]
         poNum = self.fishbowl.getPONum(customerPO)
         if poNum:
-            return self.trackingNumberSearch(poNum)
+            tracking_numbers = get_tracking_from_outlook(poNum, self.outlook)
+            if len(tracking_numbers) == 1:
+                return list(tracking_numbers.values())[0][0]
         else:
-            return self.fishbowl.getTracking(customerPO)
+            tracking_numbers = self.fishbowl.getTracking(customerPO)
+            if tracking_numbers:
+                return tracking_numbers[0]
 
-    def checkTrackingStatus(self, 
-        trackingNumber: str, 
-        carrier: str, 
-        customerPO: str
-    ) -> str:
+    def checkTrackingStatus(self,
+                            trackingNumber: str,
+                            carrier: str,
+                            customerPO: str
+                            ) -> str:
 
         """
         Checks the tracking status of a tracking number
@@ -208,12 +137,14 @@ class InternalAutomation():
         tracking = {}
         for customerPO in self.unfulfilledOrders:
             trackingNumber = self.getTracking(customerPO)
+            print(customerPO, trackingNumber)
             if trackingNumber:
                 tracking[customerPO] = trackingNumber
         for customerPO, trackingNumber in tracking.items():
             if not self.magento.isAmazonOrder(customerPO):
                 # Should delete after adding, but delete request keeps 
                 # returning server error for some reason
+                print(customerPO, trackingNumber)
                 self.magento.addOrderTracking(customerPO, trackingNumber)
             else:
                 carrier = self.magento.getCarrier(trackingNumber)
@@ -222,21 +153,6 @@ class InternalAutomation():
                 )
                 if status == "transit":
                     self.magento.addOrderTracking(customerPO, trackingNumber)
-
-    def trackingNumberSearch(self, poNum: str) -> None:
-
-        """Searches for the tracking number associated with a PO number"""
-
-        trackingNum = self.getCoastTracking(poNum)
-        if not trackingNum:
-            trackingNum = self.getJanteTracking(poNum)
-        if not trackingNum:
-            trackingNum = self.getPerfectionTracking(poNum)
-        if not trackingNum:
-            trackingNum = self.getBlackburnsTracking(poNum)
-        if not trackingNum:
-            trackingNum = self.getAwrsTracking(poNum)
-        return trackingNum
 
     def connectMagento(self) -> MagentoConnection:
         accessToken = os.getenv("MAGENTO-AT")
@@ -295,7 +211,7 @@ class InternalAutomation():
         return string
 
     def buildSOData(self, customer: str, order: str, vendor: str) -> list[str]:
-        
+
         """
         Returns the formatted sales order and item data for import given an
         order object and customer details.
@@ -314,7 +230,7 @@ class InternalAutomation():
         """
 
         return [
-            self.buildSOString(customer, order), 
+            self.buildSOString(customer, order),
             self.buildSOItemString(order, vendor)
         ]
 
@@ -388,17 +304,17 @@ class InternalAutomation():
         """
 
         return [
-            self.buildPOString(vendor, order), 
+            self.buildPOString(vendor, order),
             self.buildPOItemString(order)
         ]
 
     def getMagentoAddress(self, orderDetails: dict) -> Address:
-        shipping = orderDetails["extension_attributes"]\
+        shipping = orderDetails["extension_attributes"] \
             ["shipping_assignments"][0]["shipping"]["address"]
         address = Address(
-            " ".join([shipping["firstname"], shipping["lastname"]]), 
-            shipping["street"][0], 
-            shipping["city"], shipping["region_code"], 
+            " ".join([shipping["firstname"], shipping["lastname"]]),
+            shipping["street"][0],
+            shipping["city"], shipping["region_code"],
             shipping["postcode"]
         )
         if len(shipping["street"]) == 2:
@@ -411,11 +327,11 @@ class InternalAutomation():
         if search:
             return search.group()
 
-    def buildMagentoOrder(self, 
-        orderDetails: dict, 
-        orderID: str, 
-        address: Address
-    ) -> Order | None:
+    def buildMagentoOrder(self,
+                          orderDetails: dict,
+                          orderID: str,
+                          address: Address
+                          ) -> Order | None:
         lineItems = orderDetails["items"]
         if lineItems and len(lineItems) == 1:
             item = lineItems[0]
@@ -424,8 +340,8 @@ class InternalAutomation():
                 sku = self.checkForValidSKU(item["name"])
             if sku:
                 return Order(
-                    address, sku, item["qty_ordered"], 
-                    item["price"], customerPO = orderID
+                    address, sku, item["qty_ordered"],
+                    item["price"], customerPO=orderID
                 )
         if self.magento.isEbayOrder(orderID):
             orderID = orderID[1:]
@@ -473,7 +389,7 @@ class InternalAutomation():
         """Organizes orders from each selling avenue into ordersByVendor."""
 
         self.readMagentoOrders()
-    
+
     def emailDropships(self, orders, vendor, emailAddress) -> None:
 
         """
@@ -526,11 +442,10 @@ class InternalAutomation():
                     if not self.fishbowl.isProduct(order.hollander):
                         self.fishbowl.importProduct(order.hollander)
                         # set default vendor as coast
-                    customer = self.config["Main Settings"]\
+                    customer = self.config["Main Settings"] \
                         ["Customers"][order.avenue]
                     soData += self.buildSOData(customer, order, vendor)
         response = self.fishbowl.importSalesOrder(soData)
-        print(response)
         for vendor in self.ordersByVendor:
             for order in self.ordersByVendor[vendor]:
                 order.soNum = self.fishbowl.getSONum(order.customerPO)
@@ -545,10 +460,10 @@ class InternalAutomation():
 
         poData = []
         for vendor in self.ordersByVendor:
-            if (self.ordersByVendor[vendor] and vendor != "Warehouse" and 
-            vendor != "No vendor"):
+            if (self.ordersByVendor[vendor] and vendor != "Warehouse" and
+                    vendor != "No vendor"):
                 for order in self.ordersByVendor[vendor]:
-                    vendorDetails = self.config["Main Settings"]["Vendors"]\
+                    vendorDetails = self.config["Main Settings"]["Vendors"] \
                         [vendor]
                     poData += self.buildPOData(vendorDetails, order)
         response = self.fishbowl.importPurchaseOrder(poData)
@@ -562,7 +477,7 @@ class InternalAutomation():
         self.importPurchaseOrders()
 
     def generateSourceList(self) -> list:
-        
+
         """
         Modify to pull Sams most recent email!
         """
@@ -613,7 +528,7 @@ class InternalAutomation():
         return qty
 
     def sortOrder(self, order) -> None:
-        
+
         """
         Checks which vendor has the wheel in stock following a specific order of priority.
         Order of priority: Warehouse, Coast to Coast, Perfection Wheel, Jante Wheel
@@ -626,15 +541,16 @@ class InternalAutomation():
         Return:
             Name of the vendor (str) if any else None
         """
-        
-        vendor = wheelsourcing.CheapestVendor(
+
+        vendor = wheelsourcing.assignCheapestVendor(
             order.hollander, order.qty, self.sourceList
         )
         if not vendor:
             vendor = "No vendor"
         self.ordersByVendor[vendor].append(order)
 
-def orderImport(test = True):
+
+def orderImport(test=True):
     automation = InternalAutomation()
     try:
         automation.getOrders()
@@ -643,7 +559,7 @@ def orderImport(test = True):
         for vendor in automation.ordersByVendor:
             if automation.ordersByVendor[vendor] and not test:
                 automation.emailDropships(
-                    automation.ordersByVendor[vendor], vendor, 
+                    automation.ordersByVendor[vendor], vendor,
                     "sales@factorywheelwarehouse.com"
                 )
                 automation.emailExceptionOrders(
@@ -651,7 +567,7 @@ def orderImport(test = True):
                 )
             if automation.ordersByVendor[vendor] and test:
                 automation.emailDropships(
-                    automation.ordersByVendor[vendor], vendor, 
+                    automation.ordersByVendor[vendor], vendor,
                     "danny@factorywheelwarehouse.com"
                 )
                 automation.emailExceptionOrders(
@@ -662,6 +578,7 @@ def orderImport(test = True):
         traceback.print_exc()
     finally:
         automation.close()
+
 
 def trackingUpload():
     automation = InternalAutomation()

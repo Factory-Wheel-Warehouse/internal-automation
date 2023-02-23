@@ -4,8 +4,8 @@ import struct
 from base64 import b64encode as b64
 from hashlib import md5
 
-class FBConnection():
 
+class FBConnection:
     """
     Class for facilitating interaction with the Fishbowl API.
 
@@ -40,44 +40,56 @@ class FBConnection():
     """
 
     @property
-    def username(self): return self._username
+    def username(self):
+        return self._username
 
     @username.setter
-    def username(self, username): self._username = username
+    def username(self, username):
+        self._username = username
 
     @property
-    def password(self): return self._password
+    def password(self):
+        return self._password
 
     @password.setter
-    def password(self, password): 
+    def password(self, password):
         self._password = b64(md5(password.encode()).digest()).decode()
 
     @property
-    def host(self): return self._host
+    def host(self):
+        return self._host
 
     @host.setter
-    def host(self, host): self._host = host
+    def host(self, host):
+        self._host = host
 
     @property
-    def port(self): return self._port
+    def port(self):
+        return self._port
 
     @port.setter
-    def port(self, port): self._port = port
+    def port(self, port):
+        self._port = port
 
     @property
-    def key(self): return self._key
+    def key(self):
+        return self._key
 
     @key.setter
-    def key(self, key): self._key = key
+    def key(self, key):
+        self._key = key
 
     @property
-    def statusCode(self): return self._statusCode
+    def statusCode(self):
+        return self._statusCode
 
     @statusCode.setter
-    def statusCode(self, statusCode): self._statusCode = statusCode
+    def statusCode(self, statusCode):
+        self._statusCode = statusCode
 
     @property
-    def statusDescription(self): return self._statusDescription
+    def statusDescription(self):
+        return self._statusDescription
 
     @statusDescription.setter
     def statusDescription(self, statusDescription):
@@ -105,8 +117,7 @@ class FBConnection():
             port : int (Default: 28192)
                 port that Fishbowl Server is utilizing 
         """
-        
-        print("Fishbowl connection initialized.")
+
         self.username = username
         self.password = password
         self.host = host
@@ -118,7 +129,7 @@ class FBConnection():
     def connect(self):
 
         """Initializes a sockect and connects to the host and port."""
-        
+
         self.stream = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.stream.connect((self.host, self.port))
         self.stream.settimeout(10)
@@ -129,7 +140,7 @@ class FBConnection():
         Closes the fishbowl connection by sending a logout request to the
         Fishbowl API and the closing the socket.
         """
-        
+
         self.logoutRequest()
         self.stream.shutdown(2)
         self.stream.close()
@@ -162,14 +173,15 @@ class FBConnection():
         return messageRecv
 
     def getResponse(self):
-        
+
         """Gets length of response and uses it to return the message."""
-        
+
         length = self.getResponseLength()
         response = self.getResponseMessage(length)
         return response
 
-    def parseResponse(self, jsonResponse): return json.loads(jsonResponse)
+    def parseResponse(self, jsonResponse):
+        return json.loads(jsonResponse)
 
     def prepMessage(self, jsonDict):
 
@@ -182,7 +194,7 @@ class FBConnection():
         return message
 
     def sendRequest(self, jsonDict):
-        
+
         """
         Formats and sends a request with the specified body.
 
@@ -208,24 +220,31 @@ class FBConnection():
         """Sends a request to login and sets the access key."""
 
         jsonDict = {
-            "FbiJson" : {
-                "Ticket" : {
-                    "Key" : ""
+            "FbiJson": {
+                "Ticket": {
+                    "Key": ""
                 },
-                "FbiMsgsRq" : {
-                    "LoginRq" : {
-                        "IAID" : 4444,
-                        "IAName" : "Internal Process Automation",
-                        "IADescription" : "Automation of internal processes.",
-                        "UserName" : self.username,
-                        "UserPassword" : self.password
+                "FbiMsgsRq": {
+                    "LoginRq": {
+                        "IAID": 4444,
+                        "IAName": "Internal Process Automation",
+                        "IADescription": "Automation of internal processes.",
+                        "UserName": self.username,
+                        "UserPassword": self.password
                     }
                 }
             }
         }
         response = self.sendRequest(jsonDict)
-        self.key = response["FbiJson"]["Ticket"]["Key"]
-        print(f"Fishbowl connection successful, logged in as {self.username}.")
+        if self.statusCode == 1000:
+            self.key = response["FbiJson"]["Ticket"]["Key"]
+        else:
+            status = {
+                "code": str(self.statusCode),
+                "description": str(self.statusDescription)
+            }
+            self.close()
+            raise Exception(f"{status}")
 
     def logoutRequest(self):
 
@@ -242,17 +261,16 @@ class FBConnection():
             }
         }
         self.sendRequest(jsonDict)
-        print("Fishbowl connection logged out.")
 
     def testKey(self):
         jsonDict = {
-            "FbiJson" : {
-                "Ticket" : {
-                    "Key" : self.key
+            "FbiJson": {
+                "Ticket": {
+                    "Key": self.key
                 },
-                "FbiMsgsRq" : {
-                    "IssueSORq" : {
-                        "SONumber" : "60000"
+                "FbiMsgsRq": {
+                    "IssueSORq": {
+                        "SONumber": "60000"
                     }
                 }
             }
@@ -279,15 +297,15 @@ class FBConnection():
         """
 
         jsonDict = {
-            "FbiJson" : {
-                "Ticket" : {
-                    "Key" : self.key
+            "FbiJson": {
+                "Ticket": {
+                    "Key": self.key
                 },
-                "FbiMsgsRq" : {
-                    "ImportRq" : {
-                        "Type" : importType,
-                        "Rows" : {
-                            "Row" : data
+                "FbiMsgsRq": {
+                    "ImportRq": {
+                        "Type": importType,
+                        "Rows": {
+                            "Row": data
                         }
                     }
                 }
@@ -301,9 +319,9 @@ class FBConnection():
         """Adds a list of parts into Fishbowl and returns the response."""
 
         data = [
-            '"PartNumber", "PartDescription", "UOM", "PartType", '\
-                '"POItemType", "ConsumptionRate"',
-            ]
+            '"PartNumber", "PartDescription", "UOM", "PartType", ' \
+            '"POItemType", "ConsumptionRate"',
+        ]
         data.append(
             f'"{partNumber}", "{partNumber}", "ea", "Inventory", "Purchase", 0'
         )
@@ -316,12 +334,12 @@ class FBConnection():
         """Creates a default vendor for a newly added part"""
 
         data = [
-            '"PartNumber", "ProductNumber", "Vendor", "DefaultVendor", '\
-                '"VendorPartNumber", "Cost"'
+            '"PartNumber", "ProductNumber", "Vendor", "DefaultVendor", ' \
+            '"VendorPartNumber", "Cost"'
         ]
         data.append(
-            f'"{partNumber}", "{partNumber}", "Coast to Coast", '\
-                '"true", "{partNumber}", 0'
+            f'"{partNumber}", "{partNumber}", "Coast to Coast", ' \
+            '"true", "{partNumber}", 0'
         )
         response = self.sendImportRequest(
             data, "ImportPartProductAndVendorPricing"
@@ -339,9 +357,9 @@ class FBConnection():
         return response
 
     def importSalesOrder(self, soData):
-        
+
         """Adds a sales order into Fishbowl."""
-        
+
         data = [
             '"Flag", "SONum", "Status", "CustomerName", "CustomerContact", "BillToName", "BillToAddress", "BillToCity", "BillToState", "BillToZip", "BillToCountry", "ShipToName", "ShipToAddress", "ShipToCity", "ShipToState", "ShipToZip", "ShipToCountry", "ShipToResidential", "CarrierName", "TaxRateName", "PriorityId", "PONum"',
             '"Flag", "SOItemTypeID", "ProductNumber", "ProductDescription", "ProductQuantity", "UOM", "ProductPrice", "Taxable", "TaxCode", "Note", "ItemQuickBooksClassName", "ItemDateScheduled", "ShowItem", "KitItem", "RevisionLevel", "CustomerPartNumber"'
@@ -361,7 +379,7 @@ class FBConnection():
         data += poData
         response = self.sendImportRequest(data, "ImportPurchaseOrder")
         return response
-    
+
     def sendQueryRequest(self, query):
 
         """Sends a query request to the API and returns its response."""
@@ -385,7 +403,7 @@ class FBConnection():
         """Returns True if a query has results, else False."""
 
         response = self.sendQueryRequest(query)
-        resultsCount = response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"]\
+        resultsCount = response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"] \
             ["Rows"]["Row"][1].strip('"')
         if int(resultsCount) > 0:
             return True
@@ -398,7 +416,7 @@ class FBConnection():
         query += "AND (QOHVIEW.LOCATIONID BETWEEN 612 AND 1053 OR "
         query += "QOHVIEW.LOCATIONID BETWEEN 1062 AND 1477);"
         response = self.sendQueryRequest(query)
-        qty = response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"]\
+        qty = response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"] \
             ["Rows"]["Row"][1]
         if qty:
             return int(float(qty.strip('"')) // 1)
@@ -414,7 +432,7 @@ class FBConnection():
     def isSO(self, customerPO):
 
         """Checks if a sales order is in fishbowl by customer PO."""
-        
+
         query = f'SELECT COUNT(id) FROM so\
             WHERE so.customerPO = "{customerPO}"'
         return self.hasResult(query)
@@ -422,21 +440,21 @@ class FBConnection():
     def getSONum(self, customerPO):
 
         """Returns the SO number of a given customerPO"""
-        
+
         query = f'SELECT num FROM so WHERE so.customerPO = "{customerPO}"'
         response = self.sendQueryRequest(query)
-        soNum = response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"]\
+        soNum = response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"] \
             ["Rows"]["Row"][1]
         if len(soNum) > 1:
             return soNum.strip('"')
-    
+
     def getPONum(self, customerPO):
 
         """Returns the SO number of a given customerPO"""
 
         query = f'SELECT vendorPO FROM so WHERE so.customerPO = "{customerPO}"'
         response = self.sendQueryRequest(query)
-        poNum = response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"]\
+        poNum = response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"] \
             ["Rows"]["Row"][1]
         if len(poNum) > 1:
             return poNum.strip('"')
@@ -444,24 +462,32 @@ class FBConnection():
     def getCustomerPO(self, soNum):
         query = f'SELECT customerPO FROM so WHERE so.num = "{soNum}"'
         response = self.sendQueryRequest(query)
-        poNum = response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"]\
+        poNum = response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"] \
             ["Rows"]["Row"][1]
         if len(poNum) > 1:
             return poNum.strip('"')
 
     def getTracking(self, customerPO):
         soNum = self.getSONum(customerPO)
-        query = f'SELECT id FROM ship WHERE ship.num = "S{soNum}"'
+        query = f"""
+        SELECT id 
+        FROM ship 
+        WHERE ship.num = "S{soNum}"
+        """
         response = self.sendQueryRequest(query)
-        shipID = response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"]\
+        shipID = response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"] \
             ["Rows"]["Row"][1].strip('"')
         if shipID:
-            query = f'SELECT trackingNum FROM shipcarton WHERE shipcarton.shipId = "{shipID}"'
+            query = f"""
+            SELECT trackingNum 
+            FROM shipcarton 
+            WHERE shipcarton.shipId = "{shipID}"
+            """
             response = self.sendQueryRequest(query)
-            tracking = response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"]\
-            ["Rows"]["Row"][1]
+            tracking_numbers = response["FbiJson"]["FbiMsgsRs"][
+                                   "ExecuteQueryRs"]["Rows"]["Row"][1:]
             if len(shipID) > 1:
-                return tracking.strip('"')
+                return [number.strip('"') for number in tracking_numbers]
 
     def getPartsOnHand(self):
         query = "SELECT STOCK.NUM, STOCK.QTY, PARTCOST.avgCost "
@@ -479,7 +505,7 @@ class FBConnection():
         query += "LEFT JOIN PARTCOST "
         query += "ON STOCK.id = PARTCOST.id; "
         response = self.sendQueryRequest(query)
-        return response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"]\
+        return response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"] \
             ["Rows"]["Row"]
 
     def setStatus(self, statusCode):

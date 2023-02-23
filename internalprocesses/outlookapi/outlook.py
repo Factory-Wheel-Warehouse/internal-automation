@@ -3,8 +3,8 @@ import msal
 import json
 from datetime import date
 
-class OutlookConnection():
 
+class OutlookClient():
     """
     Class for connecting to the outlook API.
 
@@ -45,9 +45,9 @@ class OutlookConnection():
             )
         if not token:
             token = app.acquire_token_by_username_password(
-                username = data["username"], 
-                password = self.password,
-                scopes = data["scope"]
+                username=data["username"],
+                password=self.password,
+                scopes=data["scope"]
             )
         if 'access_token' in token:
             return token['access_token']
@@ -66,9 +66,9 @@ class OutlookConnection():
 
     def getEmailAttachments(self, emailID):
         return requests.get(
-                self.endpoint + "/messages/" + emailID + "/attachments",
-                headers=self.headers
-            ).json()["value"]
+            self.endpoint + "/messages/" + emailID + "/attachments",
+            headers=self.headers
+        ).json()["value"]
 
     def getEmailAttachmentContent(self, emailId, attachmentId):
         return requests.get(
@@ -86,27 +86,28 @@ class OutlookConnection():
         searchFilter += f' AND received:{date_}"'
         inbox = self.data["Tracking"]["Inbox"]
         messages = requests.get(
-                self.endpoint + "/mailFolders/" + inbox + "/messages" + searchFilter,
-                headers=self.headers
-            ).json() 
+            self.endpoint + "/mailFolders/" + inbox + "/messages" + searchFilter,
+            headers=self.headers
+        ).json()
         return messages["value"][0]["id"]
-    
+
     def getSourceList(self):
         return self.getEmailAttachment(self.getSourceListEmailID())
 
     def getUnreadEmails(self, mailFolder):
         searchFilter = '?$search="isRead:false"'
         requestEndpoint = self.endpoint + "mailFolders/" + \
-            self.data["Tracking"][mailFolder] + "/messages" + searchFilter
+                          self.data["Tracking"][
+                              mailFolder] + "/messages" + searchFilter
         folder = requests.get(
             requestEndpoint,
-            headers = self.headers
+            headers=self.headers
         ).json()
         unreadMessages = [message for message in folder["value"]]
         while "@odata.nextLink" in folder:
             folder = requests.get(
                 folder["@odata.nextLink"],
-                headers = self.headers
+                headers=self.headers
             ).json()
             unreadMessages += [message for message in folder["value"]]
         return unreadMessages
@@ -115,7 +116,7 @@ class OutlookConnection():
         endpoint = self.endpoint + "messages/" + searchQuery
         response = requests.get(
             endpoint,
-            headers = self.headers
+            headers=self.headers
         ).json()["value"]
         if len(response) > 0 and not getAll:
             return response[0]
@@ -146,10 +147,10 @@ class OutlookConnection():
                 }
             }
             jsonData["message"]["ccRecipients"].append(formattedRecipient)
-            
+
     def sendMail(
-        self, to, subject, body, cc = None, attachment = None, 
-        attachmentName = None
+            self, to, subject, body, cc=None, attachment=None,
+            attachmentName=None
     ):
         url = 'https://graph.microsoft.com/v1.0/me/sendMail'
         headers = self.headers

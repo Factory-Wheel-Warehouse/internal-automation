@@ -1,2 +1,2 @@
 import os
-from .outlook import OutlookConnection
+from .outlook import OutlookClient
