@@ -64,22 +64,19 @@ class OutlookConnection():
             self.headers = {'Authorization': f'Bearer {self.accessToken}'}
             print("Outlook connected")
 
-    def getEmailAttachment(self, emailID):
-        attachments = requests.get(
+    def getEmailAttachments(self, emailID):
+        return requests.get(
                 self.endpoint + "/messages/" + emailID + "/attachments",
                 headers=self.headers
-            ).json()
-        try:
-            attachmentID = attachments["value"][0]["id"]
-        except:
-            return None
-        attachment = requests.get(
-                self.endpoint + "/messages/" + emailID + \
-                    "/attachments/" + attachmentID + "/$value",
-                headers=self.headers
-            )
-        return attachment
-    
+            ).json()["value"]
+
+    def getEmailAttachmentContent(self, emailId, attachmentId):
+        return requests.get(
+            self.endpoint + "/messages/" + emailId + \
+            "/attachments/" + attachmentId + "/$value",
+            headers=self.headers
+        ).content
+
     def getSourceListEmailID(self):
         subject = 'FW: Source File '
         dateList = str(date.today()).split("-")
@@ -114,14 +111,15 @@ class OutlookConnection():
             unreadMessages += [message for message in folder["value"]]
         return unreadMessages
 
-    def searchMessages(self, searchQuery):
+    def searchMessages(self, searchQuery, getAll=False):
         endpoint = self.endpoint + "messages/" + searchQuery
         response = requests.get(
             endpoint,
             headers = self.headers
         ).json()["value"]
-        if len(response) > 0:
+        if len(response) > 0 and not getAll:
             return response[0]
+        return response
 
     def markRead(self, messageID):
         self.headers['Content-type'] = 'application/json'

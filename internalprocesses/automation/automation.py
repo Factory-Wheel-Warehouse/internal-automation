@@ -49,7 +49,7 @@ class InternalAutomation():
         self.fishbowl.close()
         self.ftpServer.close()
 
-    def readConfig(self):
+    def readConfig(self) -> dict:
 
         """Returns the loaded config.json file."""
 
@@ -57,14 +57,17 @@ class InternalAutomation():
         configFile= os.path.join(cd, "..", "..", "data/config.json")
         return json.load(open(configFile))
 
-    def connectFTPServer(self):
+    def connectFTPServer(self) -> FTPConnection:
+
+        """Returns an FTPConnection object"""
+
         host = "54.211.94.170"
         username = "danny"
         password = os.getenv("FTP-PW")
         port = 21
         return FTPConnection(host, port, username, password)
 
-    def connectFishbowl(self):
+    def connectFishbowl(self) -> FBConnection:
 
         """Return an instance of FBConnection to utilize the Fishbowl API."""
 
@@ -75,7 +78,7 @@ class InternalAutomation():
             config["Port"]
         )
     
-    def connectOutlook(self):
+    def connectOutlook(self) -> OutlookConnection:
 
         """Returns an instance of OutlookConnection to use the Outlook API."""
 
@@ -84,11 +87,13 @@ class InternalAutomation():
         consumerSecret = os.getenv("OUTLOOK-CS")
         return OutlookConnection(config, password, consumerSecret)
 
-    def getCoastTracking(self, poNum):
+    def getCoastTracking(self, poNum: str) -> str | None:
+        
         """
         Searches the connected outlook address for an email from coast to 
         coast containing the order tracking number
         """
+        
         searchQuery = rf'?$search="body:\"Customer P/O {poNum} Tracking\""'
         email = self.outlook.searchMessages(searchQuery)
         if email:
@@ -96,11 +101,13 @@ class InternalAutomation():
             # Mark as read
             return re.findall(r"1Z[a-z|A-Z|0-9]{8}[0-9]{8}", body)[0]
         
-    def getJanteTracking(self, poNum):
+    def getJanteTracking(self, poNum: str) -> str | None:
+        
         """
         Searches the connected outlook address for an email from jante wheels
         containing the order invoice and tracking number
         """
+        
         searchQuery = rf'?$search="subject:\"New Invoice - Customer PO {poNum}\""'
         email = self.outlook.searchMessages(searchQuery)
         if email:
@@ -108,7 +115,13 @@ class InternalAutomation():
             # Mark as read
             return re.findall(r"[0-9]{12}", body)[0]
 
-    def getPerfectionTracking(self, poNum):
+    def getPerfectionTracking(self, poNum: str) -> str | None:
+        
+        """
+        Searches the connected outlook address for an email containing the 
+        order tracking number from Perfection Wheel
+        """
+        
         searchQuery = r'?$search="subject:\"UPS Ship Notification, Tracking '
         searchQuery += rf'Number\" AND body:{poNum}"'
         email = self.outlook.searchMessages(searchQuery)
@@ -117,7 +130,13 @@ class InternalAutomation():
             # Mark as read
             return re.findall(r"1Z[a-z|A-Z|0-9]{8}[0-9]{8}", body)[0]
 
-    def getBlackburnsTracking(self, poNum):
+    def getBlackburnsTracking(self, poNum: str) -> str | None:
+
+        """
+        Searches the connected outlook account for a tracking number from 
+        blackburns
+        """
+
         searchQuery = r'?$search="subject:\"FedEx Shipment \"'
         searchQuery += f'AND body:{poNum}"'
         email = self.outlook.searchMessages(searchQuery)
@@ -126,7 +145,13 @@ class InternalAutomation():
             # Mark as read
             return re.findall(r"[0-9]{12}", body)[0]
 
-    def getAwrsTracking(self, poNum):
+    def getAwrsTracking(self, poNum: str) -> str | None:
+
+        """
+        Searches the connected outlook account for a tracking number from 
+        AWRS
+        """
+
         email = self.outlook.searchMessages(f"?$search=\"{poNum}\"")
         if email:
             attachment = self.outlook.getEmailAttachment(email["id"])
@@ -139,8 +164,10 @@ class InternalAutomation():
                 except:
                     return None
 
-    def getTracking(self, customerPO):
+    def getTracking(self, customerPO: str) -> str | None:
+
         """Checks for a tracking number for the customerPO passed in"""
+
         if self.magento.isEbayOrder(customerPO):
             customerPO = customerPO[1:]
         poNum = self.fishbowl.getPONum(customerPO)
@@ -149,7 +176,16 @@ class InternalAutomation():
         else:
             return self.fishbowl.getTracking(customerPO)
 
-    def checkTrackingStatus(self, trackingNumber, carrier, customerPO):
+    def checkTrackingStatus(self, 
+        trackingNumber: str, 
+        carrier: str, 
+        customerPO: str
+    ) -> str:
+
+        """
+        Checks the tracking status of a tracking number
+        """
+
         trackingData = self.trackingChecker.checkTracking(
             trackingNumber, carrier
         )
@@ -163,7 +199,12 @@ class InternalAutomation():
                 trackingNumber, carrier, customerPO
             )
 
-    def addTracking(self):
+    def addTracking(self) -> None:
+
+        """
+        Adds tracking numbers to unshipped orders with available tracking
+        """
+
         tracking = {}
         for customerPO in self.unfulfilledOrders:
             trackingNumber = self.getTracking(customerPO)
@@ -182,7 +223,10 @@ class InternalAutomation():
                 if status == "transit":
                     self.magento.addOrderTracking(customerPO, trackingNumber)
 
-    def trackingNumberSearch(self, poNum):
+    def trackingNumberSearch(self, poNum: str) -> None:
+
+        """Searches for the tracking number associated with a PO number"""
+
         trackingNum = self.getCoastTracking(poNum)
         if not trackingNum:
             trackingNum = self.getJanteTracking(poNum)
@@ -194,11 +238,11 @@ class InternalAutomation():
             trackingNum = self.getAwrsTracking(poNum)
         return trackingNum
 
-    def connectMagento(self):
+    def connectMagento(self) -> MagentoConnection:
         accessToken = os.getenv("MAGENTO-AT")
         return MagentoConnection(accessToken)
 
-    def buildSOItemString(self, order, vendor):
+    def buildSOItemString(self, order: str, vendor: str) -> str:
 
         """
         Takes in an Order object and builds the row to be used in the Fishbowl 
@@ -221,7 +265,7 @@ class InternalAutomation():
         string += f'"ea", {order.price}, , , , , , , , , '
         return string
 
-    def buildSOString(self, customer, order):
+    def buildSOString(self, customer: str, order: str) -> str:
 
         """
         Takes in Order object and customer (really selling avenue) and builds 
@@ -250,7 +294,7 @@ class InternalAutomation():
         string += f'"UPS", "None", 30, "{order.customerPO}"'
         return string
 
-    def buildSOData(self, customer, order, vendor):
+    def buildSOData(self, customer: str, order: str, vendor: str) -> list[str]:
         
         """
         Returns the formatted sales order and item data for import given an
@@ -274,7 +318,7 @@ class InternalAutomation():
             self.buildSOItemString(order, vendor)
         ]
 
-    def buildPOItemString(self, order):
+    def buildPOItemString(self, order: str) -> str:
 
         """
         Takes in an Order object and builds the row to be used in the Fishbowl 
@@ -295,7 +339,7 @@ class InternalAutomation():
         string += f'"{order.hollander}", {order.qty}, "ea", 0'
         return string
 
-    def buildPOString(self, vendor, order):
+    def buildPOString(self, vendor: str, order: str) -> str:
 
         """
         Takes in Order object and vendor (really dropshipper) and builds 
@@ -324,7 +368,7 @@ class InternalAutomation():
         string += f'"{order.address.zipcode}", "United States", "UPS"'
         return string
 
-    def buildPOData(self, vendor, order):
+    def buildPOData(self, vendor: str, order: str) -> list[str]:
 
         """
         Returns the formatted purchase order and item data for import given an
@@ -348,30 +392,7 @@ class InternalAutomation():
             self.buildPOItemString(order)
         ]
 
-    def getFacebookAddress(self, orderDetails):
-        
-        shipping = orderDetails["shipping_address"]
-        address = Address(
-            shipping["name"], shipping["address1"], 
-            shipping["city"], shipping["province_code"], 
-            shipping["zip"]
-        )
-        if shipping["address2"]:
-            address.street2 = shipping["address2"]
-        return address
-
-    def buildFacebookOrder(self, orderDetails):
-        
-        lineItems = orderDetails["line_items"]
-        if lineItems and len(lineItems) == 1:
-            item = lineItems[0]
-            address = self.getFacebookAddress(orderDetails)
-            return FacebookOrder(
-                address, item["sku"], item["quantity"], float(item["price"]),
-                customerPO = orderDetails["note_attributes"][1]["value"]
-            )
-
-    def getMagentoAddress(self, orderDetails):
+    def getMagentoAddress(self, orderDetails: dict) -> Address:
         shipping = orderDetails["extension_attributes"]\
             ["shipping_assignments"][0]["shipping"]["address"]
         address = Address(
@@ -384,13 +405,17 @@ class InternalAutomation():
             address.street2 = shipping["street"][1]
         return address
 
-    def checkForValidSKU(self, sku):
+    def checkForValidSKU(self, sku: str) -> str | None:
         pattern = r'(ALY|STL)[0-9]{5}[A-Z]{1}[0-9]{2}[N]?'
         search = re.search(pattern, sku.upper())
         if search:
             return search.group()
 
-    def buildMagentoOrder(self, orderDetails, orderID, address):
+    def buildMagentoOrder(self, 
+        orderDetails: dict, 
+        orderID: str, 
+        address: Address
+    ) -> Order | None:
         lineItems = orderDetails["items"]
         if lineItems and len(lineItems) == 1:
             item = lineItems[0]
@@ -409,7 +434,7 @@ class InternalAutomation():
                 f"Order #{orderID}\n\n"
             )
 
-    def setOrderType(self, order):
+    def setOrderType(self, order: Order) -> None:
 
         if self.magento.isAmazonOrder(order.customerPO):
             order.__class__ = AmazonOrder
@@ -433,7 +458,7 @@ class InternalAutomation():
                 order.__class__ = OEDOrder
                 order.avenue = "OED"
 
-    def readMagentoOrders(self):
+    def readMagentoOrders(self) -> None:
         for orderID in self.unfulfilledOrders:
             orderDetails = self.magento.getOrderDetails(orderID)
             address = self.getMagentoAddress(orderDetails)
@@ -443,13 +468,13 @@ class InternalAutomation():
                 if not self.fishbowl.isSO(order.customerPO):
                     self.sortOrder(order)
 
-    def getOrders(self):
+    def getOrders(self) -> None:
 
         """Organizes orders from each selling avenue into ordersByVendor."""
 
         self.readMagentoOrders()
     
-    def emailDropships(self, orders, vendor, emailAddress):
+    def emailDropships(self, orders, vendor, emailAddress) -> None:
 
         """
         Drop ships orders from Coast to Coast.
@@ -469,7 +494,7 @@ class InternalAutomation():
                 emailBody += "-" * 44
         self.outlook.sendMail(emailAddress, f"{vendor} Orders", emailBody)
 
-    def emailExceptionOrders(self, emailAddress):
+    def emailExceptionOrders(self, emailAddress: str) -> None:
         if self.exceptionOrders:
             emailBody = ""
             for exceptionOrder in self.exceptionOrders:
@@ -602,7 +627,7 @@ class InternalAutomation():
             Name of the vendor (str) if any else None
         """
         
-        vendor = wheelsourcing.assignCheapestVendor(
+        vendor = wheelsourcing.CheapestVendor(
             order.hollander, order.qty, self.sourceList
         )
         if not vendor:

@@ -15,7 +15,7 @@ priceList = checkSales.buildPriceDict() #3268 entries
 
 @app.route("/")
 def index():
-    return "<h1>Service is live bitches!!!<h1>"
+    return "<h1>Service is live<h1>"
 
 @app.route("/sms", methods=["GET", "POST"])
 def reply():
