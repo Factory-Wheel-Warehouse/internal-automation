@@ -9,7 +9,7 @@ from internalprocesses.ftpconnection.ftpConnection import FTPConnection
 from internalprocesses.wheelsourcing import wheelsourcing
 from internalprocesses.orders.address import Address
 from internalprocesses.orders.orders import *
-from internalprocesses.fishbowlclient.fishbowl import FBConnection
+from internalprocesses.fishbowl import FishbowlClient
 from internalprocesses.magentoapi.magento import MagentoConnection
 from internalprocesses.outlookapi.outlook import OutlookClient
 from internalprocesses.tracking import (
@@ -70,13 +70,13 @@ class InternalAutomation:
         port = 21
         return FTPConnection(host, port, username, password)
 
-    def connectFishbowl(self) -> FBConnection:
+    def connectFishbowl(self) -> FishbowlClient:
 
-        """Return an instance of FBConnection to utilize the Fishbowl API."""
+        """Return an instance of FishbowlClient to utilize the Fishbowl API."""
 
         config = self.config["APIConfig"]["Fishbowl"]
         password = os.getenv("FISHBOWL-PW")
-        return FBConnection(
+        return FishbowlClient(
             config["Username"], password, config["Host"],
             config["Port"]
         )

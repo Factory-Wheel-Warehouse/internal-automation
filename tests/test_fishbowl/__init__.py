@@ -1,0 +1,1 @@
+from .test_fishbowl_client import FishbowlClientTest

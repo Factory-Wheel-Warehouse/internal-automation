@@ -7,7 +7,7 @@ import json
 from traceback import print_exc
 from dotenv import load_dotenv
 from .outlookapi import OutlookClient
-from .fishbowlclient import FBConnection, quantitySoldBySKUReport
+from .fishbowl import FishbowlClient, quantitySoldBySKUReport
 
 
 def emailQuantitySoldReport():

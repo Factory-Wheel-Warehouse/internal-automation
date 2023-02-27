@@ -7,7 +7,7 @@ from internalprocesses.tracking.constants import *
 
 class TestUtil(unittest.TestCase):
 
-    def test_tracking_is_valid_fedex(self):
+    def test_tracking_is_valid(self):
         tracking_numbers = ["0", "394648002863", "1ZRW16610308553851"]
         self.assertFalse(tracking_is_valid(tracking_numbers[0], FEDEX))
         self.assertFalse(tracking_is_valid(tracking_numbers[0], UPS))

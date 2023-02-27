@@ -4,7 +4,7 @@ import os
 import traceback
 from base64 import b64encode
 from dotenv import load_dotenv
-from internalprocesses.fishbowlclient.fishbowl import FBConnection
+from internalprocesses.fishbowl import FishbowlClient
 from internalprocesses.ftpconnection.ftpConnection import FTPConnection
 from internalprocesses.outlookapi.outlook import OutlookClient
 from internalprocesses.wheelsourcing.wheelsourcing import (

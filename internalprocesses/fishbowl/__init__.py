@@ -1,5 +1,6 @@
 import sys
-from .fishbowl import FBConnection
+from .fishbowl_client import FishbowlClient
+
 
 def quantitySoldBySKUReport(fishbowl):
     output = []
@@ -11,7 +12,8 @@ GROUP BY SOITEM.productNum
 ORDER BY SoldQTY;"""
     response = fishbowl.sendQueryRequest(query)
     try:
-        data = response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"]["Rows"]["Row"]
+        data = response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"]["Rows"][
+            "Row"]
     except Exception as e:
         try:
             raise Exception from e

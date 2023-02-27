@@ -5,7 +5,7 @@ from base64 import b64encode as b64
 from hashlib import md5
 
 
-class FBConnection:
+class FishbowlClient:
     """
     Class for facilitating interaction with the Fishbowl API.
 
