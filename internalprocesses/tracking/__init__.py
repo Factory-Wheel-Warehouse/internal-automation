@@ -1,7 +1,7 @@
 from internalprocesses import OutlookClient
-from internalprocesses.vendortracking.util import get_tracking_from_outlook
-from internalprocesses.vendortracking.constants import TRACKING_PATTERNS
-from internalprocesses.vendortracking.trackingchecker import TrackingChecker
+from internalprocesses.tracking.util import get_tracking_from_outlook
+from internalprocesses.tracking.constants import TRACKING_PATTERNS
+from internalprocesses.tracking.tracking_checker import TrackingChecker
 
 if __name__ == "__main__":
     import json

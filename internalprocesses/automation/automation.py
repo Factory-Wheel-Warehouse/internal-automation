@@ -12,7 +12,7 @@ from internalprocesses.orders.orders import *
 from internalprocesses.fishbowlclient.fishbowl import FBConnection
 from internalprocesses.magentoapi.magento import MagentoConnection
 from internalprocesses.outlookapi.outlook import OutlookClient
-from internalprocesses.vendortracking import (
+from internalprocesses.tracking import (
     get_tracking_from_outlook, TRACKING_PATTERNS, TrackingChecker
 )
 
@@ -115,13 +115,13 @@ class InternalAutomation:
         Checks the tracking status of a tracking number
         """
 
-        trackingData = self.trackingChecker.checkTracking(
+        trackingData = self.trackingChecker.check_tracking(
             trackingNumber, carrier
         )
         if self.trackingChecker.statusCode == 200:
             return trackingData["data"][0]["status"]
         else:
-            self.trackingChecker.addSingleTracking(
+            self.trackingChecker.add_single_tracking(
                 trackingNumber, carrier, customerPO
             )
             return self.checkTrackingStatus(

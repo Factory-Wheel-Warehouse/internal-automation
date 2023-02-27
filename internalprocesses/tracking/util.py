@@ -4,9 +4,8 @@ from io import BytesIO
 import requests
 from pypdf import PdfReader
 
-from internalprocesses import FBConnection
 from internalprocesses.outlookapi.outlook import OutlookClient
-from internalprocesses.vendortracking.constants import *
+from internalprocesses.tracking.constants import *
 
 
 def po_num_email_search(po_num: str, outlook: OutlookClient) -> list:
@@ -26,7 +25,8 @@ def po_num_email_search(po_num: str, outlook: OutlookClient) -> list:
 def get_pdf_attachments(email_id: str,
                         outlook: OutlookClient) -> list[bytes]:
     """
-    Retrieves pdf attachments on the specified email using the outlook client
+    Returns pdf attachments, as a list of bytes, on the specified email.
+    Each item in the return list is a separate attachment.
 
     :param email_id: email id to retrieve attachments from
     :param outlook: Outlook account to use
@@ -47,7 +47,7 @@ def search_email_pdfs(attachments: list,
                       pattern: str) -> list[str]:
     """
     Parses pdf attachments of specified email searching for tracking number
-    candidates
+    candidates. Returns a list of tracking number candidates found.
 
     :param attachments: email attachments to search
     :param pattern: tracking number pattern to search for
@@ -81,6 +81,9 @@ def get_tracking_candidates(emails: list,
         id_ = email[EMAIL_ID_KEY]
         body = email[EMAIL_BODY_KEY][EMAIL_BODY_CONTENT_KEY]
         candidates += re.findall(pattern, body)
+        # Many vendors provide PDF invoices and textual summaries, if this
+        # is the case pdf parsing is unnecessary. However, if not
+        # found then attachment parsing is necessary
         if not candidates:
             pdf_attachments = get_pdf_attachments(id_, outlook)
             candidates += search_email_pdfs(pdf_attachments, pattern)
@@ -90,17 +93,13 @@ def get_tracking_candidates(emails: list,
 def get_valid_tracking_numbers(tracking_candidates: set[str],
                                carrier: str) -> list[str]:
     """
-    Checks each tracking candidate number for validity. UPS numbers are not
-    checked via Bing due to their uniqueness.
-    See TRACKING_URL in constants.py
+    Checks each tracking candidate number for validity
 
     :param tracking_candidates: potential tracking numbers
     :param carrier: proposed tracking number carrier
     :return: list of valid tracking numbers
     """
     valid_tracking_numbers = []
-    if carrier == UPS:
-        return list(tracking_candidates)
     for candidate in tracking_candidates:
         if tracking_is_valid(candidate, carrier):
             valid_tracking_numbers.append(candidate)
@@ -108,6 +107,14 @@ def get_valid_tracking_numbers(tracking_candidates: set[str],
 
 
 def tracking_is_valid(tracking_number: str, carrier: str) -> bool:
+    """
+    Returns a boolean indicator of tracking number validity using Bing.
+    See TRACKING_URL in constants.py
+
+    :param tracking_number: tracking number to validate
+    :param carrier: tracking number carrier
+    :return: boolean
+    """
     url = TRACKING_URL
     params = {
         TRACKING_NUMBER_KEY: tracking_number,
@@ -118,6 +125,17 @@ def tracking_is_valid(tracking_number: str, carrier: str) -> bool:
 
 
 def get_tracking_from_outlook(po_num: str, outlook: OutlookClient):
+    """
+    Searches the account connected to OutlookClient for emails containing
+    the exact string of the PO number. Tracking candidates are collected
+    and validated using Bing to verify tracking information is available.
+    Returns the validated tracking numbers in a dictionary with the carrier
+    as the key and a list of tracking numbers as values.
+
+    :param po_num: purchase order number
+    :param outlook: OutlookClient object
+    :return: dictionary of validated tracking numbers
+    """
     valid = {}
     emails = po_num_email_search(po_num, outlook)
     for carrier, pattern in TRACKING_PATTERNS.items():

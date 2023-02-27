@@ -1,0 +1,116 @@
+import os
+from http import HTTPMethod
+
+import requests
+
+
+class TrackingChecker:
+
+    def __init__(self):
+        self._headers = {
+            "Content-Type": "application/json",
+            "Tracktry-Api-Key": os.getenv("TRACKTRY-KEY")
+        }
+        self._baseURL = "https://api.tracktry.com/v1/trackings"
+        self._status_code = 0
+
+    @property
+    def status_code(self):
+        return self._status_code
+
+    @status_code.setter
+    def status_code(self, status_code):
+        self._status_code = status_code
+
+    def _request(self,
+                 relative_url,
+                 json=None,
+                 method: HTTPMethod = HTTPMethod.GET
+                 ) -> dict | None:
+        """
+        Request helper function that updates the status code attribute and
+        returns the JSON response
+
+        :param relative_url: relative request url
+        :param json: request JSON body
+        :param method: HTTP method
+        :return: JSON response from API
+        """
+        response = requests.request(
+            method=method,
+            url=self._baseURL + relative_url,
+            headers=self._headers,
+            json=json
+        ).json()
+        self.status_code = response["meta"]["code"]
+        return response
+
+    def add_single_tracking(self,
+                            tracking_number: str,
+                            carrier: str,
+                            order_id: str
+                            ) -> dict | None:
+        """
+        Adds a single tracking number and returns the JSON response
+
+        :param tracking_number: tracking number to add
+        :param carrier: associated carrier
+        :param order_id: associated order id
+        :return: JSON response
+        """
+        url = '/post'
+        json = {
+            "tracking_number": tracking_number,
+            "carrier_code": carrier,
+            "order_id": order_id
+        }
+        return self._request(url, json=json, method=HTTPMethod.POST)
+
+    def batch_add_tracking(self,
+                           tracking_numbers: list[tuple[str, str, str]]
+                           ) -> list[dict]:
+        """
+        Batch adds tracking number tuples in chunks of 40 if the input
+        exceeds 40. Returns a list of responses for each chunk
+
+        :param tracking_numbers: tuple(tracking_number, carrier_code, order_id)
+        :return: list of JSON responses
+        """
+        url = '/batch'
+        chunked_tracking_numbers = []
+        chunk = []
+
+        for i in range(len(tracking_numbers)):
+            chunk.append(tracking_numbers[i])
+            if i % 40 == 0:
+                chunked_tracking_numbers.append(chunk)
+                chunk = []
+
+        responses = []
+        for chunk in chunked_tracking_numbers:
+            json = [{
+                "tracking_number": tracking_number[0],
+                "carrier_code": tracking_number[1],
+                "orderID": tracking_number[2]
+            } for tracking_number in chunk]
+            responses.append(
+                self._request(url, json=json, method=HTTPMethod.POST)
+            )
+        return responses
+
+    def check_tracking(self, tracking_number: str, carrier: str) -> dict:
+        """
+        Returns the JSON response describing the tracking number
+
+        :param tracking_number: tracking number to check
+        :param carrier: tracking number carrier
+        :return: JSON response
+        """
+        url = f'/{carrier}/{tracking_number}'
+        return self._request(url)
+
+    def delete_tracking(self, tracking_number: str, carrier: str) -> dict:
+        """ Request not working, receiving 500 error """
+
+        url = f'{carrier}/{tracking_number}'
+        return self._request(url, method=HTTPMethod.DELETE)
