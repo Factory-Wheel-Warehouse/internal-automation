@@ -1,7 +1,13 @@
 import os
-from http import HTTPMethod
+from enum import Enum
 
 import requests
+
+
+class HTTPMethods(Enum):
+    GET = "GET"
+    POST = "POST"
+    DELETE = "DELETE"
 
 
 class TrackingChecker:
@@ -25,7 +31,7 @@ class TrackingChecker:
     def _request(self,
                  relative_url,
                  json=None,
-                 method: HTTPMethod = HTTPMethod.GET
+                 method: HTTPMethods = HTTPMethods.GET
                  ) -> dict | None:
         """
         Request helper function that updates the status code attribute and
@@ -37,7 +43,7 @@ class TrackingChecker:
         :return: JSON response from API
         """
         response = requests.request(
-            method=method,
+            method=method.value,
             url=self._baseURL + relative_url,
             headers=self._headers,
             json=json
@@ -64,7 +70,7 @@ class TrackingChecker:
             "carrier_code": carrier,
             "order_id": order_id
         }
-        return self._request(url, json=json, method=HTTPMethod.POST)
+        return self._request(url, json=json, method=HTTPMethods.POST)
 
     def batch_add_tracking(self,
                            tracking_numbers: list[tuple[str, str, str]]
@@ -94,7 +100,7 @@ class TrackingChecker:
                 "orderID": tracking_number[2]
             } for tracking_number in chunk]
             responses.append(
-                self._request(url, json=json, method=HTTPMethod.POST)
+                self._request(url, json=json, method=HTTPMethods.POST)
             )
         return responses
 
@@ -113,4 +119,4 @@ class TrackingChecker:
         """ Request not working, receiving 500 error """
 
         url = f'{carrier}/{tracking_number}'
-        return self._request(url, method=HTTPMethod.DELETE)
+        return self._request(url, method=HTTPMethods.DELETE)
