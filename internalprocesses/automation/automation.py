@@ -118,7 +118,7 @@ class InternalAutomation:
         trackingData = self.trackingChecker.check_tracking(
             trackingNumber, carrier
         )
-        if self.trackingChecker.statusCode == 200:
+        if self.trackingChecker.status_code == 200:
             return trackingData["data"][0]["status"]
         else:
             self.trackingChecker.add_single_tracking(

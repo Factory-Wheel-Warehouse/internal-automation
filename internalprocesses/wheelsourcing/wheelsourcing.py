@@ -10,6 +10,7 @@ FWWCOREPATTERN = r"(ALY|STL|FWC)[0-9]{5}[A-Z]{1}[0-9]{2}\*CORE$"
 CORE_MIN_QTY = 5
 FINISHED_MIN_QTY = 3
 
+
 def _formatWarehouseSKU(partNum):
     partNum = partNum.upper()
     if re.match(FINISHPATTERN, partNum):
@@ -54,8 +55,8 @@ def _addWarehouseInventory(fishbowl, coreInventory, finishedInventory):
 
 
 def _addPartAndCost(
-    partColumn, costColumn, qtyColumn, vendorInventory,
-    vendorName, coreInventory, finishedInventory
+        partColumn, costColumn, qtyColumn, vendorInventory,
+        vendorName, coreInventory, finishedInventory
 ):
     for row in vendorInventory:
         partNum = row[partColumn]
@@ -71,9 +72,9 @@ def _addPartAndCost(
         if re.match(ROADREADYREPLICAPATTERN, partNum):
             partNum = partNum[:3] + partNum[4:]
         if (
-            re.match(FINISHPATTERN, partNum) or 
-            re.match(REPLICAPATTERN, partNum)
-        ):  
+                re.match(FINISHPATTERN, partNum) or
+                re.match(REPLICAPATTERN, partNum)
+        ):
             if qty >= FINISHED_MIN_QTY:
                 _addToInventory(
                     finishedInventory, partNum, vendorName, qty, cost
@@ -83,6 +84,7 @@ def _addPartAndCost(
                 _addToInventory(
                     coreInventory, partNum, vendorName, qty, cost
                 )
+
 
 def _buildPerfectionSKUMap(ftp):
     skuMap = {}
@@ -96,7 +98,8 @@ def _buildPerfectionSKUMap(ftp):
 
 
 def _addPerfectionStock(ftp, coreInventory, finishedInventory):
-    perfectionStock = ftp.getFileAsList(r"/perfection/perfection_inventory.xlsx")
+    perfectionStock = ftp.getFileAsList(
+        r"/perfection/perfection_inventory.xlsx")
     skuMap = _buildPerfectionSKUMap(ftp)
     for row in perfectionStock:
         try:
@@ -134,7 +137,7 @@ def _addPerfectionStock(ftp, coreInventory, finishedInventory):
 
 def _addJanteInventory(ftp, finishedInventory):
     jante = ftp.getFileAsList(r"/jante/wheelInventory.csv")
-    jantePricingList= ftp.getFileAsList(r"jante/PriceList.xlsx")
+    jantePricingList = ftp.getFileAsList(r"jante/PriceList.xlsx")
     jantePricingDict = {
         row[0]: float(row[1]) for row in jantePricingList if row[1]
     }
@@ -151,7 +154,8 @@ def _addJanteInventory(ftp, finishedInventory):
                     else:
                         finishedInventory[partNum] = {"Jante": [qty, cost]}
                 except KeyError:
-                    print(f"{partNum} has no cost")
+                    pass
+                    # print(f"{partNum} has no cost")
 
 
 def _buildBlackburnsSKUMap(ftp):
@@ -185,9 +189,11 @@ def _addBlackburnsInventory(ftp, finishedInventory):
                     if partNumExists:
                         finishedInventory[partNum]["Blackburns"] = [qty, cost]
                     else:
-                        finishedInventory[partNum] = {"Blackburns": [qty, cost]}
+                        finishedInventory[partNum] = {
+                            "Blackburns": [qty, cost]}
                 else:
-                    print(f"{blackburnsPartNum} not mapped")
+                    pass
+                    # print(f"{blackburnsPartNum} not mapped")
 
 
 def buildVendorInventory(ftp, fishbowl):
@@ -198,14 +204,18 @@ def buildVendorInventory(ftp, fishbowl):
     awrsInv = ftp.getFileAsList(r"/AWRS/searchresults.csv")
     wheelershipInv = ftp.getDirectoryMostRecentFile("wheelership")
     _addWarehouseInventory(fishbowl, coreInventory, finishedInventory)
-    _addPartAndCost(0, 3, 2, roadReadyInv, "Road Ready", coreInventory, finishedInventory)
-    _addPartAndCost(2, 26, 27, coastInv, "Coast", coreInventory, finishedInventory)
+    _addPartAndCost(0, 3, 2, roadReadyInv, "Road Ready", coreInventory,
+                    finishedInventory)
+    _addPartAndCost(2, 26, 27, coastInv, "Coast", coreInventory,
+                    finishedInventory)
     _addPartAndCost(0, 6, 5, awrsInv, "AWRS", coreInventory, finishedInventory)
-    _addPartAndCost(0, 3, 2, wheelershipInv, "Wheelership", coreInventory, finishedInventory)
+    _addPartAndCost(0, 3, 2, wheelershipInv, "Wheelership", coreInventory,
+                    finishedInventory)
     _addPerfectionStock(ftp, coreInventory, finishedInventory)
     _addJanteInventory(ftp, finishedInventory)
     _addBlackburnsInventory(ftp, finishedInventory)
     return {"Core": coreInventory, "Finished": finishedInventory}
+
 
 # Transition to delegating structure with case-process pairings?
 def assignCheapestVendor(partNumber, qty, vendorInventory):
@@ -229,8 +239,8 @@ def assignCheapestVendor(partNumber, qty, vendorInventory):
         else:
             vendor = None
     if (
-        not vendor and coreAvailability and 
-        not re.match(REPLICAPATTERN, partNumber)
+            not vendor and coreAvailability and
+            not re.match(REPLICAPATTERN, partNumber)
     ):
         min_ = inf
         for vendorName, partInfo in coreAvailability.items():

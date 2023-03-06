@@ -158,7 +158,7 @@ def uploadInventoryToFTP():
     ftpPassword = os.getenv("FTP-PW")
     fbPassword = os.getenv("FISHBOWL-PW")
     ftpServer = FTPConnection("54.211.94.170", 21, "danny", ftpPassword)
-    fishbowl = FBConnection(
+    fishbowl = FishbowlClient(
         "danny", fbPassword, "factorywheelwarehouse.myfishbowl.com"
     )
     try:
