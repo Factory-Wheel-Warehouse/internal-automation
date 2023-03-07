@@ -126,9 +126,12 @@ class FishbowlClient:
         self.connect()
         self.loginRequest()
 
+    def __del__(self):
+        self.close()
+
     def connect(self):
 
-        """Initializes a sockect and connects to the host and port."""
+        """Initializes a socket and connects to the host and port."""
 
         self.stream = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.stream.connect((self.host, self.port))
@@ -140,10 +143,10 @@ class FishbowlClient:
         Closes the fishbowl connection by sending a logout request to the
         Fishbowl API and the closing the socket.
         """
-
-        self.logoutRequest()
-        self.stream.shutdown(2)
-        self.stream.close()
+        if self.statusCode != 1162:
+            self.logoutRequest()
+            self.stream.shutdown(2)
+            self.stream.close()
 
     def getResponseLength(self):
 

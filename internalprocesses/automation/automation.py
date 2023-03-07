@@ -1,3 +1,4 @@
+import datetime
 import os
 import re
 import json
@@ -5,8 +6,9 @@ import traceback
 from pypdf import PdfReader
 from io import BytesIO
 from dotenv import load_dotenv
+import internalprocesses.aws as aws
 from internalprocesses.ftpconnection.ftpConnection import FTPConnection
-from internalprocesses.wheelsourcing import wheelsourcing
+from internalprocesses.inventory import Inventory
 from internalprocesses.orders.address import Address
 from internalprocesses.orders.orders import *
 from internalprocesses.fishbowl import FishbowlClient
@@ -22,26 +24,18 @@ class InternalAutomation:
     def __init__(self):
         load_dotenv()
         self.config = self.readConfig()
-        self.ordersByVendor = {
-            "Warehouse": [],
-            "Coast": [],
-            "Perfection": [],
-            "Jante": [],
-            "Road Ready": [],
-            "Blackburns": [],
-            "Wheelership": [],
-            "AWRS": [],
-            "No vendor": []
-        }
+        self.ordersByVendor = {}
+        self.vendors = {}
+        for vendor in aws.get_vendor_config_data():
+            self.vendors[vendor.vendor_name] = vendor
         self.exceptionOrders = []
         self.customers = self.config["Main Settings"]["Customers"]
         self.ftpServer = self.connectFTPServer()
         self.fishbowl = self.connectFishbowl()
         self.outlook = self.connectOutlook()
         self.magento = self.connectMagento()
-        self.sourceList = wheelsourcing.buildVendorInventory(
-            self.ftpServer, self.fishbowl
-        )
+        self.sourceList = Inventory(list(self.vendors.values()),
+                                    self.ftpServer, self.fishbowl)
         self.trackingChecker = TrackingChecker()
         self.unfulfilledOrders = self.magento.getPendingOrders()
 
@@ -234,7 +228,7 @@ class InternalAutomation:
             self.buildSOItemString(order, vendor)
         ]
 
-    def buildPOItemString(self, order: str) -> str:
+    def buildPOItemString(self, order: Order) -> str:
 
         """
         Takes in an Order object and builds the row to be used in the Fishbowl 
@@ -251,11 +245,11 @@ class InternalAutomation:
         """
 
         itemType = 10
-        string = f'"Item", {itemType}, "{order.hollander}", '
-        string += f'"{order.hollander}", {order.qty}, "ea", 0'
-        return string
+        item_data = ["Item", itemType, order.hollander, order.hollander,
+                     order.hollander, order.qty, "ea", 0]
+        return ", ".join([str(element) for element in item_data])
 
-    def buildPOString(self, vendor: str, order: str) -> str:
+    def buildPOString(self, vendor_name: str, order: Order) -> str:
 
         """
         Takes in Order object and vendor (really dropshipper) and builds 
@@ -263,7 +257,7 @@ class InternalAutomation:
 
         Keyword Arguments:
 
-            vendor : dict
+            vendor_name : dict
                 dictionary describing the customer as defined in config.json
             
             order: Order
@@ -273,18 +267,20 @@ class InternalAutomation:
 
             str: formatted row describing the sales order
         """
+        vendor = self.vendors.get(vendor_name)
+        if vendor:
+            po_data = ["PO", order.poNum, "20", vendor.address.name, "",
+                       vendor.address.name, vendor.address.street,
+                       vendor.address.city, vendor.address.state,
+                       vendor.address.zipcode, vendor.address.country,
+                       order.address.name, order.address.name,
+                       order.address.street, order.address.city,
+                       order.address.state, order.address.zipcode,
+                       "UNITED STATES", "UPS"]
+            return ", ".join([str(element) for element in po_data])
+        raise Exception("Vendor name not in vendor list")
 
-        string = f'"PO", {order.poNum}, 20, "{vendor["Name"]}", , '
-        string += f'"{vendor["Name"]}", ""{vendor["Address"]}"", '
-        string += f'"{vendor["City"]}","{vendor["State"]}", '
-        string += f'"{vendor["Zipcode"]}", "{vendor["Country"]}", '
-        string += f'"{order.address.name}", '
-        string += rf'"{order.address.name}", "{order.address.street}", '
-        string += f'"{order.address.city}", "{order.address.state}", '
-        string += f'"{order.address.zipcode}", "United States", "UPS"'
-        return string
-
-    def buildPOData(self, vendor: str, order: str) -> list[str]:
+    def buildPOData(self, vendor: str, order: Order) -> list[str]:
 
         """
         Returns the formatted purchase order and item data for import given an
@@ -460,12 +456,9 @@ class InternalAutomation:
 
         poData = []
         for vendor in self.ordersByVendor:
-            if (self.ordersByVendor[vendor] and vendor != "Warehouse" and
-                    vendor != "No vendor"):
+            if self.ordersByVendor[vendor] and vendor in self.vendors:
                 for order in self.ordersByVendor[vendor]:
-                    vendorDetails = self.config["Main Settings"]["Vendors"] \
-                        [vendor]
-                    poData += self.buildPOData(vendorDetails, order)
+                    poData += self.buildPOData(vendor, order)
         response = self.fishbowl.importPurchaseOrder(poData)
         return response
 
@@ -475,25 +468,6 @@ class InternalAutomation:
 
         self.importSalesOrders()
         self.importPurchaseOrders()
-
-    def generateSourceList(self) -> list:
-
-        """
-        Modify to pull Sams most recent email!
-        """
-        """
-        Returns the inventory file conatining vendor inventory as a list.
-
-        Return:
-            list : inventory by vendor
-        """
-
-        sourceListText = self.outlook.getSourceList().text
-        sourceList = [row.strip("\r") for row in sourceListText.split("\n")]
-        for i in range(len(sourceList) - 1):
-            sourceList[i] = sourceList[i].split(",")
-        sourceList.pop(len(sourceList) - 1)
-        return sourceList
 
     def getLKQStock(self):
         return self.ftpServer.getFileAsList(
@@ -542,42 +516,33 @@ class InternalAutomation:
             Name of the vendor (str) if any else None
         """
 
-        vendor = wheelsourcing.assignCheapestVendor(
-            order.hollander, order.qty, self.sourceList
-        )
+        vendor = self.sourceList.get_cheapest_vendor(order.hollander,
+                                                     order.qty)
         if not vendor:
             vendor = "No vendor"
-        self.ordersByVendor[vendor].append(order)
+        if self.ordersByVendor.get(vendor):
+            self.ordersByVendor[vendor].append(order)
+        else:
+            self.ordersByVendor[vendor] = [order]
 
 
 def orderImport(test=True):
+    start = datetime.datetime.now()
     automation = InternalAutomation()
     try:
         automation.getOrders()
         if not test:
             automation.importOrders()
+            email = "danny@factorywheelwarehouse.com"
+        else:
+            email = "danny@factorywheelwarehouse.com"
         for vendor in automation.ordersByVendor:
-            if automation.ordersByVendor[vendor] and not test:
-                automation.emailDropships(
-                    automation.ordersByVendor[vendor], vendor,
-                    "sales@factorywheelwarehouse.com"
-                )
-                automation.emailExceptionOrders(
-                    "sales@factorywheelwarehouse.com"
-                )
-            if automation.ordersByVendor[vendor] and test:
-                automation.emailDropships(
-                    automation.ordersByVendor[vendor], vendor,
-                    "danny@factorywheelwarehouse.com"
-                )
-                automation.emailExceptionOrders(
-                    "danny@factorywheelwarehouse.com"
-                )
-        print(automation.ordersByVendor)
+            automation.emailDropships(automation.ordersByVendor[vendor],
+                                      vendor, email)
+        automation.emailExceptionOrders(email)
     except Exception:
         traceback.print_exc()
-    finally:
-        automation.close()
+    print((datetime.datetime.now() - start).total_seconds())
 
 
 def trackingUpload():
@@ -586,5 +551,3 @@ def trackingUpload():
         automation.addTracking()
     except Exception:
         traceback.print_exc()
-    finally:
-        automation.close()

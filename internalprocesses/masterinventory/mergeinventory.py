@@ -4,11 +4,13 @@ import os
 import traceback
 from base64 import b64encode
 from dotenv import load_dotenv
+
+from internalprocesses import aws
 from internalprocesses.fishbowl import FishbowlClient
 from internalprocesses.ftpconnection.ftpConnection import FTPConnection
 from internalprocesses.outlookapi.outlook import OutlookClient
-from internalprocesses.wheelsourcing.wheelsourcing import (
-    COREPATTERN, buildVendorInventory)
+from internalprocesses.inventory.inventory import (
+    CORE_PATTERN, Inventory)
 
 
 def _setVendorStock(vendorDetails):
@@ -113,7 +115,8 @@ def convertInventoryToList(ftpServer, fishbowl):
             "Road Ready Cost", "Blackburns", "Blackburns Cost"
         ]
     ]
-    inventoryDict = buildVendorInventory(ftpServer, fishbowl)
+    inventoryDict = Inventory(aws.get_vendor_config_data(),
+                              ftpServer, fishbowl).inventory
     inventoryDict["Core"] = _convertCoresToFinished(
         ftpServer, inventoryDict["Core"]
     )

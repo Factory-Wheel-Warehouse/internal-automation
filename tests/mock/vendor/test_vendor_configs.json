@@ -1,0 +1,150 @@
+[
+  {
+    "vendor_name": "Coast",
+    "address": {
+      "name": "Coast to Coast",
+      "city": "Chicago",
+      "country": "UNITED STATES",
+      "state": "IL",
+      "street1": "15733 Collections Center Drive",
+      "zipcode": "60693"
+    },
+    "cost_adjustment_config": {
+      "steel_adjustment": 17.5,
+      "alloy_adjustment": 12.5,
+      "general_adjustment": 0
+    },
+    "inventory_file_config": {
+      "cost_column": 26,
+      "file_path": "/lkq/Factory Wheel Warehouse_837903.csv",
+      "part_number_column": 2,
+      "quantity_column": 27
+    }
+  },
+  {
+    "vendor_name": "Perfection",
+    "address": {
+      "city": "Huntington",
+      "country": "UNITED STATES",
+      "name": "Perfection",
+      "state": "IN",
+      "street1": "255 N Briant ST",
+      "zipcode": "46750"
+    },
+    "classification_config": {
+      "classification_condition_column": 3,
+      "core_condition": "condition.lower()[0] == \"c\"",
+      "finish_condition": "condition.lower()[0] == \"f\""
+    },
+    "inventory_file_config": {
+      "cost_column": 6,
+      "file_path": "/perfection/perfection_inventory.xlsx",
+      "part_number_column": 1,
+      "quantity_column": 5
+    },
+    "sku_map_config": {
+      "file_path": "/perfection/PerfectionFWWMap.csv",
+      "inhouse_part_number_column": 1,
+      "vendor_part_number_column": 0
+    }
+  },
+  {
+    "vendor_name": "Blackburns",
+    "address": {
+      "city": " ",
+      "country": " ",
+      "name": "BlaCKBURNS",
+      "state": " ",
+      "street1": "BlaCKBURNS",
+      "zipcode": " "
+    },
+    "sku_map_config": {
+      "file_path": "/blackburns/BlackburnsFWWMap.csv",
+      "inhouse_part_number_column": 2,
+      "vendor_part_number_column": 0
+    },
+    "inventory_file_config": {
+      "cost_column": 4,
+      "file_path": "/blackburns/BlackburnInventory.csv",
+      "part_number_column": 3,
+      "quantity_column": 0
+    },
+    "inclusion_config": {
+      "inclusion_condition": "condition.lower()[0] == \"r\"",
+      "exclusion_condition": "condition.lower()[0] != \"r\"",
+      "inclusion_condition_column": 5
+    }
+  },
+  {
+    "vendor_name": "Jante",
+    "address": {
+      "city": "Rockford",
+      "country": "UNITED STATES",
+      "name": "Jante Wheels",
+      "state": "TN",
+      "street1": "228 Dunavant Dr.",
+      "zipcode": "37853"
+    },
+    "inventory_file_config": {
+      "file_path": "/jante/wheelInventory.csv",
+      "part_number_column": 0,
+      "quantity_column": 1
+    },
+    "cost_map_config": {
+      "file_path": "jante/PriceList.xlsx",
+      "part_number_column": 0,
+      "cost_column": 1
+    }
+  },
+  {
+    "vendor_name": "AWRS",
+    "address": {
+      "city": "NORCROSS",
+      "country": "UNITED STATES",
+      "name": "AWRS CLAIMS WORLD OF WHEELS",
+      "state": "GA",
+      "street1": "3100 Medlock Bridge Road\nSUITE 321",
+      "zipcode": "30071"
+    },
+    "inventory_file_config": {
+      "cost_column": 6,
+      "file_path": "/AWRS/searchresults.csv",
+      "part_number_column": 0,
+      "quantity_column": 5
+    }
+  },
+  {
+    "vendor_name": "Road Ready",
+    "address": {
+      "city": "CHICAGO",
+      "country": "UNITED STATES",
+      "name": "ROAD READY WHEELS",
+      "state": "IL",
+      "street1": "PO BOX 578584",
+      "zipcode": "60657"
+    },
+    "inventory_file_config": {
+      "cost_column": 0,
+      "file_path": "/roadreadywheels/roadready.csv",
+      "part_number_column": 3,
+      "quantity_column": 2
+    }
+  },
+  {
+    "vendor_name": "Wheelership",
+    "address": {
+      "city": " ",
+      "country": " ",
+      "name": "Wheelership",
+      "state": " ",
+      "street1": "Wheelership",
+      "zipcode": " "
+    },
+    "inventory_file_config": {
+      "cost_column": 3,
+      "dir_path": "/wheelership",
+      "part_number_column": 0,
+      "quantity_column": 2
+    }
+  }
+]

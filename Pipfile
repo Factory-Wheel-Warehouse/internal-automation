@@ -15,8 +15,12 @@ msal = "*"
 openpyxl = "*"
 pypdf = "*"
 bs4 = "*"
+boto3 = "*"
 
 [dev-packages]
 
 [requires]
 python_version = "3"
+
+[scripts]
+test = "pipenv run python -m unittest tests"
