@@ -533,7 +533,7 @@ def orderImport(test=True):
         automation.getOrders()
         if not test:
             automation.importOrders()
-            email = "danny@factorywheelwarehouse.com"
+            email = "sales@factorywheelwarehouse.com"
         else:
             email = "danny@factorywheelwarehouse.com"
         for vendor in automation.ordersByVendor:
