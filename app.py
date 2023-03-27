@@ -77,6 +77,12 @@ def emailSoldReport():
     return "Success"
 
 
+@app.route("/warehouse-inventory-upload")
+def warehouse_inventory_upload():
+    Thread(target=automation.warehouse_inventory_upload).start()
+    return "Success"
+
+
 def trackingUploadNewThread():
     automation.trackingUpload()
 

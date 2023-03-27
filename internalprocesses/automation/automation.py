@@ -7,6 +7,7 @@ from pypdf import PdfReader
 from io import BytesIO
 from dotenv import load_dotenv
 import internalprocesses.aws as aws
+from internalprocesses.automation.constants import *
 from internalprocesses.ftpconnection.ftpConnection import FTPConnection
 from internalprocesses.inventory import Inventory
 from internalprocesses.orders.address import Address
@@ -17,6 +18,20 @@ from internalprocesses.outlookapi.outlook import OutlookClient
 from internalprocesses.tracking import (
     get_tracking_from_outlook, TRACKING_PATTERNS, TrackingChecker
 )
+
+
+class AutomationTools:
+    def __init__(self):
+        load_dotenv()
+        self.config = self._read_config()
+
+    @staticmethod
+    def _read_config() -> dict:
+        """Returns the loaded config.json file."""
+
+        cd = os.path.dirname(__file__)
+        config_file = os.path.join(cd, "..", "..", "data/config.json")
+        return json.load(open(config_file))
 
 
 class InternalAutomation:
@@ -542,12 +557,25 @@ def orderImport(test=True):
         automation.emailExceptionOrders(email)
     except Exception:
         traceback.print_exc()
-    print((datetime.datetime.now() - start).total_seconds())
 
 
 def trackingUpload():
     automation = InternalAutomation()
     try:
         automation.addTracking()
+    except Exception:
+        traceback.print_exc()
+
+
+def warehouse_inventory_upload():
+    automation = InternalAutomation()
+    try:
+        inventory = automation.fishbowl.getPartsOnHand()
+        formatted_inventory = [[el.strip('"') for el in row.split(",")]
+                               for row in inventory]
+        print(formatted_inventory)
+        print(type(formatted_inventory))
+        automation.ftpServer.writeListAsCSV(r'/Fishbowl/inventory.csv',
+                                            formatted_inventory)
     except Exception:
         traceback.print_exc()
