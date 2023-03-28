@@ -33,7 +33,7 @@ def _setVendorStock(vendorDetails):
 
 def _getCoreToFinishMap(ftpServer):
     coreToFinishMap = {}
-    magentoSkus = ftpServer.getFileAsList(
+    magentoSkus = ftpServer.get_file_as_list(
         "/Factory_Wheel_Warehouse/combine_inventory/COMBINE_SHEET.csv"
     )
     for row in magentoSkus:
@@ -48,7 +48,7 @@ def _getCoreToFinishMap(ftpServer):
 
 
 def _coastCorePricing(ftpServer):
-    priceList = ftpServer.getFileAsList(
+    priceList = ftpServer.get_file_as_list(
         "/lkq/Factory Wheel Warehouse_837903.csv"
     )
     priceDict = {}
@@ -167,7 +167,7 @@ def uploadInventoryToFTP():
     try:
         masterInventoryList = convertInventoryToList(ftpServer, fishbowl)
         path = "Factory_Wheel_Warehouse/MergedVendorInventory.csv"
-        ftpServer.writeListAsCSV(path, masterInventoryList)
+        ftpServer.write_list_as_csv(path, masterInventoryList)
     except:
         print(traceback.print_exc())
     finally:
@@ -189,7 +189,7 @@ def emailInventorySheet():
                 "Danny"]
         outlook = OutlookClient(outlookConfig, outlookPassword, outlookCS)
         ftpServer = FTPConnection("54.211.94.170", 21, "danny", ftpPassword)
-        inventoryFileBinary = ftpServer.getFileAsBinary(
+        inventoryFileBinary = ftpServer.get_file_as_binary(
             "Factory_Wheel_Warehouse/MergedVendorInventory.csv"
         ).read()
         inventoryFileEDMBinary = b64encode(inventoryFileBinary).decode()

@@ -1,10 +1,5 @@
-import datetime
-import os
 import re
 import json
-import traceback
-from pypdf import PdfReader
-from io import BytesIO
 from dotenv import load_dotenv
 import internalprocesses.aws as aws
 from internalprocesses.automation.constants import *
@@ -16,7 +11,7 @@ from internalprocesses.fishbowl import FishbowlClient
 from internalprocesses.magentoapi.magento import MagentoConnection
 from internalprocesses.outlookapi.outlook import OutlookClient
 from internalprocesses.tracking import (
-    get_tracking_from_outlook, TRACKING_PATTERNS, TrackingChecker
+    get_tracking_from_outlook, TrackingChecker
 )
 
 
@@ -485,12 +480,12 @@ class InternalAutomation:
         self.importPurchaseOrders()
 
     def getLKQStock(self):
-        return self.ftpServer.getFileAsList(
+        return self.ftpServer.get_file_as_list(
             "/lkq/Factory Wheel Warehouse_837903.csv"
         )
 
     def getRoadReadyStock(self):
-        return self.ftpServer.getFileAsList(
+        return self.ftpServer.get_file_as_list(
             "/roadreadywheels/roadready.csv"
         )
 
@@ -539,43 +534,3 @@ class InternalAutomation:
             self.ordersByVendor[vendor].append(order)
         else:
             self.ordersByVendor[vendor] = [order]
-
-
-def orderImport(test=True):
-    start = datetime.datetime.now()
-    automation = InternalAutomation()
-    try:
-        automation.getOrders()
-        if not test:
-            automation.importOrders()
-            email = "sales@factorywheelwarehouse.com"
-        else:
-            email = "danny@factorywheelwarehouse.com"
-        for vendor in automation.ordersByVendor:
-            automation.emailDropships(automation.ordersByVendor[vendor],
-                                      vendor, email)
-        automation.emailExceptionOrders(email)
-    except Exception:
-        traceback.print_exc()
-
-
-def trackingUpload():
-    automation = InternalAutomation()
-    try:
-        automation.addTracking()
-    except Exception:
-        traceback.print_exc()
-
-
-def warehouse_inventory_upload():
-    automation = InternalAutomation()
-    try:
-        inventory = automation.fishbowl.getPartsOnHand()
-        formatted_inventory = [[el.strip('"') for el in row.split(",")]
-                               for row in inventory]
-        print(formatted_inventory)
-        print(type(formatted_inventory))
-        automation.ftpServer.writeListAsCSV(r'/Fishbowl/inventory.csv',
-                                            formatted_inventory)
-    except Exception:
-        traceback.print_exc()

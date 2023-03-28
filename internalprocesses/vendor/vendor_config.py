@@ -1,8 +1,10 @@
 import traceback
+from dataclasses import dataclass
 
 from internalprocesses.orders.address import Address
 
 
+@dataclass
 class VendorConfig:
     def __init__(self, vendor_name: str, address: dict,
                  inventory_file_config: dict, cost_adjustment_config: dict =

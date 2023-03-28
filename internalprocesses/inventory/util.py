@@ -120,9 +120,9 @@ def add_to_inventory(inventory: dict, inventory_key: str, part_num: str,
 def _get_file(ftp: FTPConnection, dir_path: str = None,
               file_path: str = None) -> list[list[str]]:
     if dir_path and not file_path:
-        return ftp.getDirectoryMostRecentFile(dir_path)
+        return ftp.get_directory_most_recent_file(dir_path, True)
     else:
-        return ftp.getFileAsList(file_path)
+        return ftp.get_file_as_list(file_path)
 
 
 def add_vendor_inventory(ftp: FTPConnection, inventory: dict, vendor_name: str,
