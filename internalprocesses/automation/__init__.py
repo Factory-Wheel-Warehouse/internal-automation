@@ -4,8 +4,8 @@ from internalprocesses import aws
 from internalprocesses.automation.automation import InternalAutomation
 
 
-def log_exceptions(func, *args, **kwargs):
-    def run():
+def log_exceptions(func):
+    def run(*args, **kwargs):
         try:
             func(*args, **kwargs)
         except Exception:
