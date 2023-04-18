@@ -256,7 +256,7 @@ class InternalAutomation:
 
         itemType = 10
         item_data = ["Item", itemType, order.hollander, order.hollander,
-                     order.hollander, order.qty, "ea", 0]
+                     order.qty, "ea", order.price]
         return ", ".join([str(element) for element in item_data])
 
     def buildPOString(self, vendor_name: str, order: Order) -> str:
@@ -279,7 +279,7 @@ class InternalAutomation:
         """
         vendor = self.vendors.get(vendor_name)
         if vendor:
-            po_data = ["PO", order.poNum, "20", vendor.address.name, "",
+            po_data = ["PO", order.poNum, 20, vendor_name, "",
                        vendor.address.name, vendor.address.street,
                        vendor.address.city, vendor.address.state,
                        vendor.address.zipcode, vendor.address.country,
