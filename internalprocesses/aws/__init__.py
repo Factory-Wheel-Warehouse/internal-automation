@@ -40,3 +40,14 @@ def post_exception_to_sns(exception_message):
     sns.publish(TopicArn=SNS_EXCEPTION_TOPIC_ARN,
                 Message=exception_message,
                 Subject=SNS_EXCEPTION_SUBJECT)
+
+
+def add_po():
+    po_document = {
+        "customer_po": 15,
+        "hollander": "",
+        "u_code": "",
+        "vendor_name": "",
+        "po_creation": "",
+        "po_fulfill": ""
+    }
