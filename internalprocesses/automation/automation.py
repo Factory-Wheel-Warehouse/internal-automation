@@ -94,14 +94,15 @@ class InternalAutomation:
         consumerSecret = os.getenv("OUTLOOK-CS")
         return OutlookClient(config, password, consumerSecret)
 
-    def getTracking(self, customerPO: str) -> str | None:
+    def getTracking(self, customerPO: str, po_num: str) -> str | None:
 
         """Checks for a tracking number for the customerPO passed in"""
         if self.magento.isEbayOrder(customerPO):
             customerPO = customerPO[1:]
-        poNum = self.fishbowl.getPONum(customerPO)
-        if poNum:
-            tracking_numbers = get_tracking_from_outlook(poNum, self.outlook)
+        if po_num:
+            tracking_numbers = get_tracking_from_outlook(po_num, self.outlook)
+            if tracking_numbers:
+                self.fishbowl.fulfill_po(po_num)
             if len(tracking_numbers) == 1:
                 return list(tracking_numbers.values())[0][0]
         else:
@@ -140,15 +141,15 @@ class InternalAutomation:
 
         tracking = {}
         for customerPO in self.unfulfilledOrders:
-            trackingNumber = self.getTracking(customerPO)
-            print(customerPO, trackingNumber)
+            po_num = self.fishbowl.getPONum(customerPO)
+            trackingNumber = self.getTracking(customerPO, po_num)
             if trackingNumber:
                 tracking[customerPO] = trackingNumber
+                # Fulfill PO # / Enter into DynamoDB
         for customerPO, trackingNumber in tracking.items():
             if not self.magento.isAmazonOrder(customerPO):
                 # Should delete after adding, but delete request keeps 
                 # returning server error for some reason
-                print(customerPO, trackingNumber)
                 self.magento.addOrderTracking(customerPO, trackingNumber)
             else:
                 carrier = self.magento.getCarrier(trackingNumber)
