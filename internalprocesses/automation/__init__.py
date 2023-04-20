@@ -8,7 +8,7 @@ def log_exceptions(func):
     def run(*args, **kwargs):
         try:
             func(*args, **kwargs)
-        except Exception:
+        except BaseException:
             traceback.print_exc()
             exception = traceback.format_exc()
             message = f"Exception encountered during {__name__}" \
@@ -18,7 +18,7 @@ def log_exceptions(func):
     return run
 
 
-@log_exceptions
+# @log_exceptions
 def order_import(test=True):
     automation = InternalAutomation()
     automation.getOrders()
@@ -33,7 +33,7 @@ def order_import(test=True):
     automation.emailExceptionOrders(email)
 
 
-@log_exceptions
+# @log_exceptions
 def tracking_upload():
     InternalAutomation().addTracking()
 

@@ -1,5 +1,4 @@
 class Order():
-
     """
     A class for representing orders.
 
@@ -30,17 +29,18 @@ class Order():
     """
 
     def __init__(
-        self, address, hollander, qty, price,
-        customerPO = None
+            self, address, hollander, qty, price,
+            customerPO=None
     ):
         self.address = address
         self.customerPO = customerPO
         self.hollander = hollander
         self.qty = qty
         self.price = price
+        self.cost = 0
         self.soNum = None
         self.poNum = None
-    
+
     def __str__(self):
         if self.poNum:
             string = f"{self.hollander} x{self.qty} PO #{self.poNum}\n\n"
@@ -50,46 +50,59 @@ class Order():
         return string
 
     @property
-    def customerPO(self): return self._customerPO
+    def customerPO(self):
+        return self._customerPO
 
     @customerPO.setter
-    def customerPO(self, customerPO): self._customerPO = customerPO
+    def customerPO(self, customerPO):
+        self._customerPO = customerPO
 
     @property
-    def hollander(self): return self._hollander
+    def hollander(self):
+        return self._hollander
 
     @hollander.setter
-    def hollander(self, hollander): self._hollander = hollander
+    def hollander(self, hollander):
+        self._hollander = hollander
 
     @property
-    def qty(self): return self._qty
+    def qty(self):
+        return self._qty
 
     @qty.setter
-    def qty(self, qty): self._qty = qty
+    def qty(self, qty):
+        self._qty = qty
 
     @property
-    def price(self): return self._price
+    def price(self):
+        return self._price
 
     @price.setter
-    def price(self, price): self._price = price
+    def price(self, price):
+        self._price = price
 
     @property
-    def soNum(self): return self._soNum
+    def soNum(self):
+        return self._soNum
 
     @soNum.setter
-    def soNum(self, soNum): self._soNum = soNum
+    def soNum(self, soNum):
+        self._soNum = soNum
 
     @property
-    def poNum(self): return self._poNum
+    def poNum(self):
+        return self._poNum
 
     @poNum.setter
-    def poNum(self, poNum): self._poNum = poNum
+    def poNum(self, poNum):
+        self._poNum = poNum
+
 
 class WalmartOrder(Order):
-    
+
     def __init__(
-        self, address, hollander, qty, price,
-        customerPO = None
+            self, address, hollander, qty, price,
+            customerPO=None
     ):
         super().__init__(
             address, hollander, qty, price,
@@ -97,11 +110,12 @@ class WalmartOrder(Order):
         )
         self.avenue = "Walmart"
 
+
 class EbayAlbanyOrder(Order):
 
     def __init__(
-        self, address, hollander, qty, price,
-        customerPO = None
+            self, address, hollander, qty, price,
+            customerPO=None
     ):
         super().__init__(
             address, hollander, qty, price,
@@ -109,11 +123,12 @@ class EbayAlbanyOrder(Order):
         )
         self.avenue = "Ebay Albany"
 
+
 class MainEbayOrder(Order):
 
     def __init__(
-        self, address, hollander, qty, price,
-        customerPO = None
+            self, address, hollander, qty, price,
+            customerPO=None
     ):
         super().__init__(
             address, hollander, qty, price,
@@ -121,11 +136,12 @@ class MainEbayOrder(Order):
         )
         self.avenue = "Main Ebay"
 
+
 class FacebookOrder(Order):
 
     def __init__(
-        self, address, hollander, qty, price,
-        customerPO = None
+            self, address, hollander, qty, price,
+            customerPO=None
     ):
         super().__init__(
             address, hollander, qty, price,
@@ -133,11 +149,12 @@ class FacebookOrder(Order):
         )
         self.avenue = "Facebook"
 
+
 class AmazonOrder(Order):
 
     def __init__(
-        self, address, hollander, qty, price,
-        customerPO = None
+            self, address, hollander, qty, price,
+            customerPO=None
     ):
         super().__init__(
             address, hollander, qty, price,
@@ -145,11 +162,12 @@ class AmazonOrder(Order):
         )
         self.avenue = "Amazon"
 
+
 class WebsiteOrder(Order):
 
     def __init__(
-        self, address, hollander, qty, price,
-        customerPO = None
+            self, address, hollander, qty, price,
+            customerPO=None
     ):
         super().__init__(
             address, hollander, qty, price,
@@ -157,11 +175,12 @@ class WebsiteOrder(Order):
         )
         self.avenue = "Website"
 
+
 class OEDOrder(Order):
 
     def __init__(
-        self, address, hollander, qty, price,
-        customerPO = None
+            self, address, hollander, qty, price,
+            customerPO=None
     ):
         super().__init__(
             address, hollander, qty, price,

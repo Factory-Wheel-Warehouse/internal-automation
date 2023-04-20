@@ -72,9 +72,9 @@ class Inventory:
         return False
 
     def get_cheapest_vendor(self, part_number: str,
-                            quantity: int) -> str | None:
+                            quantity: int) -> tuple[str, int] | None:
         if self._core_in_stock_inhouse(part_number, quantity):
-            return INHOUSE_VENDOR_KEY
+            return INHOUSE_VENDOR_KEY, 0
         search_order = [FINISH_INVENTORY_KEY, CORE_INVENTORY_KEY]
         for inventory_key in search_order:
             availability = self.inventory[inventory_key].get(part_number)
@@ -89,4 +89,4 @@ class Inventory:
                     self._decrement_inventory(inventory_key,
                                               part_number, min_vendor,
                                               quantity)
-                    return min_vendor
+                    return min_vendor, min_

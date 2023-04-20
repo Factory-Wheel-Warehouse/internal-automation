@@ -372,12 +372,16 @@ class FishbowlClient:
                 data.append(f"{po_num}, {True}, {vendor_part_num}, {qty}")
             return self.sendImportRequest(data, "ImportReceivingData")
         except IndexError as e:
+            print(e)
             return None
 
     def _parse_query_request_response(self, response: dict):
         query_response = response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"]
         data = query_response["Rows"]["Row"]
-        return [[el.strip("\"") for el in row.split(',')] for row in data]
+        if isinstance(data, list):
+            return [[el.strip("\"") for el in row.split(",")] for row in data]
+        else:
+            return [[el.strip("\"") for el in data.split(",")]]
 
     def sendQueryRequest(self, query):
 

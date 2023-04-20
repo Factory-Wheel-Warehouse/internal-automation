@@ -15,20 +15,6 @@ from internalprocesses.tracking import (
 )
 
 
-class AutomationTools:
-    def __init__(self):
-        load_dotenv()
-        self.config = self._read_config()
-
-    @staticmethod
-    def _read_config() -> dict:
-        """Returns the loaded config.json file."""
-
-        cd = os.path.dirname(__file__)
-        config_file = os.path.join(cd, "..", "..", "data/config.json")
-        return json.load(open(config_file))
-
-
 class InternalAutomation:
 
     def __init__(self):
@@ -145,7 +131,6 @@ class InternalAutomation:
             trackingNumber = self.getTracking(customerPO, po_num)
             if trackingNumber:
                 tracking[customerPO] = trackingNumber
-                # Fulfill PO # / Enter into DynamoDB
         for customerPO, trackingNumber in tracking.items():
             if not self.magento.isAmazonOrder(customerPO):
                 # Should delete after adding, but delete request keeps 
@@ -255,9 +240,8 @@ class InternalAutomation:
             str : formatted row describing the item
         """
 
-        itemType = 10
-        item_data = ["Item", itemType, order.hollander, order.hollander,
-                     order.qty, "ea", order.price]
+        item_data = ["Item", 10, order.hollander, order.hollander,
+                     order.qty, "ea", order.cost]
         return ", ".join([str(element) for element in item_data])
 
     def buildPOString(self, vendor_name: str, order: Order) -> str:
@@ -444,21 +428,18 @@ class InternalAutomation:
 
         soData = []
         for vendor in self.ordersByVendor:
-            if vendor != ["No vendor"]:
-                for order in self.ordersByVendor[vendor]:
-                    if not self.fishbowl.isProduct(order.hollander):
-                        self.fishbowl.importProduct(order.hollander)
-                        # set default vendor as coast
-                    customer = self.config["Main Settings"] \
-                        ["Customers"][order.avenue]
-                    soData += self.buildSOData(customer, order, vendor)
+            for order in self.ordersByVendor[vendor]:
+                if not self.fishbowl.isProduct(order.hollander):
+                    self.fishbowl.importProduct(order.hollander)
+                customer = self.config["Main Settings"]["Customers"][
+                    order.avenue]
+                soData += self.buildSOData(customer, order, vendor)
         response = self.fishbowl.importSalesOrder(soData)
         for vendor in self.ordersByVendor:
             for order in self.ordersByVendor[vendor]:
                 order.soNum = self.fishbowl.getSONum(order.customerPO)
-                if vendor != "Warehouse":
-                    poNum = self.fishbowl.getPONum(order.customerPO)
-                    order.poNum = poNum
+                if self.vendors.get(vendor):
+                    order.poNum = self.fishbowl.getPONum(order.customerPO)
         return response
 
     def importPurchaseOrders(self):
@@ -467,7 +448,7 @@ class InternalAutomation:
 
         poData = []
         for vendor in self.ordersByVendor:
-            if self.ordersByVendor[vendor] and vendor in self.vendors:
+            if self.vendors.get(vendor):
                 for order in self.ordersByVendor[vendor]:
                     poData += self.buildPOData(vendor, order)
         response = self.fishbowl.importPurchaseOrder(poData)
@@ -527,10 +508,10 @@ class InternalAutomation:
             Name of the vendor (str) if any else None
         """
 
-        vendor = self.sourceList.get_cheapest_vendor(order.hollander,
-                                                     order.qty)
+        vendor, order.cost = self.sourceList.get_cheapest_vendor(
+            order.hollander, order.qty)
         if not vendor:
-            vendor = "No vendor"
+            vendor, order.cost = "No vendor", 0
         if self.ordersByVendor.get(vendor):
             self.ordersByVendor[vendor].append(order)
         else:
