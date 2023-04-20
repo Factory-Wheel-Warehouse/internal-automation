@@ -382,9 +382,35 @@ class FishbowlClient:
         response = self.sendImportRequest(data, "ImportPurchaseOrder")
         return response
 
-    def fulfill_po(self, po_num):
-        data = ["PONum, Fulfill", f"{po_num}, true"]
-        return self.sendImportRequest(data, "ImportReceivingData")
+    def get_po_fulfillment_details(self, po_num: str):
+        query = f"""
+        SELECT b.vendorPartNum, b.qtyToFulfill
+        FROM po a
+        LEFT JOIN poitem b
+        ON a.id = b.poId
+        WHERE a.num = "{po_num}";
+        """
+        response = self.sendQueryRequest(query)
+        results = response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"]["Rows"][
+            "Row"]
+        return results
+
+    def fulfill_po(self, po_num: str):
+        data = ["PONum, Fulfill, VendorPartNum, Qty"]
+        fulfillment_details = self.get_po_fulfillment_details(po_num)
+        try:
+            for row in fulfillment_details[1:]:
+                row_data = [el.strip("\"") for el in row.split(',')]
+                vendor_part_num, qty = row_data[0], int(float(row_data[1]))
+                data.append(f"{po_num}, {True}, {vendor_part_num}, {qty}")
+            return self.sendImportRequest(data, "ImportReceivingData")
+        except IndexError as e:
+            return None
+
+    def _parse_query_request_response(self, response: dict):
+        query_response = response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"]
+        data = query_response["Rows"]["Row"]
+        return [[el.strip("\"") for el in row.split(',')] for row in data]
 
     def sendQueryRequest(self, query):
 
