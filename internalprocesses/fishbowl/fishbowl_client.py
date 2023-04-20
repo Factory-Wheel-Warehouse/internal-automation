@@ -322,8 +322,7 @@ class FishbowlClient:
         """Adds a list of parts into Fishbowl and returns the response."""
 
         data = [
-            '"PartNumber", "PartDescription", "UOM", "PartType", ' \
-            '"POItemType", "ConsumptionRate"',
+            '"PartNumber", "PartDescription", "UOM", "PartType", "POItemType", "ConsumptionRate"',
         ]
         data.append(
             f'"{partNumber}", "{partNumber}", "ea", "Inventory", "Purchase", 0'
@@ -376,12 +375,16 @@ class FishbowlClient:
         """Adds a purchase order into Fishbowl."""
 
         data = [
-            '"Flag", "PONum", "Status", "VendorName", "VendorContact", "RemitToName", "RemitToAddress", "RemitToCity", "RemitToState", "RemitToZip", "RemitToCountry", "ShipToName", "DeliverToName", "ShipToAddress", "ShipToCity", "ShipToState", "ShipToZip", "ShipToCountry", "CarrierName"',
-            '"Flag", "POItemTypeID", "PartNumber", "VendorPartNumber", "PartQuantity", "UOM", "PartPrice"'
+            'Flag, PONum, Status, VendorName, VendorContact, RemitToName, RemitToAddress, RemitToCity, RemitToState, RemitToZip, RemitToCountry, ShipToName, DeliverToName, ShipToAddress, ShipToCity, ShipToState, ShipToZip, ShipToCountry, CarrierName',
+            'Flag, POItemTypeID, PartNumber, VendorPartNumber, PartQuantity, UOM, PartPrice'
         ]
         data += poData
         response = self.sendImportRequest(data, "ImportPurchaseOrder")
         return response
+
+    def fulfill_po(self, po_num):
+        data = ["PONum, Fulfill", f"{po_num}, true"]
+        return self.sendImportRequest(data, "ImportReceivingData")
 
     def sendQueryRequest(self, query):
 
