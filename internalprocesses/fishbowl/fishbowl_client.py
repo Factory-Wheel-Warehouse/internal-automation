@@ -53,7 +53,7 @@ class FishbowlClient:
 
     @password.setter
     def password(self, password):
-        self._password = b64(md5(password.encode()).digest()).decode()
+        self._password = password
 
     @property
     def host(self):
