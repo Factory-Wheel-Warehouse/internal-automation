@@ -90,3 +90,4 @@ class Inventory:
                                               part_number, min_vendor,
                                               quantity)
                     return min_vendor, min_
+        return NO_VENDOR, 0

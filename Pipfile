@@ -16,6 +16,7 @@ openpyxl = "*"
 pypdf = "*"
 bs4 = "*"
 boto3 = "*"
+retry = "*"
 
 [dev-packages]
 

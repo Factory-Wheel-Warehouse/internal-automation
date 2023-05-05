@@ -128,7 +128,11 @@ class InternalAutomation:
         tracking = {}
         for customerPO in self.unfulfilledOrders:
             po_num = self.fishbowl.getPONum(customerPO)
-            trackingNumber = self.getTracking(customerPO, po_num)
+            try:
+                trackingNumber = self.getTracking(customerPO, po_num)
+            except KeyError:
+                print(f"KeyError searching for tracking:\nCustomerPO: "
+                      f"{customerPO}")
             if trackingNumber:
                 tracking[customerPO] = trackingNumber
         for customerPO, trackingNumber in tracking.items():
@@ -510,8 +514,6 @@ class InternalAutomation:
 
         vendor, order.cost = self.sourceList.get_cheapest_vendor(
             order.hollander, order.qty)
-        if not vendor:
-            vendor, order.cost = "No vendor", 0
         if self.ordersByVendor.get(vendor):
             self.ordersByVendor[vendor].append(order)
         else:

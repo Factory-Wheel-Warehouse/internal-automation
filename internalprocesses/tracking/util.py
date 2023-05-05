@@ -3,6 +3,7 @@ from io import BytesIO
 
 import requests
 from pypdf import PdfReader
+from retry import retry
 
 from internalprocesses.outlookapi.outlook import OutlookClient
 from internalprocesses.tracking.constants import *
@@ -124,6 +125,7 @@ def tracking_is_valid(tracking_number: str, carrier: str) -> bool:
     return len(response.text) > 0
 
 
+@retry(ConnectionResetError, tries=3, delay=1)
 def get_tracking_from_outlook(po_num: str, outlook: OutlookClient):
     """
     Searches the account connected to OutlookClient for emails containing
