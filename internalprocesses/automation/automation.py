@@ -430,21 +430,22 @@ class InternalAutomation:
             dict : json response to import
         """
 
-        soData = []
         for vendor in self.ordersByVendor:
             for order in self.ordersByVendor[vendor]:
                 if not self.fishbowl.isProduct(order.hollander):
                     self.fishbowl.importProduct(order.hollander)
                 customer = self.config["Main Settings"]["Customers"][
                     order.avenue]
-                soData += self.buildSOData(customer, order, vendor)
-        response = self.fishbowl.importSalesOrder(soData)
+                soData = self.buildSOData(customer, order, vendor)
+                if vendor in self.vendors:
+                    self.fishbowl.adjust_vendor_part_cost(order.hollander,
+                                                          vendor, order.cost)
+                self.fishbowl.importSalesOrder(soData)
         for vendor in self.ordersByVendor:
             for order in self.ordersByVendor[vendor]:
                 order.soNum = self.fishbowl.getSONum(order.customerPO)
                 if self.vendors.get(vendor):
                     order.poNum = self.fishbowl.getPONum(order.customerPO)
-        return response
 
     def importPurchaseOrders(self):
 
@@ -463,7 +464,6 @@ class InternalAutomation:
         """Sends an import request to import all pending sales."""
 
         self.importSalesOrders()
-        self.importPurchaseOrders()
 
     def getLKQStock(self):
         return self.ftpServer.get_file_as_list(

@@ -307,8 +307,25 @@ class FishbowlClient:
             '"VendorPartNumber", "Cost"'
         ]
         data.append(
-            f'"{partNumber}", "{partNumber}", "Coast to Coast", ' \
-            '"true", "{partNumber}", 0'
+            f'"{partNumber}", "{partNumber}", "Coast to Coast", '
+            f'"true", "{partNumber}", 0'
+        )
+        response = self.sendImportRequest(
+            data, "ImportPartProductAndVendorPricing"
+        )
+        return response
+
+    def adjust_vendor_part_cost(self, partNumber, vendor_name, cost):
+
+        """Adjusts the cost for a part number from a specified vendor"""
+
+        data = [
+            '"PartNumber", "ProductNumber", "Vendor", "DefaultVendor"' \
+            '"VendorPartNumber", "Cost"'
+        ]
+        data.append(
+            f'"{partNumber}", "{partNumber}", "{vendor_name}", {vendor_name}, '
+            f'"{partNumber}", {cost}'
         )
         response = self.sendImportRequest(
             data, "ImportPartProductAndVendorPricing"
