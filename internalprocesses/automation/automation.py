@@ -87,8 +87,6 @@ class InternalAutomation:
             customerPO = customerPO[1:]
         if po_num:
             tracking_numbers = get_tracking_from_outlook(po_num, self.outlook)
-            if tracking_numbers:
-                self.fishbowl.fulfill_po(po_num)
             if len(tracking_numbers) == 1:
                 return list(tracking_numbers.values())[0][0]
         else:
@@ -128,6 +126,7 @@ class InternalAutomation:
         tracking = {}
         for customerPO in self.unfulfilledOrders:
             po_num = self.fishbowl.getPONum(customerPO)
+            trackingNumber = None
             try:
                 trackingNumber = self.getTracking(customerPO, po_num)
             except KeyError:
@@ -136,17 +135,20 @@ class InternalAutomation:
             if trackingNumber:
                 tracking[customerPO] = trackingNumber
         for customerPO, trackingNumber in tracking.items():
+            po = self.fishbowl.getPONum(customerPO)
             if not self.magento.isAmazonOrder(customerPO):
-                # Should delete after adding, but delete request keeps 
-                # returning server error for some reason
-                self.magento.addOrderTracking(customerPO, trackingNumber)
+                self.magento.addOrderTracking(customerPO,
+                                              trackingNumber)
+                self.fishbowl.fulfill_po(po)
             else:
                 carrier = self.magento.getCarrier(trackingNumber)
                 status = self.checkTrackingStatus(
                     trackingNumber, carrier, customerPO
                 )
-                if status == "transit":
-                    self.magento.addOrderTracking(customerPO, trackingNumber)
+                if status in ["transit", "pickup", "delivered"]:
+                    self.magento.addOrderTracking(customerPO,
+                                                  trackingNumber)
+                    self.fishbowl.fulfill_po(po)
 
     def connectMagento(self) -> MagentoConnection:
         accessToken = os.getenv("MAGENTO-AT")

@@ -33,7 +33,7 @@ def order_import(test=True):
     automation.emailExceptionOrders(email)
 
 
-# @log_exceptions
+@log_exceptions
 def tracking_upload():
     InternalAutomation().addTracking()
 
