@@ -81,10 +81,9 @@ class FishbowlClient:
     def connect(self):
 
         """Initializes a socket and connects to the host and port."""
-
         self.stream = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.stream.settimeout(120)
         self.stream.connect((self.host, self.port))
-        self.stream.settimeout(10)
 
     def close(self):
 
@@ -177,7 +176,6 @@ class FishbowlClient:
 
             dict : response received from the API
         """
-
         message = self.prepMessage(jsonDict)
         self.stream.send(message)
         responseString = self.getResponse()
@@ -265,7 +263,6 @@ class FishbowlClient:
 
             dict : response received
         """
-
         jsonDict = {
             "FbiJson": {
                 "Ticket": {
@@ -489,6 +486,8 @@ class FishbowlClient:
 
     def getTracking(self, customerPO):
         soNum = self.getSONum(customerPO)
+        if not soNum:
+            return
         query = f"""
         SELECT id 
         FROM ship 
@@ -497,17 +496,18 @@ class FishbowlClient:
         response = self.sendQueryRequest(query)
         shipID = response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"] \
             ["Rows"]["Row"][1].strip('"')
-        if shipID:
-            query = f"""
-            SELECT trackingNum 
-            FROM shipcarton 
-            WHERE shipcarton.shipId = "{shipID}"
-            """
-            response = self.sendQueryRequest(query)
-            tracking_numbers = response["FbiJson"]["FbiMsgsRs"][
-                                   "ExecuteQueryRs"]["Rows"]["Row"][1:]
-            if len(shipID) > 1:
-                return [number.strip('"') for number in tracking_numbers]
+        if not shipID or shipID == "i":
+            return
+        query = f"""
+        SELECT trackingNum 
+        FROM shipcarton 
+        WHERE shipcarton.shipId = "{shipID}"
+        """
+        response = self.sendQueryRequest(query)
+        tracking_numbers = response["FbiJson"]["FbiMsgsRs"][
+                               "ExecuteQueryRs"]["Rows"]["Row"][1:]
+        if len(shipID) > 1:
+            return [number.strip('"') for number in tracking_numbers]
 
     def getPartsOnHand(self):
         query = "SELECT STOCK.NUM, STOCK.QTY, PARTCOST.avgCost "

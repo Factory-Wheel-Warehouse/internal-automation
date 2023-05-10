@@ -139,7 +139,8 @@ class InternalAutomation:
             if not self.magento.isAmazonOrder(customerPO):
                 self.magento.addOrderTracking(customerPO,
                                               trackingNumber)
-                self.fishbowl.fulfill_po(po)
+                if po:
+                    self.fishbowl.fulfill_po(po)
             else:
                 carrier = self.magento.getCarrier(trackingNumber)
                 status = self.checkTrackingStatus(
@@ -148,7 +149,8 @@ class InternalAutomation:
                 if status in ["transit", "pickup", "delivered"]:
                     self.magento.addOrderTracking(customerPO,
                                                   trackingNumber)
-                    self.fishbowl.fulfill_po(po)
+                    if po:
+                        self.fishbowl.fulfill_po(po)
 
     def connectMagento(self) -> MagentoConnection:
         accessToken = os.getenv("MAGENTO-AT")
