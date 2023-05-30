@@ -18,7 +18,7 @@ def log_exceptions(func):
     return run
 
 
-@log_exceptions
+# @log_exceptions
 def order_import(test=True):
     automation = InternalAutomation()
     automation.getOrders()

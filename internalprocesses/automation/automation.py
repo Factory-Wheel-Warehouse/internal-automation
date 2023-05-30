@@ -80,11 +80,14 @@ class InternalAutomation:
         consumerSecret = os.getenv("OUTLOOK-CS")
         return OutlookClient(config, password, consumerSecret)
 
-    def getTracking(self, customerPO: str, po_num: str) -> str | None:
+    def getTracking(self, customerPO: str) -> str | None:
 
         """Checks for a tracking number for the customerPO passed in"""
-        if self.magento.isEbayOrder(customerPO):
+        if customerPO[0].isalpha():
             customerPO = customerPO[1:]
+        if not self.fishbowl.isSO(customerPO):
+            return
+        po_num = self.fishbowl.getPONum(customerPO)
         if po_num:
             tracking_numbers = get_tracking_from_outlook(po_num, self.outlook)
             if len(tracking_numbers) == 1:
@@ -117,6 +120,16 @@ class InternalAutomation:
                 trackingNumber, carrier, customerPO
             )
 
+    def add_tracking_number_and_fulfill(self, customer_po, tracking_number,
+                                        po) -> None:
+        self.magento.addOrderTracking(customer_po,
+                                      tracking_number)
+        if po:
+            try:
+                self.fishbowl.fulfill_po(po)
+            except:
+                print(f"{po} already fulfilled")
+
     def addTracking(self) -> None:
 
         """
@@ -125,32 +138,30 @@ class InternalAutomation:
 
         tracking = {}
         for customerPO in self.unfulfilledOrders:
-            po_num = self.fishbowl.getPONum(customerPO)
             trackingNumber = None
             try:
-                trackingNumber = self.getTracking(customerPO, po_num)
+                trackingNumber = self.getTracking(customerPO)
             except KeyError:
                 print(f"KeyError searching for tracking:\nCustomerPO: "
                       f"{customerPO}")
             if trackingNumber:
                 tracking[customerPO] = trackingNumber
         for customerPO, trackingNumber in tracking.items():
-            po = self.fishbowl.getPONum(customerPO)
+            if customerPO[0].isalpha():
+                po = self.fishbowl.getPONum(customerPO[1:])
+            else:
+                po = self.fishbowl.getPONum(customerPO)
             if not self.magento.isAmazonOrder(customerPO):
-                self.magento.addOrderTracking(customerPO,
-                                              trackingNumber)
-                if po:
-                    self.fishbowl.fulfill_po(po)
+                self.add_tracking_number_and_fulfill(customerPO,
+                                                     trackingNumber, po)
             else:
                 carrier = self.magento.getCarrier(trackingNumber)
                 status = self.checkTrackingStatus(
                     trackingNumber, carrier, customerPO
                 )
                 if status in ["transit", "pickup", "delivered"]:
-                    self.magento.addOrderTracking(customerPO,
-                                                  trackingNumber)
-                    if po:
-                        self.fishbowl.fulfill_po(po)
+                    self.add_tracking_number_and_fulfill(customerPO,
+                                                         trackingNumber, po)
 
     def connectMagento(self) -> MagentoConnection:
         accessToken = os.getenv("MAGENTO-AT")

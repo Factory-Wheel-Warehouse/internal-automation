@@ -105,6 +105,8 @@ def include_row_item(exclusion_condition: str,
 
 def add_to_inventory(inventory: dict, inventory_key: str, part_num: str,
                      vendor: str, qty: int, cost: float) -> None:
+    if cost <= 0:
+        return
     if (len(part_num) > PAINT_CODE_START and
             inventory_key == CORE_INVENTORY_KEY):
         part_num = part_num[:PAINT_CODE_START]
