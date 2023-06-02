@@ -166,11 +166,12 @@ class InternalAutomation:
                     self.add_tracking_number_and_fulfill(customerPO,
                                                          trackingNumber, po,
                                                          zero_cost_pos)
-        self.outlook.sendMail("sales@factorywheelwarehouse.com",
-                              "Unfulfilled POs with Tracking Received",
-                              "The following POs have had tracking uploaded "
-                              "but had zero cost PO items:\n\n"
-                              f"{zero_cost_pos}")
+        if zero_cost_pos:
+            self.outlook.sendMail("sales@factorywheelwarehouse.com",
+                                  "Unfulfilled POs with Tracking Received",
+                                  "The following POs have had tracking "
+                                  "uploaded but had zero cost PO items:\n\n"
+                                  f"{zero_cost_pos}")
 
     def connectMagento(self) -> MagentoConnection:
         accessToken = os.getenv("MAGENTO-AT")
