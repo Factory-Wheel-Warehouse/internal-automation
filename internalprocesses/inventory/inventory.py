@@ -1,4 +1,3 @@
-import os
 from math import inf
 
 from internalprocesses.inventory.util import *
@@ -9,23 +8,25 @@ from ..vendor import VendorConfig
 
 
 class Inventory:
-    def __init__(self, vendor_configs: list[VendorConfig],
-                 ftp: FTPConnection, fishbowl: FishbowlClient) -> None:
+    def __init__(self, vendor_configs: list[VendorConfig] | None,
+                 ftp: FTPConnection | None,
+                 fishbowl: FishbowlClient | None) -> None:
         self.inventory = {CORE_INVENTORY_KEY: {}, FINISH_INVENTORY_KEY: {}}
-        add_inhouse_inventory(self.inventory, fishbowl.getPartsOnHand())
-        for vendor in vendor_configs:
-            sku_map = cost_map = None
-            if hasattr(vendor, SKU_MAP_CONFIG_ATTRIBUTE):
-                sku_map = build_map_from_config(
-                    ftp, **vars(vendor.sku_map_config))
-            if hasattr(vendor, COST_MAP_CONFIG_ATTRIBUTE):
-                cost_map = build_map_from_config(
-                    ftp, **vars(vendor.cost_map_config))
-            add_vendor_inventory(ftp, self.inventory, vendor.vendor_name,
-                                 sku_map=sku_map, cost_map=cost_map,
-                                 **vars(vendor.inventory_file_config),
-                                 **vars(vendor.cost_adjustment_config),
-                                 **vars(vendor.classification_config))
+        if vendor_configs and ftp and fishbowl:
+            add_inhouse_inventory(self.inventory, fishbowl.getPartsOnHand())
+            for vendor in vendor_configs:
+                sku_map = cost_map = None
+                if hasattr(vendor, SKU_MAP_CONFIG_ATTRIBUTE):
+                    sku_map = build_map_from_config(
+                        ftp, **vars(vendor.sku_map_config))
+                if hasattr(vendor, COST_MAP_CONFIG_ATTRIBUTE):
+                    cost_map = build_map_from_config(
+                        ftp, **vars(vendor.cost_map_config))
+                add_vendor_inventory(ftp, self.inventory, vendor.vendor_name,
+                                     sku_map=sku_map, cost_map=cost_map,
+                                     **vars(vendor.inventory_file_config),
+                                     **vars(vendor.cost_adjustment_config),
+                                     **vars(vendor.classification_config))
 
     def _decrement_inventory(self, inventory_key: str, part_number: str,
                              vendor: str, quantity: int) -> None:
@@ -48,28 +49,31 @@ class Inventory:
     # Public get cheapest vendor
 
     def _core_in_stock_inhouse(self, part_number: str, quantity: int) -> bool:
-        if len(part_number) > PAINT_CODE_START:
-            paint_code = int(part_number[PAINT_CODE_START: PAINT_CODE_END])
-        else:
-            paint_code = 0
-        part_number_copy = str(part_number)[:PAINT_CODE_START]
-        if not re.match(REPLICA_PATTERN, part_number):
+        core_search_value = get_core_search_value(part_number)
+        if core_search_value:
             core_availability = self.inventory[CORE_INVENTORY_KEY].get(
-                part_number_copy
+                core_search_value
             )
             if core_availability:
                 warehouse_availability = core_availability.get(
                     INHOUSE_VENDOR_KEY
                 )
-                if (warehouse_availability and
-                        paint_code < POLISHED_PAINT_CODE_START):
+                if warehouse_availability:
                     warehouse_quantity = warehouse_availability[QUANTITY_INDEX]
                     if warehouse_quantity >= quantity:
                         self._decrement_inventory(CORE_INVENTORY_KEY,
-                                                  part_number_copy,
+                                                  core_search_value,
                                                   INHOUSE_VENDOR_KEY, quantity)
-                    return True
+                        return True
         return False
+
+    def handle_zero_cost(self, part_number: str, vendor: str) -> float:
+        availability = self.inventory[FINISH_INVENTORY_KEY].get(part_number)
+        if availability:
+            vendor_availability = availability.get(vendor)
+            if vendor_availability:
+                return vendor_availability[COST_INDEX]
+        return 0.0
 
     def get_cheapest_vendor(self, part_number: str,
                             quantity: int) -> tuple[str, int] | None:
@@ -77,17 +81,25 @@ class Inventory:
             return INHOUSE_VENDOR_KEY, 0
         search_order = [FINISH_INVENTORY_KEY, CORE_INVENTORY_KEY]
         for inventory_key in search_order:
-            availability = self.inventory[inventory_key].get(part_number)
+            if inventory_key == CORE_INVENTORY_KEY:
+                search = get_core_search_value(part_number)
+                if not search:
+                    pass
+            else:
+                search = part_number
+            availability = self.inventory[inventory_key].get(search)
             if availability:
                 min_ = inf
                 min_vendor = None
                 for vendor, stock_data in availability.items():
                     vendor_quantity, cost = stock_data
+                    if cost == 0.0:
+                        cost = self.handle_zero_cost(part_number, vendor)
                     if vendor_quantity >= quantity and cost < min_:
                         min_, min_vendor = cost, vendor
                 if min_vendor:
                     self._decrement_inventory(inventory_key,
-                                              part_number, min_vendor,
+                                              search, min_vendor,
                                               quantity)
                     return min_vendor, min_
         return NO_VENDOR, 0

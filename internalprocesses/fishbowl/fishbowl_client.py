@@ -365,7 +365,7 @@ class FishbowlClient:
 
     def get_po_fulfillment_details(self, po_num: str):
         query = f"""
-        SELECT b.vendorPartNum, b.qtyToFulfill
+        SELECT b.vendorPartNum, b.qtyToFulfill, b.unitCost
         FROM po a
         LEFT JOIN poitem b
         ON a.id = b.poId
@@ -383,8 +383,10 @@ class FishbowlClient:
             for row in fulfillment_details[1:]:
                 row_data = [el.strip("\"") for el in row.split(',')]
                 vendor_part_num, qty = row_data[0], int(float(row_data[1]))
-                data.append(f"{po_num}, {True}, {vendor_part_num}, {qty}")
-            return self.sendImportRequest(data, "ImportReceivingData")
+                cost = float(row_data[2])
+                if cost > 0:
+                    data.append(f"{po_num}, {True}, {vendor_part_num}, {qty}")
+                    return self.sendImportRequest(data, "ImportReceivingData")
         except IndexError as e:
             print(e)
             return None

@@ -42,6 +42,8 @@ def build_map_from_config(ftp: FTPConnection, value_column: int,
 def get_adjusted_cost(inhouse_part_number: str, cost: float,
                       general_adjustment: int, steel_adjustment: int,
                       alloy_adjustment: int) -> float:
+    if cost == 0.0:
+        return 0.0
     material_code = str(inhouse_part_number)[:MATERIAL_CODE_END]
     if material_code == ALLOY_MATERIAL_CODE:
         cost += alloy_adjustment
@@ -105,8 +107,6 @@ def include_row_item(exclusion_condition: str,
 
 def add_to_inventory(inventory: dict, inventory_key: str, part_num: str,
                      vendor: str, qty: int, cost: float) -> None:
-    if cost <= 0:
-        return
     if (len(part_num) > PAINT_CODE_START and
             inventory_key == CORE_INVENTORY_KEY):
         part_num = part_num[:PAINT_CODE_START]
@@ -185,9 +185,18 @@ def add_inhouse_inventory(inventory, fishbowl_inventory_report):
         else:
             inventory_key = FINISH_INVENTORY_KEY
         qty = int(float(qty))
-        if avg_cost:
-            avg_cost = round(float(avg_cost), ndigits=COST_ROUND_DIGITS)
-        else:
-            avg_cost = DEFAULT_AVG_COST
+        # Always use cost of zero to prioritize inhouse assignments
         add_to_inventory(inventory, inventory_key, part_num,
-                         INHOUSE_VENDOR_KEY, qty, avg_cost)
+                         INHOUSE_VENDOR_KEY, qty, 0.0)
+
+
+def get_core_search_value(part_number: str) -> str | None:
+    if len(part_number) > PAINT_CODE_START:
+        paint_code = int(part_number[PAINT_CODE_START: PAINT_CODE_END])
+    else:
+        paint_code = 0
+    is_replica = re.match(REPLICA_PATTERN, part_number)
+    is_polished = paint_code > POLISHED_PAINT_CODE_START
+    if not (is_replica or is_polished):
+        return str(part_number)[:PAINT_CODE_START]
+    return None

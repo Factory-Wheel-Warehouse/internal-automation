@@ -121,12 +121,13 @@ class InternalAutomation:
             )
 
     def add_tracking_number_and_fulfill(self, customer_po, tracking_number,
-                                        po) -> None:
+                                        po, zero_cost_pos) -> None:
         self.magento.addOrderTracking(customer_po,
                                       tracking_number)
         if po:
             try:
-                self.fishbowl.fulfill_po(po)
+                if not self.fishbowl.fulfill_po(po):
+                    zero_cost_pos.append(po)
             except:
                 print(f"{po} already fulfilled")
 
@@ -146,6 +147,7 @@ class InternalAutomation:
                       f"{customerPO}")
             if trackingNumber:
                 tracking[customerPO] = trackingNumber
+        zero_cost_pos = []
         for customerPO, trackingNumber in tracking.items():
             if customerPO[0].isalpha():
                 po = self.fishbowl.getPONum(customerPO[1:])
@@ -153,7 +155,8 @@ class InternalAutomation:
                 po = self.fishbowl.getPONum(customerPO)
             if not self.magento.isAmazonOrder(customerPO):
                 self.add_tracking_number_and_fulfill(customerPO,
-                                                     trackingNumber, po)
+                                                     trackingNumber, po,
+                                                     zero_cost_pos)
             else:
                 carrier = self.magento.getCarrier(trackingNumber)
                 status = self.checkTrackingStatus(
@@ -161,7 +164,13 @@ class InternalAutomation:
                 )
                 if status in ["transit", "pickup", "delivered"]:
                     self.add_tracking_number_and_fulfill(customerPO,
-                                                         trackingNumber, po)
+                                                         trackingNumber, po,
+                                                         zero_cost_pos)
+        self.outlook.sendMail("sales@factorywheelwarehouse.com",
+                              "Unfulfilled POs with Tracking Received",
+                              "The following POs have had tracking uploaded "
+                              "but had zero cost PO items:\n\n"
+                              f"{zero_cost_pos}")
 
     def connectMagento(self) -> MagentoConnection:
         accessToken = os.getenv("MAGENTO-AT")
