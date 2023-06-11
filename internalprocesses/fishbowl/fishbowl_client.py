@@ -1,8 +1,6 @@
-import socket
 import json
+import socket
 import struct
-from base64 import b64encode as b64
-from hashlib import md5
 
 from internalprocesses.fishbowl.fishbowl_status import status_codes
 

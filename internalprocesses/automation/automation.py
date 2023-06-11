@@ -1,11 +1,11 @@
 import re
 import json
 from dotenv import load_dotenv
-import internalprocesses.aws as aws
 from internalprocesses.automation.constants import *
+from internalprocesses.aws.dynamodb import ProcessedOrderDAO, InventoryDAO, \
+    VendorConfigDAO
 from internalprocesses.ftpconnection.ftpConnection import FTPConnection
 from internalprocesses.inventory import Inventory
-from internalprocesses.orders.address import Address
 from internalprocesses.orders.orders import *
 from internalprocesses.fishbowl import FishbowlClient
 from internalprocesses.magentoapi.magento import MagentoConnection
@@ -22,7 +22,7 @@ class InternalAutomation:
         self.config = self.readConfig()
         self.ordersByVendor = {}
         self.vendors = {}
-        for vendor in aws.get_vendor_config_data():
+        for vendor in VendorConfigDAO().get_all_items():
             self.vendors[vendor.vendor_name] = vendor
         self.exceptionOrders = []
         self.customers = self.config["Main Settings"]["Customers"]
@@ -80,27 +80,27 @@ class InternalAutomation:
         consumerSecret = os.getenv("OUTLOOK-CS")
         return OutlookClient(config, password, consumerSecret)
 
-    def getTracking(self, customerPO: str) -> str | None:
+    def getTracking(self, customer_po: str) -> str | None:
 
-        """Checks for a tracking number for the customerPO passed in"""
-        if customerPO[0].isalpha():
-            customerPO = customerPO[1:]
-        if not self.fishbowl.isSO(customerPO):
+        """Checks for a tracking number for the customer_po passed in"""
+        if customer_po[0].isalpha():
+            customer_po = customer_po[1:]
+        if not self.fishbowl.isSO(customer_po):
             return
-        po_num = self.fishbowl.getPONum(customerPO)
+        po_num = self.fishbowl.getPONum(customer_po)
         if po_num:
             tracking_numbers = get_tracking_from_outlook(po_num, self.outlook)
             if len(tracking_numbers) == 1:
                 return list(tracking_numbers.values())[0][0]
         else:
-            tracking_numbers = self.fishbowl.getTracking(customerPO)
+            tracking_numbers = self.fishbowl.getTracking(customer_po)
             if tracking_numbers:
                 return tracking_numbers[0]
 
     def checkTrackingStatus(self,
                             trackingNumber: str,
                             carrier: str,
-                            customerPO: str
+                            customer_po: str
                             ) -> str:
 
         """
@@ -114,10 +114,10 @@ class InternalAutomation:
             return trackingData["data"][0]["status"]
         else:
             self.trackingChecker.add_single_tracking(
-                trackingNumber, carrier, customerPO
+                trackingNumber, carrier, customer_po
             )
             return self.checkTrackingStatus(
-                trackingNumber, carrier, customerPO
+                trackingNumber, carrier, customer_po
             )
 
     def add_tracking_number_and_fulfill(self, customer_po, tracking_number,
@@ -138,32 +138,32 @@ class InternalAutomation:
         """
 
         tracking = {}
-        for customerPO in self.unfulfilledOrders:
+        for customer_po in self.unfulfilledOrders:
             trackingNumber = None
             try:
-                trackingNumber = self.getTracking(customerPO)
+                trackingNumber = self.getTracking(customer_po)
             except KeyError:
                 print(f"KeyError searching for tracking:\nCustomerPO: "
-                      f"{customerPO}")
+                      f"{customer_po}")
             if trackingNumber:
-                tracking[customerPO] = trackingNumber
+                tracking[customer_po] = trackingNumber
         zero_cost_pos = []
-        for customerPO, trackingNumber in tracking.items():
-            if customerPO[0].isalpha():
-                po = self.fishbowl.getPONum(customerPO[1:])
+        for customer_po, trackingNumber in tracking.items():
+            if customer_po[0].isalpha():
+                po = self.fishbowl.getPONum(customer_po[1:])
             else:
-                po = self.fishbowl.getPONum(customerPO)
-            if not self.magento.isAmazonOrder(customerPO):
-                self.add_tracking_number_and_fulfill(customerPO,
+                po = self.fishbowl.getPONum(customer_po)
+            if not self.magento.isAmazonOrder(customer_po):
+                self.add_tracking_number_and_fulfill(customer_po,
                                                      trackingNumber, po,
                                                      zero_cost_pos)
             else:
                 carrier = self.magento.getCarrier(trackingNumber)
                 status = self.checkTrackingStatus(
-                    trackingNumber, carrier, customerPO
+                    trackingNumber, carrier, customer_po
                 )
                 if status in ["transit", "pickup", "delivered"]:
-                    self.add_tracking_number_and_fulfill(customerPO,
+                    self.add_tracking_number_and_fulfill(customer_po,
                                                          trackingNumber, po,
                                                          zero_cost_pos)
         if zero_cost_pos:
@@ -226,7 +226,7 @@ class InternalAutomation:
         string += rf'"{order.address.name}", "{order.address.street}", '
         string += f'"{order.address.city}", "{order.address.state}", '
         string += f'"{order.address.zipcode}", "United States", "false", '
-        string += f'"UPS", "None", 30, "{order.customerPO}"'
+        string += f'"UPS", "None", 30, "{order.customer_po}"'
         return string
 
     def buildSOData(self, customer: str, order: str, vendor: str) -> list[str]:
@@ -358,51 +358,34 @@ class InternalAutomation:
             sku = self.checkForValidSKU(item["sku"])
             if not sku:
                 sku = self.checkForValidSKU(item["name"])
+            if self.magento.isEbayOrder(orderID):
+                account = self.magento.getEbayAccount(orderID)
+                orderID = orderID[1:]
+            else:
+                account = self.magento.get_platform(orderID)
             if sku:
-                return Order(
-                    address, sku, item["qty_ordered"],
-                    item["price"], customerPO=orderID
-                )
-        if self.magento.isEbayOrder(orderID):
-            orderID = orderID[1:]
+                order = {
+                    "address": address,
+                    "customer_po": orderID,
+                    "hollander": sku,
+                    "qty": int(item["qty_ordered"]),
+                    "price": float(item["price"]),
+                    "platform": self.magento.get_platform(orderID),
+                    "account": account
+                }
+                return Order(**order)
         if not self.fishbowl.isSO(orderID):
             self.exceptionOrders.append(
                 f"Order #{orderID}\n\n"
             )
-
-    def setOrderType(self, order: Order) -> None:
-
-        if self.magento.isAmazonOrder(order.customerPO):
-            order.__class__ = AmazonOrder
-            order.avenue = "Amazon"
-        elif self.magento.isWalmartOrder(order.customerPO):
-            order.__class__ = WalmartOrder
-            order.avenue = "Walmart"
-        elif self.magento.isWebsiteOrder(order.customerPO):
-            order.__class__ = WebsiteOrder
-            order.avenue = "Website"
-        elif self.magento.isEbayOrder(order.customerPO):
-            ebayAccount = self.magento.getEbayAccount(order.customerPO)
-            order.customerPO = order.customerPO[1:]
-            if ebayAccount == "Main Ebay":
-                order.__class__ = MainEbayOrder
-                order.avenue = "Main Ebay"
-            elif ebayAccount == "Ebay Albany":
-                order.__class__ = EbayAlbanyOrder
-                order.avenue = "Ebay Albany"
-            elif ebayAccount == "OED":
-                order.__class__ = OEDOrder
-                order.avenue = "OED"
 
     def readMagentoOrders(self) -> None:
         for orderID in self.unfulfilledOrders:
             orderDetails = self.magento.getOrderDetails(orderID)
             address = self.getMagentoAddress(orderDetails)
             order = self.buildMagentoOrder(orderDetails, orderID, address)
-            if order:
-                self.setOrderType(order)
-                if not self.fishbowl.isSO(order.customerPO):
-                    self.sortOrder(order)
+            if order and not self.fishbowl.isSO(order.customer_po):
+                self.sortOrder(order)
 
     def getOrders(self) -> None:
 
@@ -440,55 +423,37 @@ class InternalAutomation:
                 "Multiline/Exception Orders", emailBody
             )
 
-    def importSalesOrders(self):
+    def importOrders(self):
 
-        """
-        Returns formatted orders coming from a specified vendor for import.
-        
-        Keyword Arguments:
-
-            venodr : str
-                vendor of the orders being processed
-
-        Return:
-
-            dict : json response to import
-        """
+        """Sends an import request to import all pending sales."""
 
         for vendor in self.ordersByVendor:
             for order in self.ordersByVendor[vendor]:
                 if not self.fishbowl.isProduct(order.hollander):
                     self.fishbowl.importProduct(order.hollander)
                 customer = self.config["Main Settings"]["Customers"][
-                    order.avenue]
+                    order.account]
                 soData = self.buildSOData(customer, order, vendor)
                 if vendor in self.vendors:
                     self.fishbowl.adjust_vendor_part_cost(order.hollander,
                                                           vendor, order.cost)
                 self.fishbowl.importSalesOrder(soData)
+
+        processed_orders = []
+        processed_order_count = 0
         for vendor in self.ordersByVendor:
             for order in self.ordersByVendor[vendor]:
-                order.soNum = self.fishbowl.getSONum(order.customerPO)
-                if self.vendors.get(vendor):
-                    order.poNum = self.fishbowl.getPONum(order.customerPO)
-
-    def importPurchaseOrders(self):
-
-        """Formats purchase orders for a specific vendor."""
-
-        poData = []
-        for vendor in self.ordersByVendor:
-            if self.vendors.get(vendor):
-                for order in self.ordersByVendor[vendor]:
-                    poData += self.buildPOData(vendor, order)
-        response = self.fishbowl.importPurchaseOrder(poData)
-        return response
-
-    def importOrders(self):
-
-        """Sends an import request to import all pending sales."""
-
-        self.importSalesOrders()
+                order.soNum = self.fishbowl.getSONum(order.customer_po)
+                if self.vendors.get(vendor) or vendor == "No Vendor":
+                    order.poNum = self.fishbowl.getPONum(order.customer_po)
+                sbd = InventoryDAO().get_ship_by_date(order)
+                if sbd:
+                    order.ship_by_date = sbd
+                    order.vendor = vendor
+                    processed_orders.append(order)
+                    processed_order_count += 1
+        ProcessedOrderDAO().batch_write_items(processed_orders,
+                                              processed_order_count)
 
     def getLKQStock(self):
         return self.ftpServer.get_file_as_list(
@@ -522,7 +487,7 @@ class InternalAutomation:
                     qty += int(self.RRStock[i][27])
         return qty
 
-    def sortOrder(self, order) -> None:
+    def sortOrder(self, order: Order) -> None:
 
         """
         Checks which vendor has the wheel in stock following a specific order of priority.
@@ -539,6 +504,7 @@ class InternalAutomation:
 
         vendor, order.cost = self.sourceList.get_cheapest_vendor(
             order.hollander, order.qty)
+        print(vendor)
         if self.ordersByVendor.get(vendor):
             self.ordersByVendor[vendor].append(order)
         else:

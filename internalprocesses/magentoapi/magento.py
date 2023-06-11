@@ -67,7 +67,8 @@ class MagentoConnection():
 
     def isEbayOrder(self, incrementID):
         return bool(
-            re.match(r"^[A-Z][0-9]{2}-[0-9]{5}-[0-9]{5}$", incrementID)
+            re.match(r"^[A-Z][0-9]{2}-[0-9]{5}-[0-9]{5}$", incrementID) or
+            re.match(r"^[0-9]{2}-[0-9]{5}-[0-9]{5}$", incrementID)
         )
 
     def getEbayAccount(self, incrementID):
@@ -83,6 +84,16 @@ class MagentoConnection():
 
     def isWebsiteOrder(self, incrementID):
         return bool(re.match(r"^[0-9]{10}$", incrementID))
+
+    def get_platform(self, incrementID):
+        if self.isWebsiteOrder(incrementID):
+            return "website"
+        if self.isWalmartOrder(incrementID):
+            return "walmart"
+        if self.isEbayOrder(incrementID):
+            return "ebay"
+        if self.isAmazonOrder(incrementID):
+            return "amazon"
 
     def getCarrier(self, trackingNumber):
         if re.findall(r"^1Z[a-z|A-Z|0-9]{8}[0-9]{8}$", trackingNumber):

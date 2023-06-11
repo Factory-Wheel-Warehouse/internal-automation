@@ -62,7 +62,6 @@ class OutlookClient():
         self.accessToken = self.getAccessToken(app, self.data)
         if self.accessToken:
             self.headers = {'Authorization': f'Bearer {self.accessToken}'}
-            print("Outlook connected")
 
     def getEmailAttachments(self, emailID):
         return requests.get(

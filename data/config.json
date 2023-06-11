@@ -139,7 +139,7 @@
         "Zipcode": "11725",
         "Country": "UNITED STATES"
       },
-      "Walmart": {
+      "walmart": {
         "Name": "Walmart customer",
         "Address": "None",
         "City": " ",
@@ -155,7 +155,7 @@
         "Zipcode": " ",
         "Country": "UNITED STATES"
       },
-      "Amazon": {
+      "amazon": {
         "Name": "Amazon sale",
         "Address": "None",
         "City": " ",
@@ -163,7 +163,7 @@
         "Zipcode": " ",
         "Country": "UNITED STATES"
       },
-      "Website": {
+      "website": {
         "Name": "Website sale",
         "Address": "None",
         "City": " ",
@@ -171,7 +171,7 @@
         "Zipcode": " ",
         "Country": "UNITED STATES"
       },
-      "Facebook": {
+      "facebook": {
         "Name": "Facebook",
         "Address": "771 Columbia Turnpike",
         "City": "East Greenbush",

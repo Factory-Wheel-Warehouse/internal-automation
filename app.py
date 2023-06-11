@@ -1,13 +1,12 @@
 from threading import Thread
 from flask import Flask, request
-from twilio.rest import Client
 from twilio.twiml.messaging_response import MessagingResponse
 import internalprocesses.corepricer.checkSales as checkSales
 from internalprocesses.automation import *
 from internalprocesses.masterinventory.mergeinventory import (
     uploadInventoryToFTP, emailInventorySheet
 )
-from internalprocesses import emailQuantitySoldReport
+from internalprocesses import email_quantity_sold_report
 
 app = Flask(__name__)
 priceList = checkSales.buildPriceDict()  # 3268 entries
@@ -72,8 +71,15 @@ def emailInventoryFile():
 
 @app.route("/yearly-sold-report")
 def emailSoldReport():
-    emailSoldReportThread = Thread(target=emailQuantitySoldReport)
+    emailSoldReportThread = Thread(target=email_quantity_sold_report)
     emailSoldReportThread.start()
+    return "Success"
+
+
+@app.route("/upload_inventory_source_data")
+def upload_inventory_source_data():
+    thread = Thread(target=update_inventory_source_data)
+    thread.start()
     return "Success"
 
 

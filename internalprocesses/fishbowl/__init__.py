@@ -2,7 +2,7 @@ import sys
 from .fishbowl_client import FishbowlClient
 
 
-def quantitySoldBySKUReport(fishbowl):
+def quantity_sold_by_sku_report(fishbowl):
     output = []
     query = """SELECT SOITEM.productNum as SKU, SUM(SOITEM.qtyFulfilled) as SoldQTY
 FROM SOITEM
@@ -20,7 +20,7 @@ ORDER BY SoldQTY;"""
         except:
             raise Exception("Invalid fishbowl response")
     for row in data[1:]:
-        strippedRow = [value.strip('"') for value in row.split(",")]
-        strippedRow[1] = int(float(strippedRow[1]))
-        output.append(strippedRow)
+        stripped_row = [value.strip('"') for value in row.split(",")]
+        stripped_row[1] = int(float(stripped_row[1]))
+        output.append(stripped_row)
     return output

@@ -1,32 +1,17 @@
+from dataclasses import dataclass
+
+
+@dataclass
 class Address:
-    """
-    Class for representing addresses.
+    name: str
+    street1: str
+    city: str
+    state: str
+    zipcode: str
+    country: str = "UNITED STATES"
+    street2: str | None = None
 
-    Attributes
-    ---------- 
-    name : str
-        Full name to appear on the address
-    street1 : str
-        Street address line 1
-    city : str
-        Address city
-    state : str
-        Address state
-    zipcode : str
-        Address zipcode
-    street2 : str, optional
-        Street address line 2 (Default: None)
-    """
-
-    def __init__(self, name, street1, city, state, zipcode, street2=None,
-                 country='UNITED STATES'):
-        self.name = name
-        self.street1 = street1
-        self.city = city
-        self.state = state
-        self.zipcode = zipcode
-        self.street2 = street2
-        self.country = country
+    def __post_init__(self):
         self.street = self.street1
 
     def __str__(self):

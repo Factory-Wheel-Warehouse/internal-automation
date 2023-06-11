@@ -17,6 +17,9 @@ pypdf = "*"
 bs4 = "*"
 boto3 = "*"
 retry = "*"
+dynamodb-json = "*"
+botocore = "*"
+dacite = "*"
 
 [dev-packages]
 

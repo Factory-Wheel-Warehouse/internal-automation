@@ -1,6 +1,3 @@
-import os
-from pprint import pprint
-
 import boto3
 
 from internalprocesses.aws.constants import *

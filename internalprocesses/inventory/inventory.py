@@ -16,17 +16,13 @@ class Inventory:
             add_inhouse_inventory(self.inventory, fishbowl.getPartsOnHand())
             for vendor in vendor_configs:
                 sku_map = cost_map = None
-                if hasattr(vendor, SKU_MAP_CONFIG_ATTRIBUTE):
-                    sku_map = build_map_from_config(
-                        ftp, **vars(vendor.sku_map_config))
-                if hasattr(vendor, COST_MAP_CONFIG_ATTRIBUTE):
-                    cost_map = build_map_from_config(
-                        ftp, **vars(vendor.cost_map_config))
-                add_vendor_inventory(ftp, self.inventory, vendor.vendor_name,
-                                     sku_map=sku_map, cost_map=cost_map,
-                                     **vars(vendor.inventory_file_config),
-                                     **vars(vendor.cost_adjustment_config),
-                                     **vars(vendor.classification_config))
+                if vendor.sku_map_config:
+                    sku_map = build_map_from_config(ftp, vendor.sku_map_config)
+                if vendor.cost_map_config:
+                    cost_map = build_map_from_config(ftp,
+                                                     vendor.cost_map_config)
+                add_vendor_inventory(ftp, self.inventory, vendor, sku_map,
+                                     cost_map)
 
     def _decrement_inventory(self, inventory_key: str, part_number: str,
                              vendor: str, quantity: int) -> None:
@@ -76,9 +72,9 @@ class Inventory:
         return 0.0
 
     def get_cheapest_vendor(self, part_number: str,
-                            quantity: int) -> tuple[str, int] | None:
+                            quantity: int) -> tuple[str, float] | None:
         if self._core_in_stock_inhouse(part_number, quantity):
-            return INHOUSE_VENDOR_KEY, 0
+            return INHOUSE_VENDOR_KEY, 0.0
         search_order = [FINISH_INVENTORY_KEY, CORE_INVENTORY_KEY]
         for inventory_key in search_order:
             if inventory_key == CORE_INVENTORY_KEY:
@@ -102,4 +98,4 @@ class Inventory:
                                               search, min_vendor,
                                               quantity)
                     return min_vendor, min_
-        return NO_VENDOR, 0
+        return NO_VENDOR, 0.0
