@@ -89,6 +89,12 @@ def warehouse_inventory_upload_endpoint():
     return "Success"
 
 
+@app.route("/email_ship_by_notifications")
+def update_inventory_source_data():
+    Thread(target=email_ship_by_notifications).start()
+    return "Success"
+
+
 def trackingUploadNewThread():
     tracking_upload()
 

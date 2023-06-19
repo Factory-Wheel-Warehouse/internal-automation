@@ -15,7 +15,7 @@ class Order:
     account: str
     vendor: str = None
     soNum: str = None
-    poNum: str = None
+    poNum: str | None = None
     cost: float = None
     processed_date: str = str(date.today())
     ship_by_date: str = None

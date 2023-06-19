@@ -103,8 +103,9 @@ class DAO(ABC):
             else:
                 raise Exception("Max time exceeded waiting for table")
 
-    def get_all_items(self) -> list[Type[T] | None]:
-        data = self._client.scan(TableName=self.table_name)
+    def get_all_items(self, **scan_filter) -> list[Type[T] | None]:
+        data = self._client.scan(TableName=self.table_name,
+                                 ScanFilter=scan_filter)
         if data[ITEM_COUNT_KEY] > 0:
             res = []
             for item in data[ITEMS_KEY]:
@@ -162,6 +163,19 @@ class DAO(ABC):
         self.wait_for_status(DynamoDBStatus.ACTIVE)
 
     def get_item(self, partition_key_value: str) -> Type[T] | None:
+        try:
+            response = self._client.get_item(
+                TableName=self.table_name,
+                Key=self._marshall({self._partition_key: partition_key_value}),
+            )
+            if response:
+                return from_dict(data_class=self._dataclass,
+                                 data=self._unmarshall(response[ITEM_KEY]),
+                                 config=self._dacite_config)
+        except self.BOTOCORE_EXCEPTION:
+            return None
+
+    def _get_item_by_key(self, partition_key_value: str) -> Type[T] | None:
         try:
             response = self._client.get_item(
                 TableName=self.table_name,
