@@ -74,14 +74,17 @@ def update_inventory_source_data():
 def email_ship_by_notifications():
     outlook = OutlookClient(**OUTLOOK_CREDENTIALS)
     order_dao = ProcessedOrderDAO()
-    ship_by_today = order_dao.get_orders_by_sbd(str(date.today()))
+    ship_by_today = filter(lambda order: not order.shipped,
+                           order_dao.get_orders_by_sbd(str(date.today())))
     tomorrow = date.today() + timedelta(days=1)
-    ship_by_tomorrow = order_dao.get_orders_by_sbd(str(tomorrow))
+    ship_by_tomorrow = filter(lambda order: not order.shipped,
+                              order_dao.get_orders_by_sbd(str(tomorrow)))
     if ship_by_today or ship_by_tomorrow:
         message = ""
         if ship_by_today:
             message += "Orders to ship by today: \n\n"
-            message += "\n\n\n".join([str(order) for order in ship_by_today])
+            message += "\n\n\n".join([str(order) for order in
+                                      ship_by_today])
         if ship_by_tomorrow:
             message += "\n\n\n\n\n" if message else ""
             message += "Orders to ship by tomorrow: \n\n"

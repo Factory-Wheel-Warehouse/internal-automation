@@ -19,6 +19,8 @@ class Order:
     cost: float = None
     processed_date: str = str(date.today())
     ship_by_date: str = None
+    shipped: bool = False
+    date_shipped: str = None
 
     def __str__(self):
         if self.poNum:

@@ -1,4 +1,5 @@
 from typing import Type
+from datetime import date
 
 from internalprocesses.aws.dynamodb.constants import COMPARISON_OPERATOR_KEY, \
     EQUAL_TO, ATTRIBUTE_VALUE_LIST_KEY
@@ -28,3 +29,9 @@ class ProcessedOrderDAO(DAO):
             }).get(attribute_key)],
             COMPARISON_OPERATOR_KEY: EQUAL_TO
         })
+
+    def mark_order_shipped(self, customer_po):
+        date_str = str(date.today())
+        return self._update_item(customer_po,
+                                 [("shipped", True),
+                                  ("date_shipped", date_str)])

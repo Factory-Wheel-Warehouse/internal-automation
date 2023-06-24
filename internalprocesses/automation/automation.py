@@ -124,6 +124,7 @@ class InternalAutomation:
                                         po, zero_cost_pos) -> None:
         self.magento.addOrderTracking(customer_po,
                                       tracking_number)
+        ProcessedOrderDAO().mark_order_shipped(customer_po)
         if po:
             try:
                 if not self.fishbowl.fulfill_po(po):
