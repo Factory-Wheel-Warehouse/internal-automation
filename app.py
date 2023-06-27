@@ -90,7 +90,7 @@ def warehouse_inventory_upload_endpoint():
 
 
 @app.route("/email_ship_by_notifications")
-def update_inventory_source_data():
+def email_ship_by_notifications():
     Thread(target=email_ship_by_notifications).start()
     return "Success"
 
