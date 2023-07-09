@@ -151,9 +151,8 @@ class InternalAutomation:
         zero_cost_pos = []
         for customer_po, trackingNumber in tracking.items():
             if customer_po[0].isalpha():
-                po = self.fishbowl.getPONum(customer_po[1:])
-            else:
-                po = self.fishbowl.getPONum(customer_po)
+                customer_po = customer_po[1:]
+            po = self.fishbowl.getPONum(customer_po)
             if not self.magento.isAmazonOrder(customer_po):
                 self.add_tracking_number_and_fulfill(customer_po,
                                                      trackingNumber, po,
@@ -450,9 +449,9 @@ class InternalAutomation:
                 sbd = InventoryDAO().get_ship_by_date(order)
                 if sbd:
                     order.ship_by_date = sbd
-                    order.vendor = vendor
-                    processed_orders.append(order)
-                    processed_order_count += 1
+                order.vendor = vendor
+                processed_orders.append(order)
+                processed_order_count += 1
         ProcessedOrderDAO().batch_write_items(processed_orders,
                                               processed_order_count)
 
