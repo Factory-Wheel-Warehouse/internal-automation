@@ -124,7 +124,10 @@ class InternalAutomation:
                                         po, zero_cost_pos) -> None:
         self.magento.addOrderTracking(customer_po,
                                       tracking_number)
-        ProcessedOrderDAO().mark_order_shipped(customer_po)
+        if customer_po[0].isalpha():
+            ProcessedOrderDAO().mark_order_shipped(customer_po[1:])
+        else:
+            ProcessedOrderDAO().mark_order_shipped(customer_po)
         if po:
             try:
                 if not self.fishbowl.fulfill_po(po):
@@ -151,8 +154,9 @@ class InternalAutomation:
         zero_cost_pos = []
         for customer_po, trackingNumber in tracking.items():
             if customer_po[0].isalpha():
-                customer_po = customer_po[1:]
-            po = self.fishbowl.getPONum(customer_po)
+                po = self.fishbowl.getPONum(customer_po[0])
+            else:
+                po = self.fishbowl.getPONum(customer_po)
             if not self.magento.isAmazonOrder(customer_po):
                 self.add_tracking_number_and_fulfill(customer_po,
                                                      trackingNumber, po,

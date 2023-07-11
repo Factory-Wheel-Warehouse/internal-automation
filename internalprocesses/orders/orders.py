@@ -16,11 +16,11 @@ class Order:
     vendor: str = None
     soNum: str = None
     poNum: str | None = None
-    cost: float = None
+    cost: float = 0.0
     processed_date: str = str(date.today())
-    ship_by_date: str = None
+    ship_by_date: str | None = None
     shipped: bool = False
-    date_shipped: str = None
+    date_shipped: str | None = None
 
     def __str__(self):
         if self.poNum:
