@@ -1,14 +1,11 @@
 import io
-import pprint
-import time
 
 import dacite
-from pandas import read_csv
+import pandas
+from pandas import DataFrame
 
 from internalprocesses import OutlookClient
-from internalprocesses.automation import InternalAutomation
 from internalprocesses.automation.constants import OUTLOOK_CREDENTIALS
-from internalprocesses.aws.dynamodb import ProcessedOrderDAO
 from internalprocesses.inventory.part import Part
 
 SOURCE_FILE_SEARCH_QUERY = "?" + "&".join([
@@ -21,7 +18,7 @@ SOURCE_FILE_SEARCH_QUERY = "?" + "&".join([
 ])
 
 
-def get_most_recent_source_file() -> list:
+def get_most_recent_source_file() -> DataFrame:
     outlook = OutlookClient(**OUTLOOK_CREDENTIALS)
     message_response = outlook.searchMessages(SOURCE_FILE_SEARCH_QUERY)
     email_id = message_response["id"]
@@ -29,21 +26,20 @@ def get_most_recent_source_file() -> list:
     attachment_id = attachment_response[0]["id"]
     attachment_bytes = outlook.getEmailAttachmentContent(email_id,
                                                          attachment_id)
-    return list(
-        read_csv(filepath_or_buffer=io.BytesIO(attachment_bytes)).values)
+    return pandas.read_csv(io.BytesIO(attachment_bytes))
 
 
-def parse_inventory(inventory_list: list[any]) -> list[Part]:
+def parse_inventory(inventory_dataframe: DataFrame) -> list[Part]:
     handling_times = []
-    for row in inventory_list:
+    for _, row in inventory_dataframe.iterrows():
         handling_times.append(dacite.from_dict(
             data_class=Part,
             data={
-                "part_number": row[0],
+                "part_number": row["sku"],
                 "handling_times": {
-                    "ebay": int(float(str(row[40]))),
-                    "amazon": int(float(str(row[41]))),
-                    "walmart": int(float(str(row[42])))
+                    "ebay": int(float(row["HT"])),
+                    "amazon": int(float(row["final_Walmart_HT"])),
+                    "walmart": int(float(row["Amazon_HT"]))
                 }
             }
         ))

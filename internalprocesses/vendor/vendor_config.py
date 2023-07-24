@@ -1,5 +1,5 @@
 import traceback
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass
 
 from internalprocesses.orders.address import Address
@@ -45,8 +45,12 @@ class SkuMapConfig(MapConfig):
     vendor_part_number_column: int = 1
     file_path: str = None
     dir_path: str = None
-    key_column: int | None = inhouse_part_number_column
-    value_column: int | None = vendor_part_number_column
+    key_column: int = None
+    value_column: int = None
+
+    def __post_init__(self):
+        self.key_column = self.vendor_part_number_column
+        self.value_column = self.inhouse_part_number_column
 
 
 @dataclass
@@ -55,8 +59,12 @@ class CostMapConfig(MapConfig):
     cost_column: int = 1
     file_path: str = None
     dir_path: str = None
-    key_column: int | None = part_number_column
-    value_column: int | None = cost_column
+    key_column: int = None
+    value_column: int = None
+
+    def __post_init__(self):
+        self.key_column = self.part_number_column
+        self.value_column = self.cost_column
 
 
 @dataclass
