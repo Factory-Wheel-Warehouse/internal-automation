@@ -2,8 +2,10 @@ import re
 import requests
 from datetime import date, timedelta
 
+from requests import JSONDecodeError
 
-class MagentoConnection():
+
+class MagentoConnection:
 
     def __init__(self, accessToken):
         self.baseRequest = "https://factorywheelwarehouse.com/rest/default/V1/"
@@ -42,7 +44,11 @@ class MagentoConnection():
             headers=self.headers,
             params=params
         )
-        return [order["increment_id"] for order in response.json()["items"]]
+        try:
+            return [order["increment_id"] for order in
+                    response.json()["items"]]
+        except JSONDecodeError as e:
+            raise JSONDecodeError(e, response.text)
 
     def getOrder(self, incrementID):
         params = {}
