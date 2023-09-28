@@ -1,4 +1,6 @@
 import re
+import traceback
+
 import requests
 from datetime import date, timedelta
 
@@ -48,7 +50,9 @@ class MagentoConnection:
             return [order["increment_id"] for order in
                     response.json()["items"]]
         except JSONDecodeError as e:
-            raise JSONDecodeError(e, response.text)
+            traceback.print_stack()
+            print(response.text)
+            raise JSONDecodeError(e)
 
     def getOrder(self, incrementID):
         params = {}

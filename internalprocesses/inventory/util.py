@@ -87,19 +87,22 @@ def get_inventory_key_and_min_qty(part_num: str, row: list[str],
         elif condition_result == 2:
             return CORE_INVENTORY_KEY, CORE_MIN_QTY
     try:
-        if (re.match(FINISH_PATTERN, part_num) or
-                re.match(REPLICA_PATTERN, part_num)):
+        if re.match(FINISH_PATTERN, part_num):
             return FINISH_INVENTORY_KEY, FINISHED_MIN_QTY
         elif re.match(CORE_PATTERN, part_num):
             return CORE_INVENTORY_KEY, CORE_MIN_QTY
+        elif re.match(REPLICA_PATTERN, part_num):
+            return FINISH_INVENTORY_KEY, REPLICA_MIN_QTY
     except TypeError:
         # Log?
         pass
     return None, None
 
 
-def include_row_item(row: list[str],
-                     config: InclusionConfig | None) -> bool:
+def include_row_item(row: list[str], config: InclusionConfig | None,
+                     cost: float, price: float) -> bool:
+    if cost < 0 or cost * (1 + MINIMUM_MARGIN) > price:
+        return False
     if config:
         inclusion_result = eval_conditions(
             config.exclusion_condition, config.inclusion_condition,
@@ -135,32 +138,47 @@ def _get_file(ftp: FTPConnection,
         return ftp.get_file_as_list(config.file_path)
 
 
+def _get_part_cost(cost_map: dict, part_num: str, row: list,
+                   vendor: VendorConfig) -> float:
+    try:
+        if cost_map:
+            cost_map_response = cost_map.get(part_num)
+            if not cost_map_response:
+                # Log missing cost
+                return -1
+            cost = float(cost_map_response)
+        else:
+            cost = float(row[vendor.inventory_file_config.cost_column])
+    except ValueError:
+        return -1
+    return cost
+
+
+def _get_qty(row: list, vendor: VendorConfig) -> int:
+    try:
+        qty = int(row[vendor.inventory_file_config.quantity_column])
+    except ValueError:
+        qty = 0
+    return qty
+
+
 def add_vendor_inventory(ftp: FTPConnection, inventory: dict,
                          vendor: VendorConfig, sku_map: dict,
-                         cost_map: dict) -> None:
+                         cost_map: dict, price_map: dict) -> None:
     for row in _get_file(ftp, vendor.inventory_file_config):
         part_number_column = vendor.inventory_file_config.part_number_column
         part_num = get_part_number(row, part_number_column, sku_map)
-        inventory_key, min_qty = get_inventory_key_and_min_qty(
-            part_num, row, vendor.classification_config)
-        include = include_row_item(row, vendor.inclusion_config)
-        if not inventory_key or not include:
-            continue
         if not part_num:
             # Log error
             continue
-        try:
-            if cost_map:
-                cost_map_response = cost_map.get(part_num)
-                if not cost_map_response:
-                    # Log missing cost
-                    continue
-                cost = float(cost_map_response)
-            else:
-                cost = float(row[vendor.inventory_file_config.cost_column])
-            qty = int(row[vendor.inventory_file_config.quantity_column])
-        except ValueError:
+        inventory_key, min_qty = get_inventory_key_and_min_qty(
+            part_num, row, vendor.classification_config)
+        price = price_map.get(part_num) if price_map.get(part_num) else -1
+        cost = _get_part_cost(cost_map, part_num, row, vendor)
+        include = include_row_item(row, vendor.inclusion_config, cost, price)
+        if not inventory_key or not include:
             continue
+        qty = _get_qty(row, vendor)
         cost = get_adjusted_cost(part_num, cost,
                                  vendor.cost_adjustment_config)
         if qty >= min_qty:
@@ -174,14 +192,16 @@ def add_inhouse_inventory(inventory, fishbowl_inventory_report):
             element.strip('"') for element in row.split(",")
         ]
         part_num = raw_part_num.upper()
+        inventory_key = None
         if re.match(FWW_CORE_PATTERN, part_num):
             inventory_key = CORE_INVENTORY_KEY
-        else:
+        elif re.match(FINISH_PATTERN, part_num):
             inventory_key = FINISH_INVENTORY_KEY
         qty = int(float(qty))
         # Always use cost of zero to prioritize inhouse assignments
-        add_to_inventory(inventory, inventory_key, part_num,
-                         INHOUSE_VENDOR_KEY, qty, 0.0)
+        if inventory_key:
+            add_to_inventory(inventory, inventory_key, part_num,
+                             INHOUSE_VENDOR_KEY, qty, 0.0)
 
 
 def get_core_search_value(part_number: str) -> str | None:

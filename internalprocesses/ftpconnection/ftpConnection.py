@@ -21,9 +21,12 @@ class FTPConnection:
         file = self.get_file_as_binary(relativePath)
         extension = relativePath[relativePath.rfind("."):]
         if extension == ".csv":
-            return read_csv(file,
-                            quoting=csv.QUOTE_NONE,
-                            on_bad_lines="skip").values.tolist()
+            csv_file = read_csv(file,
+                                quoting=csv.QUOTE_NONE,
+                                on_bad_lines="skip",
+                                index_col=False)
+            csv_file.columns = csv_file.columns
+            return csv_file.values.tolist()
         elif extension == ".xlsx":
             return read_excel(file).values.tolist()
 
@@ -33,6 +36,12 @@ class FTPConnection:
         writer.writerows(inputList)
         file_as_bytes = io.BytesIO(csv_file.getvalue().encode())
         self.server.storbinary(f"STOR {outputFilePath}", file_as_bytes)
+
+    def write_df_as_csv(self, outputFilePath, dataframe):
+        csv_buffer = io.BytesIO()
+        dataframe.to_csv(csv_buffer, index=False)
+        csv_buffer.seek(0)
+        self.server.storbinary(f"STOR {outputFilePath}", csv_buffer)
 
     def get_directory_most_recent_file(self, directory: str,
                                        prune: bool = False):

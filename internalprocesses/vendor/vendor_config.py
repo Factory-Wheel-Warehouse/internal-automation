@@ -31,6 +31,8 @@ class InventoryFileConfig:
 class MapConfig(ABC):
     file_path: str | None = None
     dir_path: str | None = None
+    key_column: int = None
+    value_column: int = None
 
     def __post_init__(self):
         if (not (self.file_path or self.dir_path) or
@@ -45,8 +47,6 @@ class SkuMapConfig(MapConfig):
     vendor_part_number_column: int = 1
     file_path: str = None
     dir_path: str = None
-    key_column: int = None
-    value_column: int = None
 
     def __post_init__(self):
         self.key_column = self.vendor_part_number_column
@@ -59,8 +59,6 @@ class CostMapConfig(MapConfig):
     cost_column: int = 1
     file_path: str = None
     dir_path: str = None
-    key_column: int = None
-    value_column: int = None
 
     def __post_init__(self):
         self.key_column = self.part_number_column

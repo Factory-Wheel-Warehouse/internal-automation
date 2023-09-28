@@ -8,12 +8,14 @@ from ..vendor import VendorConfig
 
 
 class Inventory:
+    inventory = {CORE_INVENTORY_KEY: {}, FINISH_INVENTORY_KEY: {}}
+
     def __init__(self, vendor_configs: list[VendorConfig] | None,
                  ftp: FTPConnection | None,
                  fishbowl: FishbowlClient | None) -> None:
-        self.inventory = {CORE_INVENTORY_KEY: {}, FINISH_INVENTORY_KEY: {}}
         if vendor_configs and ftp and fishbowl:
             add_inhouse_inventory(self.inventory, fishbowl.getPartsOnHand())
+            price_map = self._get_price_map(ftp)
             for vendor in vendor_configs:
                 sku_map = cost_map = None
                 if vendor.sku_map_config:
@@ -22,7 +24,7 @@ class Inventory:
                     cost_map = build_map_from_config(ftp,
                                                      vendor.cost_map_config)
                 add_vendor_inventory(ftp, self.inventory, vendor, sku_map,
-                                     cost_map)
+                                     cost_map, price_map)
 
     def _decrement_inventory(self, inventory_key: str, part_number: str,
                              vendor: str, quantity: int) -> None:
@@ -34,15 +36,10 @@ class Inventory:
             if not self.inventory[inventory_key][part_number]:
                 del self.inventory[inventory_key][part_number]
 
-    def get_availability(self, part_number: str) -> list[dict]:
-        results = []
-        for key in self.inventory.keys():
-            for part, stock in self.inventory[key].items():
-                if part_number in part:
-                    results.append({part: stock})
-        return results
-
-    # Public get cheapest vendor
+    @staticmethod
+    def _get_price_map(ftp: FTPConnection):
+        pricing_file = ftp.get_file_as_list(FTP_PRICING_FILE)
+        return {r[0]: float(r[1]) for r in pricing_file}
 
     def _core_in_stock_inhouse(self, part_number: str, quantity: int) -> bool:
         core_search_value = get_core_search_value(part_number)

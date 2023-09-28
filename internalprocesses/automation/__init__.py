@@ -2,12 +2,20 @@ import time
 import traceback
 from datetime import date, timedelta
 
-from internalprocesses import aws, OutlookClient
+from internalprocesses import aws, OutlookClient, FishbowlClient
 from internalprocesses.automation.automation import InternalAutomation
-from internalprocesses.automation.constants import OUTLOOK_CREDENTIALS
+from internalprocesses.automation.constants import OUTLOOK_CREDENTIALS, \
+    FTP_CREDENTIALS, FISHBOWL_CREDENTIALS
 from internalprocesses.automation.dynamodb_inventory_upload import \
     get_most_recent_part_data
-from internalprocesses.aws.dynamodb import InventoryDAO, ProcessedOrderDAO
+from internalprocesses.automation.upload_master_inventory import \
+    build_total_inventory, populate_dataframe, get_initial_dataframe, \
+    FTP_SAVE_PATH
+from internalprocesses.aws.dynamodb import InventoryDAO, ProcessedOrderDAO, \
+    VendorConfigDAO
+from internalprocesses.ftpconnection.ftpConnection import FTPConnection
+from internalprocesses.inventory import Inventory
+from internalprocesses.vendor import VendorConfig
 
 
 def log_exceptions(func):
@@ -93,3 +101,19 @@ def email_ship_by_notifications():
         outlook.sendMail("sales@factorywheelwarehouse.com",
                          "\"Ship By\" Automated Notifications",
                          message)
+
+
+@log_exceptions
+def upload_master_inventory():
+    vendor_configs: list[VendorConfig] = VendorConfigDAO().get_all_items()
+    ftp = FTPConnection(**FTP_CREDENTIALS)
+    fishbowl = FishbowlClient(**FISHBOWL_CREDENTIALS)
+    inventory = Inventory(vendor_configs, ftp, fishbowl)
+    print(inventory)
+    total_inv = build_total_inventory(inventory, ftp)
+    print(f"total_inv: {len(total_inv)}")
+    df = populate_dataframe(total_inv, get_initial_dataframe(
+        vendor_configs), ftp)
+    print(f"df: {len(df)}")
+    ftp.write_df_as_csv(FTP_SAVE_PATH, df)
+    print("ftp upload complete")

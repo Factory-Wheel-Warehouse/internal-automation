@@ -78,7 +78,7 @@ def emailSoldReport():
 
 @app.route("/upload_inventory_source_data")
 def upload_inventory_source_data():
-    thread = Thread(target=update_inventory_source_data)
+    thread = Thread(target=upload_master_inventory)
     thread.start()
     return "Success"
 
