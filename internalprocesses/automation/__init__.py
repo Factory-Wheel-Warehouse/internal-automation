@@ -1,6 +1,8 @@
 import time
 import traceback
+from base64 import b64encode
 from datetime import date, timedelta
+from io import BytesIO
 
 from internalprocesses import aws, OutlookClient, FishbowlClient
 from internalprocesses.automation.automation import InternalAutomation
@@ -103,17 +105,25 @@ def email_ship_by_notifications():
                          message)
 
 
-@log_exceptions
+# @log_exceptions
 def upload_master_inventory():
     vendor_configs: list[VendorConfig] = VendorConfigDAO().get_all_items()
     ftp = FTPConnection(**FTP_CREDENTIALS)
     fishbowl = FishbowlClient(**FISHBOWL_CREDENTIALS)
     inventory = Inventory(vendor_configs, ftp, fishbowl)
-    print(inventory)
     total_inv = build_total_inventory(inventory, ftp)
-    print(f"total_inv: {len(total_inv)}")
     df = populate_dataframe(total_inv, get_initial_dataframe(
         vendor_configs), ftp)
-    print(f"df: {len(df)}")
     ftp.write_df_as_csv(FTP_SAVE_PATH, df)
-    print("ftp upload complete")
+    outlook = OutlookClient(**OUTLOOK_CREDENTIALS)
+    file = BytesIO()
+    df.to_csv(file)
+    file.seek(0)
+    date_ = date.today().isoformat()
+    respones = outlook.sendMail(to="sales@factorywheelwarehouse.com",
+                                subject="Master Inventory Sheet",
+                                body="File attached",
+                                attachment=b64encode(file.read()).decode(),
+                                attachmentName=f"fww_master_inventory_"
+                                               f"{date_}.csv")
+    print(respones.content)
