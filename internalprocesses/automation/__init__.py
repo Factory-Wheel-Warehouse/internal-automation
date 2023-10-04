@@ -105,7 +105,7 @@ def email_ship_by_notifications():
                          message)
 
 
-# @log_exceptions
+@log_exceptions
 def upload_master_inventory():
     vendor_configs: list[VendorConfig] = VendorConfigDAO().get_all_items()
     ftp = FTPConnection(**FTP_CREDENTIALS)
@@ -120,10 +120,10 @@ def upload_master_inventory():
     df.to_csv(file)
     file.seek(0)
     date_ = date.today().isoformat()
-    respones = outlook.sendMail(to="sales@factorywheelwarehouse.com",
+    response = outlook.sendMail(to="sales@factorywheelwarehouse.com",
                                 subject="Master Inventory Sheet",
                                 body="File attached",
                                 attachment=b64encode(file.read()).decode(),
                                 attachmentName=f"fww_master_inventory_"
                                                f"{date_}.csv")
-    print(respones.content)
+    print(response.content)

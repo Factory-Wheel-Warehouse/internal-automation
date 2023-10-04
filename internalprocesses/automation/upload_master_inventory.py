@@ -102,12 +102,8 @@ def _get_formatted_row(sku: str, availability: dict, price: int) -> dict:
                 formatted_vendor_name = vendor.lower().replace(" ", "_")
                 row[f"{formatted_vendor_name}_{header}"] = locals()[header]
     final_ht = round(avg_ht[0] / avg_ht[1]) if avg_ht[1] else 0
-    if sku[-1] != "N":
-        final_qty = 3 if total_qty > 3 else total_qty
-    else:
-        final_qty = total_qty
     row.update({"total_qty": total_qty,
-                "final_magento_qty": final_qty,
+                "final_magento_qty": 3 if total_qty > 3 else total_qty,
                 "avg_ht": final_ht if final_ht <= 10 else 15,
                 "walmart_ht": _get_walmart_handling_time(final_ht)})
     return row
