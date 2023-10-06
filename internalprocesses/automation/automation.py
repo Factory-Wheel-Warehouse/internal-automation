@@ -1,3 +1,4 @@
+import pprint
 import re
 import json
 from dotenv import load_dotenv
@@ -447,15 +448,18 @@ class InternalAutomation:
         processed_order_count = 0
         for vendor in self.ordersByVendor:
             for order in self.ordersByVendor[vendor]:
-                order.soNum = self.fishbowl.getSONum(order.customer_po)
-                if self.vendors.get(vendor) or vendor == "No Vendor":
-                    order.poNum = self.fishbowl.getPONum(order.customer_po)
-                sbd = InventoryDAO().get_ship_by_date(order)
-                if sbd:
-                    order.ship_by_date = sbd
-                order.vendor = vendor
-                processed_orders.append(order)
-                processed_order_count += 1
+                try:
+                    order.soNum = self.fishbowl.getSONum(order.customer_po)
+                    if self.vendors.get(vendor) or vendor == "No Vendor":
+                        order.poNum = self.fishbowl.getPONum(order.customer_po)
+                    sbd = InventoryDAO().get_ship_by_date(order)
+                    if sbd:
+                        order.ship_by_date = sbd
+                    order.vendor = vendor
+                    processed_orders.append(order)
+                    processed_order_count += 1
+                except:
+                    pprint.pprint(order)
         ProcessedOrderDAO().batch_write_items(processed_orders,
                                               processed_order_count)
 
@@ -508,7 +512,6 @@ class InternalAutomation:
 
         vendor, order.cost = self.sourceList.get_cheapest_vendor(
             order.hollander, order.qty)
-        print(vendor)
         if self.ordersByVendor.get(vendor):
             self.ordersByVendor[vendor].append(order)
         else:

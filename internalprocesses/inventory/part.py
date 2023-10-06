@@ -37,10 +37,5 @@ class PartAvailability:
 
 @dataclass
 class Part:
-    sku: str
+    part_number: str
     handling_times: HandlingTime
-
-# @dataclass
-# class Part:
-#     part_number: str
-#     availability: PartAvailability

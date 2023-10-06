@@ -120,7 +120,7 @@ def upload_master_inventory():
     df.to_csv(file, index=False)
     file.seek(0)
     date_ = date.today().isoformat()
-    response = outlook.sendMail(to="danny@factorywheelwarehouse.com",
+    response = outlook.sendMail(to="sales@factorywheelwarehouse.com",
                                 subject="Master Inventory Sheet",
                                 body="File attached",
                                 attachment=b64encode(file.read()).decode(),
