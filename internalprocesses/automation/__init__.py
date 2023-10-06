@@ -1,19 +1,16 @@
-import time
 import traceback
-from base64 import b64encode
 from datetime import date, timedelta
-from io import BytesIO
 
-from internalprocesses import aws, OutlookClient, FishbowlClient
+from internalprocesses import OutlookClient, FishbowlClient
 from internalprocesses.automation.automation import InternalAutomation
 from internalprocesses.automation.constants import OUTLOOK_CREDENTIALS, \
     FTP_CREDENTIALS, FISHBOWL_CREDENTIALS
 from internalprocesses.automation.dynamodb_inventory_upload import \
     get_most_recent_part_data
-from internalprocesses.automation.upload_master_inventory import \
+from src.manager.inventory.upload_master_inventory import \
     build_total_inventory, populate_dataframe, get_initial_dataframe, \
     FTP_SAVE_PATH
-from internalprocesses.aws.dynamodb import InventoryDAO, ProcessedOrderDAO, \
+from internalprocesses.aws.dynamodb import ProcessedOrderDAO, \
     VendorConfigDAO
 from internalprocesses.ftpconnection.ftpConnection import FTPConnection
 from internalprocesses.inventory import Inventory
@@ -30,7 +27,7 @@ def log_exceptions(func):
             exception = traceback.format_exc()
             message = f"Exception encountered during {__name__}" \
                       f"::{func.__name__}\n\n\n{exception}"
-            aws.post_exception_to_sns(message)
+            post_exception_to_sns(message)
 
     return run
 
@@ -66,7 +63,7 @@ def tracking_upload():
 
 @log_exceptions
 def warehouse_inventory_upload():
-    automation = InternalAutomation()
+    automation = InternalAutomationFacade()
     inventory = automation.fishbowl.getPartsOnHand()
     formatted_inventory = [[el.strip('"') for el in row.split(",")]
                            for row in inventory]
@@ -76,21 +73,8 @@ def warehouse_inventory_upload():
 
 
 @log_exceptions
-def update_inventory_source_data():
-    start = time.time()
-    inventory_dao = InventoryDAO()
-    print("Retrieving inventory data...", "")
-    data = get_most_recent_part_data()
-    print("Deleting and recreating database...", "")
-    inventory_dao.delete_all_items()
-    print("Writing data to database", "")
-    inventory_dao.batch_write_items(data, len(data))
-    print(f"Rebuilt inventory database in {time.time() - start} seconds")
-
-
-@log_exceptions
 def email_ship_by_notifications():
-    outlook = OutlookClient(**OUTLOOK_CREDENTIALS)
+    outlook = OutlookFacade(**OUTLOOK_CREDENTIALS)
     order_dao = ProcessedOrderDAO()
     ship_by_today = filter(lambda order: not order.shipped,
                            order_dao.get_orders_by_sbd(str(date.today())))

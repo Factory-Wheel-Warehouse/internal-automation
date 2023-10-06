@@ -4,8 +4,8 @@ import os
 import json
 from traceback import print_exc
 from dotenv import load_dotenv
-from .outlookapi import OutlookClient
-from .fishbowl import FishbowlClient, quantity_sold_by_sku_report
+from src.facade.outlook import OutlookFacade
+from src.facade.fishbowl import FishbowlFacade, quantity_sold_by_sku_report
 
 
 def email_quantity_sold_report():
@@ -21,8 +21,8 @@ def email_quantity_sold_report():
         ) as configFile:
             outlook_config = json.load(configFile)["APIConfig"]["Outlook"][
                 "Danny"]
-        outlook = OutlookClient(outlook_config, outlook_password, outlook_cs)
-        fishbowl = FishbowlClient("danny", fb_password,
+        outlook = OutlookFacade(outlook_config, outlook_password, outlook_cs)
+        fishbowl = FishbowlFacade("danny", fb_password,
                                   "factorywheelwarehouse.myfishbowl.com")
         report_as_list = [["SKU",
                            "Quantity Sold"]] + quantity_sold_by_sku_report(

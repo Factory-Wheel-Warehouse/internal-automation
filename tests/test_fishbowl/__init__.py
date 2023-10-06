@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from internalprocesses import FishbowlClient
+from internalprocesses import FishbowlFacade
 
 
 class FishbowlClientTest(unittest.TestCase):
@@ -20,11 +20,11 @@ class FishbowlClientTest(unittest.TestCase):
     }
 
     def test_login_logout_with_valid_credentials(self):
-        fishbowl = FishbowlClient(**self.VALID_CREDENTIALS)
+        fishbowl = FishbowlFacade(**self.VALID_CREDENTIALS)
         self.assertEqual(1000, fishbowl.general_status)
         fishbowl.close()
         self.assertEqual(1164, fishbowl.general_status)
 
     def test_login_with_invalid_credentials(self):
-        self.assertRaises(Exception, FishbowlClient,
+        self.assertRaises(Exception, FishbowlFacade,
                           **self.INVALID_CREDENTIALS)

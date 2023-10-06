@@ -1,8 +1,6 @@
-import json
 import unittest
 
-from internalprocesses.tracking.util import *
-from internalprocesses.tracking.constants import *
+from src.util.tracking.constants import *
 
 
 class TestUtil(unittest.TestCase):
