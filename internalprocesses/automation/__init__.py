@@ -105,7 +105,7 @@ def email_ship_by_notifications():
                          message)
 
 
-# @log_exceptions
+@log_exceptions
 def upload_master_inventory():
     vendor_configs: list[VendorConfig] = VendorConfigDAO().get_all_items()
     ftp = FTPConnection(**FTP_CREDENTIALS)
