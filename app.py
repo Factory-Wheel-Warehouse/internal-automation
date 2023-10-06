@@ -1,90 +1,71 @@
-from threading import Thread
-from flask import Flask, request
-from twilio.twiml.messaging_response import MessagingResponse
-import internalprocesses.corepricer.checkSales as checkSales
-from internalprocesses.automation import *
-from internalprocesses import email_quantity_sold_report
+from dataclasses import dataclass
 
-app = Flask(__name__)
-priceList = checkSales.buildPriceDict()  # 3268 entries
+from flask import Flask
 
-
-@app.route("/")
-def index():
-    return "<h1>Service is live<h1>"
+from src.manager.inventory.inventory_manager import InventoryManager
+from src.manager.manager import Manager
+from src.manager.order.order_manager import OrderManager
+from src.manager.report_manager.report_manager import ReportManager
+from src.manager.test_manager import TestManager
+from src.manager.tracking import TrackingManager
 
 
-@app.route("/sms", methods=["GET", "POST"])
-def reply():
-    query = request.values.get('Body', None)
-    resp = MessagingResponse()
-    if str(query).strip().lower() == "test":
-        resp.message("Aced!")
-        return str(resp)
-    hollanders = query.strip().split(", ")
-    body = ""
-    for hollander in hollanders:
-        while len(hollander) < 5:
-            hollander = "0" + hollander
-        body += checkSales.checkHollander(hollander, priceList)
-    resp.message(body)
-    return str(resp)
+@dataclass
+class FlaskService:
+    manager: Manager
 
 
-@app.route("/import-orders")
-def orderImport():
-    orderImportThread = Thread(target=orderImportNewThread, args=(False,))
-    orderImportThread.start()
-    return "Success"
+@dataclass
+class FlaskServer:
+    app: Flask
+    managers: list[Manager]
+
+    def __post_init__(self):
+        for service in services:
+            self._add_routes(service)
+        self.structure = self._get_route_structure()
+        self.app.add_url_rule("/ms/", view_func=lambda: self.structure)
+
+    def _get_route_structure(self, managers=None, indent=0,
+                             indent_seq="&emsp;"):
+        structure = []
+        if not managers and not indent:
+            managers = self.managers
+        for manager in managers:
+            structure.append((indent_seq * indent) + manager.endpoint)
+            for route in manager.get_actions():
+                structure.append((indent_seq * (indent + 1)) + route)
+            structure += self._get_route_structure(manager.get_sub_managers(),
+                                                   indent=1).splitlines()
+        return r"<br \>".join(structure)
+
+    @staticmethod
+    def get_url(resource_path: list[str]):
+        return "/" + "/".join(resource_path)
+
+    def _add_routes(self, manager: Manager, prefix: list[str] = None):
+        if prefix is None:
+            path = ["ms", manager.endpoint]
+        else:
+            path = prefix + [manager.endpoint]
+        for name in manager.get_actions():
+            route = path + [name]
+            func = getattr(manager, name)
+            self.app.add_url_rule(self.get_url(route), view_func=func)
+        for sub_manager in manager.get_sub_managers():
+            self._add_routes(sub_manager, prefix=path)
 
 
-@app.route("/import-orders-test")
-def orderImportTest():
-    orderImportThread = Thread(target=order_import)
-    orderImportThread.start()
-    return "Success"
+app = Flask("InternalAutomationService")
 
-
-@app.route("/upload-tracking")
-def trackingUpload():
-    trackingUploadThread = Thread(target=trackingUploadNewThread)
-    trackingUploadThread.start()
-    return "Success"
-
-
-@app.route("/yearly-sold-report")
-def emailSoldReport():
-    emailSoldReportThread = Thread(target=email_quantity_sold_report)
-    emailSoldReportThread.start()
-    return "Success"
-
-
-@app.route("/upload_inventory_source_data")
-def upload_inventory_source_data():
-    thread = Thread(target=upload_master_inventory)
-    thread.start()
-    return "Success"
-
-
-@app.route("/warehouse-inventory-upload")
-def warehouse_inventory_upload_endpoint():
-    Thread(target=warehouse_inventory_upload).start()
-    return "Success"
-
-
-@app.route("/email_ship_by_notifications")
-def email_sbd():
-    Thread(target=email_ship_by_notifications).start()
-    return "Success"
-
-
-def trackingUploadNewThread():
-    tracking_upload()
-
-
-def orderImportNewThread(test=True):
-    order_import(test=test)
-
+services = [
+    TestManager(),
+    InventoryManager(),
+    OrderManager(),
+    TrackingManager(),
+    ReportManager()
+]
+server = FlaskServer(app, services)
 
 if __name__ == "__main__":
     app.run(debug=True)

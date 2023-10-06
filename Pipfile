@@ -9,7 +9,6 @@ requests = "*"
 pandas = "*"
 zeep = "*"
 twilio = "*"
-flask = "*"
 gunicorn = "*"
 msal = "*"
 openpyxl = "*"
@@ -20,6 +19,10 @@ retry = "*"
 dynamodb-json = "*"
 botocore = "*"
 dacite = "*"
+dependency-injector = "*"
+asyncio = "*"
+flask = {extras = ["async"], version = "*"}
+watchtower = "*"
 
 [dev-packages]
 

@@ -1,7 +1,7 @@
 import unittest
 
-from internalprocesses.tracking import TrackingChecker
-from internalprocesses.tracking.constants import FEDEX
+from src.util.tracking import TrackingChecker
+from src.util.tracking.constants import FEDEX
 
 
 class TestTrackingChecker(unittest.TestCase):

@@ -1,7 +1,7 @@
 import unittest
 
 from internalprocesses.inventory import Inventory
-from internalprocesses.inventory.constants import CORE_INVENTORY_KEY, \
+from src.domain.inventory.constants import CORE_INVENTORY_KEY, \
     FINISH_INVENTORY_KEY, INHOUSE_VENDOR_KEY
 
 
