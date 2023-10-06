@@ -1,5 +1,19 @@
 from dataclasses import dataclass
 
+from internalprocesses.inventory.constants import MATERIAL_CODE_END, \
+    PAINT_CODE_START
+
+
+@dataclass
+class Sku:
+    sku: str
+
+    def __post_init__(self):
+        self.material = self.sku[:MATERIAL_CODE_END]
+        self.hollander = self.sku[MATERIAL_CODE_END: PAINT_CODE_START]
+        self.ucode = self.sku[PAINT_CODE_START:]
+        self.core = self.sku[:PAINT_CODE_START]
+
 
 @dataclass
 class HandlingTime:
@@ -23,7 +37,7 @@ class PartAvailability:
 
 @dataclass
 class Part:
-    part_number: str
+    sku: Sku
     handling_times: HandlingTime
 
 # @dataclass

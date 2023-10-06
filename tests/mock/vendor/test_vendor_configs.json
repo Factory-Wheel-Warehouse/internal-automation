@@ -12,7 +12,7 @@
     "cost_adjustment_config": {
       "steel_adjustment": 17.5,
       "alloy_adjustment": 12.5,
-      "general_adjustment": 0
+      "general_adjustment": 0.0
     },
     "inventory_file_config": {
       "cost_column": 26,
@@ -46,6 +46,19 @@
       "file_path": "/perfection/PerfectionFWWMap.csv",
       "inhouse_part_number_column": 1,
       "vendor_part_number_column": 0
+    },
+    "cost_adjustment_config": {
+      "ucode_adjustment": {
+        "ucodes": {
+          "78": 58.0,
+          "79": 58.0,
+          "80": 72.0,
+          "90": 94.0,
+          "91": 94.0,
+          "95": 128.0,
+          "97": 128.0
+        }
+      }
     }
   },
   {

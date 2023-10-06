@@ -12,9 +12,9 @@ from internalprocesses.inventory.constants import CORE_INVENTORY_KEY, \
     FINISH_INVENTORY_KEY, PAINT_CODE_START
 from internalprocesses.vendor import VendorConfig
 
-HEADERS = ["sku", "final_magento_qty", "total_qty", "avg_ht",
+HEADERS = ["sku", "total_qty", "final_magento_qty", "avg_ht",
            "walmart_ht", "list_price"]
-VENDOR_SPECIFIC_HEADERS = ["fin_qty", "core_qty", "cost", "ht"]
+VENDOR_SPECIFIC_HEADERS = ["cost", "fin_qty", "core_qty", "combined_qty", "ht"]
 FTP_SAVE_PATH = "/Magento_upload/source-file-2.csv"
 FTP_PRICING_SHEET = "/Magento_upload/lkq_based_sku_pricing.csv"
 
@@ -22,11 +22,14 @@ FTP_PRICING_SHEET = "/Magento_upload/lkq_based_sku_pricing.csv"
 def get_initial_dataframe(vendor_configs: list[VendorConfig]):
     # limit total to five
     # walmart ht must be 5 or 10
-    for vendor in vendor_configs:
-        for header in VENDOR_SPECIFIC_HEADERS:
+    vendor_headers = []
+    for header in VENDOR_SPECIFIC_HEADERS:
+        for vendor in vendor_configs:
             vendor_name = vendor.vendor_name.lower().replace(" ", "_")
-            HEADERS.append(f"{vendor_name}_{header}")
-    return DataFrame(columns=HEADERS)
+            vendor_headers.append(f"{vendor_name}_{header}")
+        vendor_headers.append(f"warehouse_{header}")
+    headers = HEADERS[:2] + vendor_headers + HEADERS[2:]
+    return DataFrame(columns=headers)
 
 
 def build_total_inventory(inventory: Inventory, ftp: FTPConnection) -> dict:
@@ -59,22 +62,28 @@ def add_core_equivalents_to_total(total_inventory: dict, finishes: list[str],
 
 
 def populate_dataframe(total_inventory: dict, df: DataFrame,
-                       ftp: FTPConnection) -> DataFrame:
+                       ftp: FTPConnection,
+                       vendors: dict[str, VendorConfig]) -> DataFrame:
     pricing = {r[0]: r[1] for r in ftp.get_file_as_list(FTP_PRICING_SHEET)}
     rows = []
     for sku, availability in total_inventory.items():
         price = pricing.get(sku)
-        rows.append(_get_formatted_row(sku, availability, price))
+        rows.append(_get_formatted_row(sku, availability, price, vendors))
     df = pd.concat([df, DataFrame(rows)], ignore_index=True)
     df.reset_index()
     return df
 
 
-def _get_sku_handling_time(sku: str, is_finished: bool):
-    paint_code = int(sku[PAINT_CODE_START:][:2])
+def _get_sku_handling_time(sku: str, is_finished: bool,
+                           vendor: VendorConfig | None) -> int:
+    paint_code = sku[PAINT_CODE_START:][:2]
+    status = "FINISHED" if is_finished else "CORE"
+    if vendor and vendor.handling_time_config:
+        return vendor.get_handling_time(paint_code, status)
+    paint_code = int(paint_code[:2])
     ht_values = {
-        "finished": 2,
-        "core": 15 if paint_code >= 80 else 7
+        "finished": 1,
+        "core": 15 if paint_code >= 80 else 2
     }
     return ht_values["finished"] if is_finished else ht_values["core"]
 
@@ -87,7 +96,8 @@ def _get_walmart_handling_time(ht: int):
     return 3
 
 
-def _get_formatted_row(sku: str, availability: dict, price: int) -> dict:
+def _get_formatted_row(sku: str, availability: dict, price: int,
+                       vendors: dict[str, VendorConfig]) -> dict:
     price = price if price else 5000
     row = {"sku": sku, "list_price": price}
     total_qty, avg_ht, max_cost = 0, [0, 0], 0
@@ -95,13 +105,14 @@ def _get_formatted_row(sku: str, availability: dict, price: int) -> dict:
         for vendor, detailed_availability in availability.items():
             fin_qty, cost, *extended_unpacking = detailed_availability
             core_qty = extended_unpacking[0] if extended_unpacking else 0
-            ht = _get_sku_handling_time(sku, fin_qty > 3)
-            total_qty += (fin_qty + core_qty)
+            ht = _get_sku_handling_time(sku, fin_qty > 2, vendors.get(vendor))
+            combined_qty = (fin_qty + core_qty)
+            total_qty += combined_qty
             avg_ht = [avg_ht[0] + ht, avg_ht[1] + 1]
             for header in VENDOR_SPECIFIC_HEADERS:
                 formatted_vendor_name = vendor.lower().replace(" ", "_")
                 row[f"{formatted_vendor_name}_{header}"] = locals()[header]
-    final_ht = round(avg_ht[0] / avg_ht[1]) if avg_ht[1] else 0
+    final_ht = round(avg_ht[0] / avg_ht[1]) if avg_ht[1] else 3
     row.update({"total_qty": total_qty,
                 "final_magento_qty": 3 if total_qty > 3 else total_qty,
                 "avg_ht": final_ht if final_ht <= 10 else 15,

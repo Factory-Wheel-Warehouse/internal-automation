@@ -59,6 +59,9 @@ def get_adjusted_cost(inhouse_part_number: str, cost: float,
             cost += config.alloy_adjustment
         elif material_code == STEEL_MATERIAL_CODE:
             cost += config.steel_adjustment
+        if config.ucode_adjustment:
+            ucode = inhouse_part_number[PAINT_CODE_START:]
+            cost += config.ucode_adjustment.get(ucode)
         return cost + config.general_adjustment
     return cost
 
@@ -175,12 +178,12 @@ def add_vendor_inventory(ftp: FTPConnection, inventory: dict,
             part_num, row, vendor.classification_config)
         price = price_map.get(part_num) if price_map.get(part_num) else -1
         cost = _get_part_cost(cost_map, part_num, row, vendor)
+        cost = get_adjusted_cost(part_num, cost,
+                                 vendor.cost_adjustment_config)
         include = include_row_item(row, vendor.inclusion_config, cost, price)
         if not inventory_key or not include:
             continue
         qty = _get_qty(row, vendor)
-        cost = get_adjusted_cost(part_num, cost,
-                                 vendor.cost_adjustment_config)
         if qty >= min_qty:
             add_to_inventory(inventory, inventory_key, part_num,
                              vendor.vendor_name, qty, cost)
