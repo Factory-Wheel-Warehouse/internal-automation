@@ -140,7 +140,7 @@ def upload_coast_based_pricing():
         sku = map_.get(part_num)
         if sku:
             shipping = 17.5 if sku.startswith("STL") else 12.5
-            margin = 1.3 if cost < 350 else 1.22
+            margin = 1.35 if cost < 350 else 1.27
             price = round(cost * margin + shipping, 2)
             prices.append([sku, price])
     ftp.write_list_as_csv(FTP_PRICING_SHEET, prices)

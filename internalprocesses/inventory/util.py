@@ -104,7 +104,7 @@ def get_inventory_key_and_min_qty(part_num: str, row: list[str],
 
 def include_row_item(row: list[str], config: InclusionConfig | None,
                      cost: float, price: float) -> bool:
-    if cost < 0 or cost * (1 + MINIMUM_MARGIN) > price:
+    if cost < 0 or cost * MINIMUM_MARGIN > price:
         return False
     if config:
         inclusion_result = eval_conditions(
