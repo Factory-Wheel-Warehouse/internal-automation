@@ -184,6 +184,8 @@ def add_vendor_inventory(ftp: FTPConnection, inventory: dict,
         if not inventory_key or not include:
             continue
         qty = _get_qty(row, vendor)
+        if vendor.vendor_name == "Blackburns" and part_num == "ALY05228U20":
+            print(row)
         if qty >= min_qty:
             add_to_inventory(inventory, inventory_key, part_num,
                              vendor.vendor_name, qty, cost)

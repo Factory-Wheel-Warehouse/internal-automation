@@ -17,6 +17,7 @@ class Order:
     soNum: str = None
     poNum: str | None = None
     cost: float = 0.0
+    status: str | None = None
     processed_date: str = str(date.today())
     ship_by_date: str | None = None
     shipped: bool = False

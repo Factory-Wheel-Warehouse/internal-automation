@@ -1,12 +1,15 @@
 import pprint
 import re
 import json
+from datetime import timedelta
+
 from dotenv import load_dotenv
 from internalprocesses.automation.constants import *
 from internalprocesses.aws.dynamodb import ProcessedOrderDAO, InventoryDAO, \
     VendorConfigDAO
 from internalprocesses.ftpconnection.ftpConnection import FTPConnection
 from internalprocesses.inventory import Inventory
+from internalprocesses.inventory.constants import PAINT_CODE_START
 from internalprocesses.orders.orders import *
 from internalprocesses.fishbowl import FishbowlClient
 from internalprocesses.magentoapi.magento import MagentoConnection
@@ -14,6 +17,7 @@ from internalprocesses.outlookapi.outlook import OutlookClient
 from internalprocesses.tracking import (
     get_tracking_from_outlook, TrackingChecker
 )
+from internalprocesses.vendor import VendorConfig
 
 
 class InternalAutomation:
@@ -452,7 +456,7 @@ class InternalAutomation:
                     order.soNum = self.fishbowl.getSONum(order.customer_po)
                     if self.vendors.get(vendor) or vendor == "No Vendor":
                         order.poNum = self.fishbowl.getPONum(order.customer_po)
-                    sbd = InventoryDAO().get_ship_by_date(order)
+                    sbd = self._get_ship_by_date(order)
                     if sbd:
                         order.ship_by_date = sbd
                     order.vendor = vendor
@@ -462,6 +466,17 @@ class InternalAutomation:
                     pprint.pprint(order)
         ProcessedOrderDAO().batch_write_items(processed_orders,
                                               processed_order_count)
+
+    def _get_ship_by_date(self, order: Order):
+        vendor_name = order.vendor
+        order_vendor: VendorConfig | None = None
+        for vendor in self.vendors:
+            if vendor.vendor_name == vendor_name:
+                order_vendor = vendor
+        if order_vendor:
+            ucode, status = order.hollander[PAINT_CODE_START:], order.status
+            ht = order_vendor.handling_time_config.get(ucode, status.upper())
+            return str(date.today() + timedelta(days=ht))
 
     def getLKQStock(self):
         return self.ftpServer.get_file_as_list(
@@ -510,7 +525,7 @@ class InternalAutomation:
             Name of the vendor (str) if any else None
         """
 
-        vendor, order.cost = self.sourceList.get_cheapest_vendor(
+        vendor, order.cost, order.status = self.sourceList.get_cheapest_vendor(
             order.hollander, order.qty)
         if self.ordersByVendor.get(vendor):
             self.ordersByVendor[vendor].append(order)
