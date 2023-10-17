@@ -130,9 +130,11 @@ class InternalAutomation:
         self.magento.addOrderTracking(customer_po,
                                       tracking_number)
         if customer_po[0].isalpha():
-            ProcessedOrderDAO().mark_order_shipped(customer_po[1:])
+            reference_customer_po = customer_po[1:]
         else:
-            ProcessedOrderDAO().mark_order_shipped(customer_po)
+            reference_customer_po = customer_po
+        if ProcessedOrderDAO().get_item(reference_customer_po):
+            ProcessedOrderDAO().mark_order_shipped(reference_customer_po)
         if po:
             try:
                 if not self.fishbowl.fulfill_po(po):
