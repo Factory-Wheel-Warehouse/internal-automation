@@ -467,16 +467,12 @@ class InternalAutomation:
                                               processed_order_count)
 
     def _get_ship_by_date(self, order: Order):
-        vendor_name = order.vendor
-        order_vendor: VendorConfig | None = None
-        for vendor in self.vendors:
-            if vendor.vendor_name == vendor_name:
-                order_vendor = vendor
+        order_vendor = self.vendors.get(order.vendor)
         if order_vendor:
             ucode, status = order.hollander[PAINT_CODE_START:], order.status
             ht = order_vendor.handling_time_config.get(ucode, status.upper())
             return str(date.today() + timedelta(days=ht))
-
+        
     def getLKQStock(self):
         return self.ftpServer.get_file_as_list(
             "/lkq/Factory Wheel Warehouse_837903.csv"
