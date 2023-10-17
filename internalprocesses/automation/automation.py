@@ -452,18 +452,15 @@ class InternalAutomation:
         processed_order_count = 0
         for vendor in self.ordersByVendor:
             for order in self.ordersByVendor[vendor]:
-                try:
-                    order.soNum = self.fishbowl.getSONum(order.customer_po)
-                    if self.vendors.get(vendor) or vendor == "No Vendor":
-                        order.poNum = self.fishbowl.getPONum(order.customer_po)
-                    sbd = self._get_ship_by_date(order)
-                    if sbd:
-                        order.ship_by_date = sbd
-                    order.vendor = vendor
-                    processed_orders.append(order)
-                    processed_order_count += 1
-                except:
-                    pprint.pprint(order)
+                order.soNum = self.fishbowl.getSONum(order.customer_po)
+                if self.vendors.get(vendor) or vendor == "No Vendor":
+                    order.poNum = self.fishbowl.getPONum(order.customer_po)
+                sbd = self._get_ship_by_date(order)
+                if sbd:
+                    order.ship_by_date = sbd
+                order.vendor = vendor
+                processed_orders.append(order)
+                processed_order_count += 1
         ProcessedOrderDAO().batch_write_items(processed_orders,
                                               processed_order_count)
 
