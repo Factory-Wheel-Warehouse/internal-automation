@@ -160,6 +160,8 @@ def _get_part_cost(cost_map: dict, part_num: str, row: list,
 def _get_qty(row: list, vendor: VendorConfig) -> int:
     try:
         qty = int(row[vendor.inventory_file_config.quantity_column])
+        if vendor.inventory_file_config.quantity_deduction:
+            qty -= vendor.inventory_file_config.quantity_deduction
     except ValueError:
         qty = 0
     return qty

@@ -1,5 +1,6 @@
 import traceback
 from abc import ABC
+from abc import abstractmethod
 from dataclasses import dataclass
 
 from internalprocesses.orders.address import Address
@@ -30,6 +31,7 @@ class CostConfig:
 class InventoryFileConfig:
     part_number_column: int
     quantity_column: int
+    quantity_deduction: int | None = None
     file_path: str | None = None
     dir_path: str | None = None
     cost_column: int | None = None
@@ -41,12 +43,19 @@ class InventoryFileConfig:
                             "file_path or dir_path defined")
 
 
-@dataclass
 class MapConfig(ABC):
     file_path: str | None = None
     dir_path: str | None = None
-    key_column: int = None
-    value_column: int = None
+
+    @property
+    @abstractmethod
+    def key_column(self):
+        pass
+
+    @property
+    @abstractmethod
+    def value_column(self):
+        pass
 
     def __post_init__(self):
         if (not (self.file_path or self.dir_path) or
@@ -62,9 +71,13 @@ class SkuMapConfig(MapConfig):
     file_path: str = None
     dir_path: str = None
 
-    def __post_init__(self):
-        self.key_column = self.vendor_part_number_column
-        self.value_column = self.inhouse_part_number_column
+    @property
+    def key_column(self):
+        return self.vendor_part_number_column
+
+    @property
+    def value_column(self):
+        return self.inhouse_part_number_column
 
 
 @dataclass
@@ -74,9 +87,13 @@ class CostMapConfig(MapConfig):
     file_path: str = None
     dir_path: str = None
 
-    def __post_init__(self):
-        self.key_column = self.part_number_column
-        self.value_column = self.cost_column
+    @property
+    def key_column(self):
+        return self.part_number_column
+
+    @property
+    def value_column(self):
+        return self.cost_column
 
 
 @dataclass
