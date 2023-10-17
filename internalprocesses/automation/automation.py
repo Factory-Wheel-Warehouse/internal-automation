@@ -460,7 +460,6 @@ class InternalAutomation:
                 sbd = self._get_ship_by_date(order)
                 if sbd:
                     order.ship_by_date = sbd
-                order.vendor = vendor
                 processed_orders.append(order)
                 processed_order_count += 1
         ProcessedOrderDAO().batch_write_items(processed_orders,
@@ -472,7 +471,7 @@ class InternalAutomation:
             ucode, status = order.hollander[PAINT_CODE_START:], order.status
             ht = order_vendor.handling_time_config.get(ucode, status.upper())
             return str(date.today() + timedelta(days=ht))
-        
+
     def getLKQStock(self):
         return self.ftpServer.get_file_as_list(
             "/lkq/Factory Wheel Warehouse_837903.csv"
@@ -522,6 +521,7 @@ class InternalAutomation:
 
         vendor, order.cost, order.status = self.sourceList.get_cheapest_vendor(
             order.hollander, order.qty)
+        order.vendor = vendor
         if self.ordersByVendor.get(vendor):
             self.ordersByVendor[vendor].append(order)
         else:
