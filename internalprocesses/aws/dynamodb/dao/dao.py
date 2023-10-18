@@ -168,7 +168,7 @@ class DAO(ABC):
                 TableName=self.table_name,
                 Key=self._marshall({self._partition_key: partition_key_value}),
             )
-            if response:
+            if response and response.get(ITEM_KEY):
                 return from_dict(data_class=self._dataclass,
                                  data=self._unmarshall(response[ITEM_KEY]),
                                  config=self._dacite_config)
