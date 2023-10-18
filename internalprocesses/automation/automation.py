@@ -158,6 +158,7 @@ class InternalAutomation:
                       f"{customer_po}")
             if trackingNumber:
                 tracking[customer_po] = trackingNumber
+        print(tracking)
         zero_cost_pos = []
         for customer_po, trackingNumber in tracking.items():
             if customer_po[0].isalpha():
