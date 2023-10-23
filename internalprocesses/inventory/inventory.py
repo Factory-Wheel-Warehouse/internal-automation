@@ -85,7 +85,6 @@ class Inventory:
                 min_ = inf
                 min_vendor = None
                 for vendor, stock_data in availability.items():
-                    print(stock_data)
                     vendor_quantity, cost, *_ = stock_data
                     if cost == 0.0:
                         cost = self.handle_zero_cost(part_number, vendor)

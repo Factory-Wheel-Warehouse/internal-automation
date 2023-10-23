@@ -516,14 +516,10 @@ class FishbowlClient:
         query += "    FROM QOHVIEW "
         query += "    LEFT JOIN PART "
         query += "    ON QOHVIEW.PARTID = PART.id "
-        query += "    WHERE QOHVIEW.QTY > 0 "
-        query += "    AND ( "
-        query += "        QOHVIEW.LOCATIONID BETWEEN 612 AND 1053 "
-        query += "        OR QOHVIEW.LOCATIONID BETWEEN 1062 AND 1477 "
-        query += "    )"
+        query += "    WHERE QOHVIEW.QTY > 0"
         query += ") as STOCK "
         query += "LEFT JOIN PARTCOST "
-        query += "ON STOCK.id = PARTCOST.id; "
+        query += "ON STOCK.id = PARTCOST.id;"
         response = self.sendQueryRequest(query)
         return response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"] \
             ["Rows"]["Row"]

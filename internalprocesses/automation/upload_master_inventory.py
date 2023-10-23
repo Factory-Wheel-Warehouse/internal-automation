@@ -1,4 +1,3 @@
-import pprint
 from collections import defaultdict
 
 import pandas as pd
@@ -35,10 +34,11 @@ def get_initial_dataframe(vendor_configs: list[VendorConfig]):
 
 def build_total_inventory(inventory: Inventory, ftp: FTPConnection) -> dict:
     total_inventory = {}
-    finishes = defaultdict(list)
+    finishes = defaultdict(set)
     for row in ftp.get_file_as_list(FTP_SAVE_PATH):
         total_inventory[row[0]] = {}
-        finishes[row[0][:PAINT_CODE_START]].append(row[0])
+        if row[0][-1] != "N":
+            finishes[row[0][:PAINT_CODE_START]].add(row[0].upper())
     for key, value in inventory.inventory[FINISH_INVENTORY_KEY].items():
         if key in total_inventory:
             total_inventory[key] = value
@@ -49,17 +49,20 @@ def build_total_inventory(inventory: Inventory, ftp: FTPConnection) -> dict:
     return total_inventory
 
 
-def add_core_equivalents_to_total(total_inventory: dict, finishes: list[str],
+def add_core_equivalents_to_total(total_inventory: dict, finishes: set[str],
                                   core_availability: dict) -> None:
-    if finishes:
-        for core_vendor, vendor_details in core_availability.items():
-            qty, cost = vendor_details
-            for finish in finishes:
-                if total_inventory.get(finish):
-                    if total_inventory[finish].get(core_vendor):
-                        total_inventory[finish][core_vendor].append(qty)
-                    else:
-                        total_inventory[finish][core_vendor] = [0, cost, qty]
+    if not finishes:
+        return
+    for core_vendor, vendor_details in core_availability.items():
+        qty, cost = vendor_details
+        for finish in finishes:
+            if total_inventory[finish].get(core_vendor):
+                if len(total_inventory[finish][core_vendor]) < 3:
+                    total_inventory[finish][core_vendor].append(qty)
+                else:
+                    total_inventory[finish][core_vendor][2] += qty
+            else:
+                total_inventory[finish][core_vendor] = [0, cost, qty]
 
 
 def populate_dataframe(total_inventory: dict, df: DataFrame,
@@ -97,17 +100,18 @@ def _get_walmart_handling_time(ht: int):
     return 3
 
 
-def _get_formatted_row(sku: str, availability: dict, price: int,
+def _get_formatted_row(sku: str, availability: dict, price: float,
                        vendors: dict[str, VendorConfig]) -> dict:
-    price = price if price else 5000
+    price = price if price else 5000.0
     row = {"sku": sku, "list_price": price}
     total_qty, avg_ht, max_cost = 0, [0, 0], 0
     if price < 5000:
         for vendor, detailed_availability in availability.items():
+            vendor_config = vendors.get(vendor)
             fin_qty, cost, *extended_unpacking = detailed_availability
             core_qty = extended_unpacking[0] if extended_unpacking else 0
-            ht = _get_sku_handling_time(sku, fin_qty > 2, vendors.get(vendor))
-            combined_qty = (fin_qty + core_qty)
+            ht = _get_sku_handling_time(sku, fin_qty > 2, vendor_config)
+            combined_qty = _get_combined_qty(fin_qty, core_qty, vendor_config)
             total_qty += combined_qty
             avg_ht = [avg_ht[0] + ht, avg_ht[1] + 1]
             for header in VENDOR_SPECIFIC_HEADERS:
@@ -119,6 +123,15 @@ def _get_formatted_row(sku: str, availability: dict, price: int,
                 "avg_ht": final_ht if final_ht <= 10 else 15,
                 "walmart_ht": _get_walmart_handling_time(final_ht)})
     return row
+
+
+def _get_combined_qty(fin_qty: int, core_qty: int,
+                      vendor: VendorConfig | None) -> int:
+    if vendor:
+        qty_deduction = vendor.inventory_file_config.quantity_deduction
+        if qty_deduction:
+            return fin_qty + core_qty - qty_deduction
+    return fin_qty + core_qty
 
 
 def upload_coast_based_pricing():

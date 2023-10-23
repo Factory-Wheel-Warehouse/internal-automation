@@ -1,3 +1,5 @@
+import csv
+import os
 import re
 
 from internalprocesses.ftpconnection.ftpConnection import FTPConnection
@@ -13,39 +15,30 @@ def eval_conditions(condition_1: str,
                     condition_column: int,
                     data: list[str]) -> int:
     condition = data[condition_column]
-    try:
-        if condition_1 and eval(
-                condition_1, {EVAL_CONDITION_VARIABLE_NAME: condition}):
-            return 1
-        elif condition_2 and eval(
-                condition_2, {EVAL_CONDITION_VARIABLE_NAME: condition}):
-            return 2
-    except:
-        return 0
+    if condition_1 and eval(
+            condition_1, {EVAL_CONDITION_VARIABLE_NAME: condition}):
+        return 1
+    elif condition_2 and eval(
+            condition_2, {EVAL_CONDITION_VARIABLE_NAME: condition}):
+        return 2
     return 0
 
 
 def build_map_from_config(ftp: FTPConnection,
                           config: SkuMapConfig | CostMapConfig,
                           **kwargs) -> dict:
-    map_ = {}
-    collisions = {}
-    try:
-        for row in _get_file(ftp, config):
-            key = str(row[config.key_column]).upper()
-            value = str(row[config.value_column]).upper()
-            result = map_.get(key)
-            if not result:
-                map_[key] = value
+    map_, collisions = {}, {}
+    for row in _get_file(ftp, config):
+        key = str(row[config.key_column]).upper()
+        value = str(row[config.value_column]).upper()
+        result = map_.get(key)
+        if not result:
+            map_[key] = value
+        else:
+            if collisions.get(key) and value not in collisions[key]:
+                collisions[key].add(value)
             else:
-                if collisions.get(key):
-                    collisions[key].append(value)
-                else:
-                    collisions[key] = [result, value]
-    except:
-        print(config.key_column, config.value_column, config.file_path,
-              config.dir_path)
-    # Log collisions
+                collisions[key] = {result, value}
     return map_
 
 
@@ -71,7 +64,7 @@ def get_part_number(row: list[str], part_number_column: int,
     raw_part_num = str(row[part_number_column]).upper()
     if sku_map:
         return sku_map.get(raw_part_num)
-    if re.match(ROAD_READY_REPLICA_PATTERN, raw_part_num):
+    if re.match(ROAD_READY_FINISH_PATTERN, raw_part_num):
         return (raw_part_num[:MATERIAL_CODE_END] +
                 raw_part_num[ROAD_READY_EXTRA_CHAR_END:])
     return raw_part_num
@@ -89,22 +82,18 @@ def get_inventory_key_and_min_qty(part_num: str, row: list[str],
             return CORE_INVENTORY_KEY, CORE_MIN_QTY
         elif condition_result == 2:
             return CORE_INVENTORY_KEY, CORE_MIN_QTY
-    try:
-        if re.match(FINISH_PATTERN, part_num):
-            return FINISH_INVENTORY_KEY, FINISHED_MIN_QTY
-        elif re.match(CORE_PATTERN, part_num):
-            return CORE_INVENTORY_KEY, CORE_MIN_QTY
-        elif re.match(REPLICA_PATTERN, part_num):
-            return FINISH_INVENTORY_KEY, REPLICA_MIN_QTY
-    except TypeError:
-        # Log?
-        pass
+    if re.match(FINISH_PATTERN, part_num):
+        return FINISH_INVENTORY_KEY, FINISHED_MIN_QTY
+    elif re.match(CORE_PATTERN, part_num):
+        return CORE_INVENTORY_KEY, CORE_MIN_QTY
+    elif re.match(REPLICA_PATTERN, part_num):
+        return FINISH_INVENTORY_KEY, REPLICA_MIN_QTY
     return None, None
 
 
 def include_row_item(row: list[str], config: InclusionConfig | None,
                      cost: float, price: float) -> bool:
-    if cost < 0 or cost * MINIMUM_MARGIN > price:
+    if cost and cost * MINIMUM_MARGIN > price:
         return False
     if config:
         inclusion_result = eval_conditions(
@@ -143,27 +132,24 @@ def _get_file(ftp: FTPConnection,
 
 def _get_part_cost(cost_map: dict, part_num: str, row: list,
                    vendor: VendorConfig) -> float:
-    try:
-        if cost_map:
-            cost_map_response = cost_map.get(part_num)
-            if not cost_map_response:
-                # Log missing cost
-                return -1
-            cost = float(cost_map_response)
-        else:
+    if cost_map:
+        cost_map_response = cost_map.get(part_num)
+        if not cost_map_response:
+            return -1
+        cost = float(cost_map_response)
+    else:
+        try:
             cost = float(row[vendor.inventory_file_config.cost_column])
-    except ValueError:
-        return -1
+        except ValueError:
+            return -1  # Catch NaN
     return cost
 
 
 def _get_qty(row: list, vendor: VendorConfig) -> int:
     try:
         qty = int(row[vendor.inventory_file_config.quantity_column])
-        if vendor.inventory_file_config.quantity_deduction:
-            qty -= vendor.inventory_file_config.quantity_deduction
     except ValueError:
-        qty = 0
+        return -1  # Catch NaN
     return qty
 
 
@@ -173,30 +159,26 @@ def add_vendor_inventory(ftp: FTPConnection, inventory: dict,
     for row in _get_file(ftp, vendor.inventory_file_config):
         part_number_column = vendor.inventory_file_config.part_number_column
         part_num = get_part_number(row, part_number_column, sku_map)
-        if not part_num:
-            # Log error
-            continue
-        inventory_key, min_qty = get_inventory_key_and_min_qty(
-            part_num, row, vendor.classification_config)
-        price = price_map.get(part_num) if price_map.get(part_num) else -1
-        cost = _get_part_cost(cost_map, part_num, row, vendor)
-        cost = get_adjusted_cost(part_num, cost,
-                                 vendor.cost_adjustment_config)
-        include = include_row_item(row, vendor.inclusion_config, cost, price)
-        if not inventory_key or not include:
-            continue
-        qty = _get_qty(row, vendor)
-        if vendor.vendor_name == "Blackburns" and part_num == "ALY05228U20":
-            print(row)
-        if qty >= min_qty:
-            add_to_inventory(inventory, inventory_key, part_num,
-                             vendor.vendor_name, qty, cost)
+        if part_num:
+            inventory_key, min_qty = get_inventory_key_and_min_qty(
+                part_num, row, vendor.classification_config)
+            price = price_map.get(part_num) if price_map.get(part_num) else -1
+            cost = _get_part_cost(cost_map, part_num, row, vendor)
+            cost = get_adjusted_cost(part_num, cost,
+                                     vendor.cost_adjustment_config)
+            include = include_row_item(row, vendor.inclusion_config,
+                                       cost, price)
+            if inventory_key and include:
+                qty = _get_qty(row, vendor)
+                if qty >= min_qty:
+                    add_to_inventory(inventory, inventory_key, part_num,
+                                     vendor.vendor_name, qty, cost)
 
 
 def add_inhouse_inventory(inventory, fishbowl_inventory_report):
     for row in fishbowl_inventory_report[1:]:
         raw_part_num, qty, avg_cost = [
-            element.strip('"') for element in row.split(",")
+            element.strip('"').strip() for element in row.split(",")
         ]
         part_num = raw_part_num.upper()
         inventory_key = None
