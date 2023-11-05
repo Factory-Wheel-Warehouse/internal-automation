@@ -17,6 +17,7 @@ from internalprocesses.aws.dynamodb import InventoryDAO, ProcessedOrderDAO, \
     VendorConfigDAO
 from internalprocesses.ftpconnection.ftpConnection import FTPConnection
 from internalprocesses.inventory import Inventory
+from internalprocesses.magentoapi.magento import Environment
 from internalprocesses.vendor import VendorConfig
 
 
@@ -36,25 +37,27 @@ def log_exceptions(func):
 
 @log_exceptions
 def order_import(test=True):
-    automation = InternalAutomation()
-    print("Retrieving orders")
-    automation.getOrders()
-    print(f"Retrieved orders:\n{automation.ordersByVendor}")
-    if not test:
-        automation.importOrders()
-        email = "sales@factorywheelwarehouse.com"
-    else:
-        email = "danny@factorywheelwarehouse.com"
-    for vendor in automation.ordersByVendor:
-        automation.emailDropships(automation.ordersByVendor[vendor],
-                                  vendor, email)
-    automation.emailExceptionOrders(email)
-    print("done")
+    for env in [Environment.PROD, Environment.STAGING]:
+        automation = InternalAutomation(env)
+        print(f"Retrieving orders for {env}")
+        automation.getOrders()
+        print(f"Retrieved orders:\n{automation.ordersByVendor}")
+        if not test:
+            automation.importOrders()
+            email = "orders@factorywheelwarehouse.com"
+        else:
+            email = "danny@factorywheelwarehouse.com"
+        for vendor in automation.ordersByVendor:
+            automation.emailDropships(automation.ordersByVendor[vendor],
+                                      vendor, email)
+        automation.emailExceptionOrders(email)
+        print("done")
 
 
 @log_exceptions
 def tracking_upload():
-    InternalAutomation().addTracking()
+    for env in [Environment.PROD, Environment.STAGING]:
+        InternalAutomation(env).addTracking()
 
 
 @log_exceptions

@@ -3,9 +3,6 @@ from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 import internalprocesses.corepricer.checkSales as checkSales
 from internalprocesses.automation import *
-from internalprocesses.masterinventory.mergeinventory import (
-    uploadInventoryToFTP, emailInventorySheet
-)
 from internalprocesses import email_quantity_sold_report
 
 app = Flask(__name__)
@@ -55,20 +52,6 @@ def trackingUpload():
     return "Success"
 
 
-@app.route("/inventory-upload")
-def inventoryUpload():
-    inventoryUploadThread = Thread(target=inventoryUploadNewThread)
-    inventoryUploadThread.start()
-    return "Success"
-
-
-@app.route("/email-inventory-file")
-def emailInventoryFile():
-    emailInventoryFileThread = Thread(target=emailInventorySheetNewThread)
-    emailInventoryFileThread.start()
-    return "Success"
-
-
 @app.route("/yearly-sold-report")
 def emailSoldReport():
     emailSoldReportThread = Thread(target=email_quantity_sold_report)
@@ -101,14 +84,6 @@ def trackingUploadNewThread():
 
 def orderImportNewThread(test=True):
     order_import(test=test)
-
-
-def inventoryUploadNewThread():
-    uploadInventoryToFTP()
-
-
-def emailInventorySheetNewThread():
-    emailInventorySheet()
 
 
 if __name__ == "__main__":

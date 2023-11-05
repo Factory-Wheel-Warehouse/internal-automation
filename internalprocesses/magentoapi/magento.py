@@ -1,5 +1,6 @@
 import re
 import traceback
+from enum import Enum
 
 import requests
 from datetime import date, timedelta
@@ -7,10 +8,19 @@ from datetime import date, timedelta
 from requests import JSONDecodeError
 
 
-class MagentoConnection:
+class Environment(Enum):
+    PROD = "PROD"
+    STAGING = "STAGING"
 
-    def __init__(self, accessToken):
-        self.baseRequest = "https://factorywheelwarehouse.com/rest/default/V1/"
+
+class MagentoConnection:
+    def __init__(self, accessToken, env: Environment = Environment.PROD):
+        self.environment = env
+        if self.environment == Environment.PROD:
+            self.baseRequest = "https://factorywheelwarehouse.com"
+        elif self.environment == Environment.STAGING:
+            self.baseRequest = "https://staging.factorywheelwarehouse.com"
+        self.baseRequest += "/rest/default/V1/"
         self._accessToken = accessToken
         self.headers = {
             "Authorization": f"Bearer {self._accessToken}"

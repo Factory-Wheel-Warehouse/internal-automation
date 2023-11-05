@@ -1,15 +1,14 @@
-import pprint
 import re
 import json
 from datetime import timedelta
 
 from dotenv import load_dotenv
 from internalprocesses.automation.constants import *
-from internalprocesses.aws.dynamodb import ProcessedOrderDAO, InventoryDAO, \
-    VendorConfigDAO
+from internalprocesses.aws.dynamodb import ProcessedOrderDAO, VendorConfigDAO
 from internalprocesses.ftpconnection.ftpConnection import FTPConnection
 from internalprocesses.inventory import Inventory
 from internalprocesses.inventory.constants import PAINT_CODE_START
+from internalprocesses.magentoapi.magento import Environment
 from internalprocesses.orders.orders import *
 from internalprocesses.fishbowl import FishbowlClient
 from internalprocesses.magentoapi.magento import MagentoConnection
@@ -17,12 +16,11 @@ from internalprocesses.outlookapi.outlook import OutlookClient
 from internalprocesses.tracking import (
     get_tracking_from_outlook, TrackingChecker
 )
-from internalprocesses.vendor import VendorConfig
 
 
 class InternalAutomation:
 
-    def __init__(self):
+    def __init__(self, env: Environment = Environment.PROD):
         load_dotenv()
         self.config = self.readConfig()
         self.ordersByVendor = {}
@@ -34,7 +32,7 @@ class InternalAutomation:
         self.ftpServer = self.connectFTPServer()
         self.fishbowl = self.connectFishbowl()
         self.outlook = self.connectOutlook()
-        self.magento = self.connectMagento()
+        self.magento = self.connectMagento(env)
         self.sourceList = Inventory(list(self.vendors.values()),
                                     self.ftpServer, self.fishbowl)
         self.trackingChecker = TrackingChecker()
@@ -185,9 +183,12 @@ class InternalAutomation:
                                   "uploaded but had zero cost PO items:\n\n"
                                   f"{zero_cost_pos}")
 
-    def connectMagento(self) -> MagentoConnection:
-        accessToken = os.getenv("MAGENTO-AT")
-        return MagentoConnection(accessToken)
+    def connectMagento(self, env: Environment) -> MagentoConnection:
+        if env == Environment.STAGING:
+            accessToken = os.getenv("MAGENTO-AT-2")
+        else:
+            accessToken = os.getenv("MAGENTO-AT")
+        return MagentoConnection(accessToken, env)
 
     def buildSOItemString(self, order: str, vendor: str) -> str:
 
