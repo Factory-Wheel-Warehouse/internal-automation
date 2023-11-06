@@ -35,7 +35,7 @@ def log_exceptions(func):
     return run
 
 
-# @log_exceptions
+@log_exceptions
 def order_import(test=True):
     for env in [Environment.PROD, Environment.STAGING]:
         print(f"Retrieving orders for {env}")
