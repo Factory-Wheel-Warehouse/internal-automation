@@ -51,13 +51,16 @@ def order_import(test=True):
             automation.emailDropships(automation.ordersByVendor[vendor],
                                       vendor, email)
         automation.emailExceptionOrders(email)
+        automation.close()
         print("done")
 
 
 @log_exceptions
 def tracking_upload():
     for env in [Environment.PROD, Environment.STAGING]:
-        InternalAutomation(env).addTracking()
+        automation = InternalAutomation(env)
+        automation.addTracking()
+        automation.close()
 
 
 @log_exceptions
@@ -68,6 +71,7 @@ def warehouse_inventory_upload():
                            for row in inventory]
     automation.ftpServer.write_list_as_csv(r'/Fishbowl/inventory.csv',
                                            formatted_inventory)
+    automation.close()
 
 
 @log_exceptions
