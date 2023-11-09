@@ -8,11 +8,12 @@ from ..vendor import VendorConfig
 
 
 class Inventory:
-    inventory = {CORE_INVENTORY_KEY: {}, FINISH_INVENTORY_KEY: {}}
 
     def __init__(self, vendor_configs: list[VendorConfig] | None,
                  ftp: FTPConnection | None,
                  fishbowl: FishbowlClient | None) -> None:
+        self.inventory = {CORE_INVENTORY_KEY: {},
+                          FINISH_INVENTORY_KEY: {}}
         if vendor_configs and ftp and fishbowl:
             add_inhouse_inventory(self.inventory, fishbowl.getPartsOnHand())
             price_map = self._get_price_map(ftp)

@@ -120,8 +120,8 @@ def upload_master_inventory():
     fishbowl = FishbowlClient(**FISHBOWL_CREDENTIALS)
     inventory = Inventory(vendor_configs, ftp, fishbowl)
     total_inv = build_total_inventory(inventory, ftp)
-    df = populate_dataframe(total_inv, get_initial_dataframe(
-        vendor_configs), ftp, {v.vendor_name: v for v in vendor_configs})
+    df = populate_dataframe(total_inv, get_initial_dataframe(vendor_configs),
+                            ftp, {v.vendor_name: v for v in vendor_configs})
     ftp.write_df_as_csv(FTP_SAVE_PATH, df)
     outlook = OutlookClient(**OUTLOOK_CREDENTIALS)
     file = BytesIO()
@@ -134,4 +134,4 @@ def upload_master_inventory():
                      attachment=b64encode(file.read()).decode(),
                      attachmentName=f"fww_master_inventory_"
                                     f"{date_}.csv")
-    del inventory
+    fishbowl.close()

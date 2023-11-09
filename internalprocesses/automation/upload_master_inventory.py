@@ -130,7 +130,8 @@ def _get_combined_qty(fin_qty: int, core_qty: int,
     if vendor:
         qty_deduction = vendor.inventory_file_config.quantity_deduction
         if qty_deduction:
-            return fin_qty + core_qty - qty_deduction
+            adjusted_cost = fin_qty + core_qty - qty_deduction
+            return adjusted_cost if adjusted_cost > 0 else 0
     return fin_qty + core_qty
 
 
