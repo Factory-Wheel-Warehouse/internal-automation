@@ -450,6 +450,8 @@ class InternalAutomation:
                 if vendor in self.vendors:
                     self.fishbowl.adjust_vendor_part_cost(order.hollander,
                                                           vendor, order.cost)
+                elif vendor == "No Vendor":
+                    self.fishbowl.importPPVP(order.hollander)
                 self.fishbowl.importSalesOrder(soData)
 
         processed_orders = []

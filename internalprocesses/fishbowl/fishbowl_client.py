@@ -315,7 +315,7 @@ class FishbowlClient:
         """Adjusts the cost for a part number from a specified vendor"""
 
         data = [
-            '"PartNumber", "ProductNumber", "Vendor", "DefaultVendor"' \
+            '"PartNumber", "ProductNumber", "Vendor", "DefaultVendor", ' \
             '"VendorPartNumber", "Cost"'
         ]
         data.append(
