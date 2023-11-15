@@ -319,7 +319,7 @@ class FishbowlClient:
             '"VendorPartNumber", "Cost"'
         ]
         data.append(
-            f'"{partNumber}", "{partNumber}", "{vendor_name}", {vendor_name}, '
+            f'"{partNumber}", "{partNumber}", "{vendor_name}", {True}, '
             f'"{partNumber}", {cost}'
         )
         response = self.sendImportRequest(
