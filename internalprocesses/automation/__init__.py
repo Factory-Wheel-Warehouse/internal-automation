@@ -37,7 +37,7 @@ def log_exceptions(func):
 
 @log_exceptions
 def order_import(test=True):
-    for env in [Environment.PROD, Environment.STAGING]:
+    for env in [Environment.PROD]:
         print(f"Retrieving orders for {env}")
         automation = InternalAutomation(env)
         automation.getOrders()
@@ -57,7 +57,7 @@ def order_import(test=True):
 
 @log_exceptions
 def tracking_upload():
-    for env in [Environment.PROD, Environment.STAGING]:
+    for env in [Environment.PROD]:
         print(f"Uploading tracking for {env}")
         automation = InternalAutomation(env)
         automation.addTracking()
