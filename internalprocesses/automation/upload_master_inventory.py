@@ -13,10 +13,13 @@ from internalprocesses.inventory.constants import CORE_INVENTORY_KEY, \
 from internalprocesses.vendor import VendorConfig
 
 HEADERS = ["sku", "total_qty", "final_magento_qty", "avg_ht",
-           "walmart_ht", "list_price"]
+           "walmart_ht", "ebay_ht", "list_price"]
 VENDOR_SPECIFIC_HEADERS = ["cost", "fin_qty", "core_qty", "combined_qty", "ht"]
 FTP_SAVE_PATH = "/Magento_upload/source-file-2.csv"
 FTP_PRICING_SHEET = "/Magento_upload/lkq_based_sku_pricing.csv"
+
+EBAY_HANDLING_TIMES = [1, 2, 3, 4, 5, 6, 7, 10, 15]
+WALMART_HANDLING_TIMES = [5, 10]
 
 
 def get_initial_dataframe(vendor_configs: list[VendorConfig]):
@@ -92,12 +95,11 @@ def _get_sku_handling_time(sku: str, is_finished: bool,
     return ht_values["finished"] if is_finished else ht_values["core"]
 
 
-def _get_walmart_handling_time(ht: int):
-    if ht <= 5:
-        return 5
-    elif ht <= 10:
-        return 10
-    return 3
+def _get_acceptable_ht(ht: int, good_hts: list[int]):
+    for good_ht in good_hts:
+        if ht <= good_ht:
+            return good_ht
+    return 3  # Default handling time (means no handling time fits)
 
 
 def _get_formatted_row(sku: str, availability: dict, price: float,
@@ -121,7 +123,9 @@ def _get_formatted_row(sku: str, availability: dict, price: float,
     row.update({"total_qty": total_qty,
                 "final_magento_qty": 3 if total_qty > 3 else total_qty,
                 "avg_ht": final_ht if final_ht <= 10 else 15,
-                "walmart_ht": _get_walmart_handling_time(final_ht)})
+                "ebay_ht": _get_acceptable_ht(final_ht, EBAY_HANDLING_TIMES),
+                "walmart_ht": _get_acceptable_ht(final_ht,
+                                                 WALMART_HANDLING_TIMES)})
     return row
 
 
