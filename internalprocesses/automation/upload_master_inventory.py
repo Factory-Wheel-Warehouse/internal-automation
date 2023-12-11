@@ -99,7 +99,7 @@ def _get_acceptable_ht(ht: int, good_hts: list[int]):
     for good_ht in good_hts:
         if ht <= good_ht:
             return good_ht
-    return 3  # Default handling time (means no handling time fits)
+    return good_hts[-1] + 1  # Return max acceptable ht plus one by default
 
 
 def _get_formatted_row(sku: str, availability: dict, price: float,
