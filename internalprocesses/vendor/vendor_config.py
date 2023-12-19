@@ -35,6 +35,7 @@ class InventoryFileConfig:
     file_path: str | None = None
     dir_path: str | None = None
     cost_column: int | None = None
+    encoding: str = "utf-8"
 
     def __post_init__(self):
         if (not (self.file_path or self.dir_path) or
@@ -46,6 +47,7 @@ class InventoryFileConfig:
 class MapConfig(ABC):
     file_path: str | None = None
     dir_path: str | None = None
+    encoding: str = "utf-8"
 
     @property
     @abstractmethod

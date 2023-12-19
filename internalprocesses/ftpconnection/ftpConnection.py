@@ -17,14 +17,15 @@ class FTPConnection:
         file.seek(0)
         return file
 
-    def get_file_as_list(self, relativePath):
+    def get_file_as_list(self, relativePath: str, encoding: str = "utf-8"):
         file = self.get_file_as_binary(relativePath)
         extension = relativePath[relativePath.rfind("."):]
         if extension == ".csv":
             csv_file = read_csv(file,
                                 quoting=csv.QUOTE_NONE,
                                 on_bad_lines="skip",
-                                index_col=False)
+                                index_col=False,
+                                encoding=encoding)
             csv_file.columns = csv_file.columns
             return csv_file.values.tolist()
         elif extension == ".xlsx":
@@ -44,6 +45,7 @@ class FTPConnection:
         self.server.storbinary(f"STOR {outputFilePath}", csv_buffer)
 
     def get_directory_most_recent_file(self, directory: str,
+                                       encoding: str = "utf-8",
                                        prune: bool = False):
         newest_file = None
         max_date = 0
@@ -62,7 +64,7 @@ class FTPConnection:
                                           file[1]["type"]]
                 if type_ == "file" and file_name != newest_file:
                     self.server.delete(f"{directory}/{file_name}")
-        return self.get_file_as_list(f"{directory}/{newest_file}")
+        return self.get_file_as_list(f"{directory}/{newest_file}", encoding)
 
     def close(self):
         self.server.close()

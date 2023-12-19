@@ -125,9 +125,10 @@ def _get_file(ftp: FTPConnection,
               config: InventoryFileConfig | SkuMapConfig | CostMapConfig,
               **kwargs) -> list[list[str]]:
     if config.dir_path:
-        return ftp.get_directory_most_recent_file(config.dir_path, True)
+        return ftp.get_directory_most_recent_file(config.dir_path,
+                                                  config.encoding, True)
     else:
-        return ftp.get_file_as_list(config.file_path)
+        return ftp.get_file_as_list(config.file_path, config.encoding)
 
 
 def _get_part_cost(cost_map: dict, part_num: str, row: list,
