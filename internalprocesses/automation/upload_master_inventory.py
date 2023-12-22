@@ -1,4 +1,5 @@
 from collections import defaultdict
+from math import ceil
 
 import pandas as pd
 
@@ -104,10 +105,10 @@ def _get_acceptable_ht(ht: int, good_hts: list[int]):
 
 def _get_formatted_row(sku: str, availability: dict, price: float,
                        vendors: dict[str, VendorConfig]) -> dict:
-    price = price if price else 5000.0
+    price = price if price else 100.0
     row = {"sku": sku, "list_price": price}
     total_qty, avg_ht, max_cost = 0, [0, 0], 0
-    if price < 5000:
+    if price != 100.0:
         for vendor, detailed_availability in availability.items():
             vendor_config = vendors.get(vendor)
             fin_qty, cost, *extended_unpacking = detailed_availability
@@ -160,7 +161,7 @@ def upload_coast_based_pricing():
         if sku:
             shipping = 17.5 if sku.startswith("STL") else 12.5
             margin = 1.35 if cost < 350 else 1.27
-            price = round(cost * margin + shipping, 2)
+            price = round(ceil(cost * margin + shipping) - 0.01, 2)
             prices.append([sku, price])
     ftp.write_list_as_csv(FTP_PRICING_SHEET, prices)
     prices.sort(key=lambda x: x[1])
