@@ -350,7 +350,7 @@ class InternalAutomation:
             shipping["city"], shipping["region_code"],
             shipping["postcode"]
         )
-        if len(shipping["street"]) == 2:
+        if len(shipping["street"]) > 1:
             address.street2 = shipping["street"][1]
         return address
 
@@ -531,20 +531,19 @@ class InternalAutomation:
         else:
             self.ordersByVendor[vendor] = [order]
 
-
-if __name__ == "__main__":
-    automation = InternalAutomation()
-    customer_pos = input("Enter space separated ebay order numbers:\n").split()
-    tracking_numbers = {}
-    not_in_fishbowl = []
-    for customer_po in customer_pos:
-        if automation.fishbowl.isSO(customer_po):
-            tracking = automation.getTracking(customer_po)
-            if tracking:
-                tracking_numbers[customer_po] = tracking
-        else:
-            not_in_fishbowl.append(customer_po)
-    tuple_tracking = [f"{k}: {v}" for k, v in tracking_numbers.items()]
-    tracking_numbers_formatted = "\n".join(tuple_tracking)
-    print(f"\nOrder numbers not in fishbowl: {', '.join(not_in_fishbowl)}\n\n"
-          f"Orders with tracking found:\n{tracking_numbers_formatted}")
+# if __name__ == "__main__":
+#     automation = InternalAutomation()
+#     customer_pos = input("Enter space separated ebay order numbers:\n").split()
+#     tracking_numbers = {}
+#     not_in_fishbowl = []
+#     for customer_po in customer_pos:
+#         if automation.fishbowl.isSO(customer_po):
+#             tracking = automation.getTracking(customer_po)
+#             if tracking:
+#                 tracking_numbers[customer_po] = tracking
+#         else:
+#             not_in_fishbowl.append(customer_po)
+#     tuple_tracking = [f"{k}: {v}" for k, v in tracking_numbers.items()]
+#     tracking_numbers_formatted = "\n".join(tuple_tracking)
+#     print(f"\nOrder numbers not in fishbowl: {', '.join(not_in_fishbowl)}\n\n"
+#           f"Orders with tracking found:\n{tracking_numbers_formatted}")

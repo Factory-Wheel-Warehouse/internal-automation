@@ -14,7 +14,7 @@ from internalprocesses.inventory.constants import CORE_INVENTORY_KEY, \
 from internalprocesses.vendor import VendorConfig
 
 HEADERS = ["sku", "total_qty", "final_magento_qty", "avg_ht",
-           "walmart_ht", "ebay_ht", "list_price"]
+           "walmart_ht", "ebay_ht", "list_price", "list_on_elite"]
 VENDOR_SPECIFIC_HEADERS = ["cost", "fin_qty", "core_qty", "combined_qty", "ht"]
 FTP_SAVE_PATH = "/Magento_upload/source-file-2.csv"
 FTP_PRICING_SHEET = "/Magento_upload/lkq_based_sku_pricing.csv"
@@ -108,6 +108,7 @@ def _get_formatted_row(sku: str, availability: dict, price: float,
     price = price if price else 100.0
     row = {"sku": sku, "list_price": price}
     total_qty, avg_ht, max_cost = 0, [0, 0], 0
+    list_on_elite = False
     if price != 100.0:
         for vendor, detailed_availability in availability.items():
             vendor_config = vendors.get(vendor)
@@ -115,7 +116,11 @@ def _get_formatted_row(sku: str, availability: dict, price: float,
             core_qty = extended_unpacking[0] if extended_unpacking else 0
             ht = _get_sku_handling_time(sku, fin_qty > 2, vendor_config)
             combined_qty = _get_combined_qty(fin_qty, core_qty, vendor_config)
-            total_qty += combined_qty
+            if vendor == "Warehouse" and combined_qty > 0:
+                list_on_elite = True
+                total_qty = combined_qty
+            if not list_on_elite:
+                total_qty += combined_qty
             avg_ht = [avg_ht[0] + ht, avg_ht[1] + 1]
             for header in VENDOR_SPECIFIC_HEADERS:
                 formatted_vendor_name = vendor.lower().replace(" ", "_")
@@ -126,7 +131,8 @@ def _get_formatted_row(sku: str, availability: dict, price: float,
                 "avg_ht": final_ht if final_ht <= 10 else 15,
                 "ebay_ht": _get_acceptable_ht(final_ht, EBAY_HANDLING_TIMES),
                 "walmart_ht": _get_acceptable_ht(final_ht,
-                                                 WALMART_HANDLING_TIMES)})
+                                                 WALMART_HANDLING_TIMES),
+                "list_on_elite": list_on_elite})
     return row
 
 
