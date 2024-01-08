@@ -91,7 +91,7 @@ def _get_sku_handling_time(sku: str, is_finished: bool,
     paint_code = int(paint_code[:2])
     ht_values = {
         "finished": 1,
-        "core": 15 if paint_code >= 80 else 2
+        "core": 15 if paint_code >= 80 else 3
     }
     return ht_values["finished"] if is_finished else ht_values["core"]
 
@@ -114,8 +114,9 @@ def _get_formatted_row(sku: str, availability: dict, price: float,
             vendor_config = vendors.get(vendor)
             fin_qty, cost, *extended_unpacking = detailed_availability
             core_qty = extended_unpacking[0] if extended_unpacking else 0
-            ht = _get_sku_handling_time(sku, fin_qty > 2, vendor_config)
             combined_qty = _get_combined_qty(fin_qty, core_qty, vendor_config)
+            is_finished = fin_qty >= 2 or (core_qty == 0 and fin_qty > 0)
+            ht = _get_sku_handling_time(sku, is_finished, vendor_config)
             if vendor == "Warehouse" and combined_qty > 0:
                 list_on_elite = True
                 total_qty = combined_qty
