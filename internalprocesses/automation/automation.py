@@ -213,7 +213,7 @@ class InternalAutomation:
         string += f'"ea", {order.price}, , , , , , , , , '
         return string
 
-    def buildSOString(self, customer: str, order: str) -> str:
+    def buildSOString(self, customer: str, order: Order) -> str:
 
         """
         Takes in Order object and customer (really selling avenue) and builds 

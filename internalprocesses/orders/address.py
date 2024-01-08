@@ -11,9 +11,12 @@ class Address:
     country: str = "UNITED STATES"
     street2: str | None = None
 
-    def __post_init__(self):
-        self.street = self.street1
-
+    @property
+    def street(self):
+        if self.street2:
+            return f"{self.street1}\n{self.street2}"
+        return self.street1
+    
     def __str__(self):
         outp = f"{self.name}\n{self.street}\n"
         outp += f"{self.city} {self.state} {self.zipcode}"
