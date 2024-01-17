@@ -133,12 +133,12 @@ class InternalAutomation:
             reference_customer_po = customer_po
         if ProcessedOrderDAO().get_item(reference_customer_po):
             ProcessedOrderDAO().mark_order_shipped(reference_customer_po)
-        if po:
-            try:
-                if not self.fishbowl.fulfill_po(po):
-                    zero_cost_pos.append(po)
-            except:
-                print(f"{po} already fulfilled")
+        # if po:
+        #     try:
+        #         if not self.fishbowl.fulfill_po(po):
+        #             zero_cost_pos.append(po)
+        #     except:
+        #         print(f"{po} already fulfilled")
 
     def addTracking(self) -> None:
 
@@ -156,7 +156,6 @@ class InternalAutomation:
                       f"{customer_po}")
             if trackingNumber:
                 tracking[customer_po] = trackingNumber
-        print(tracking)
         zero_cost_pos = []
         for customer_po, trackingNumber in tracking.items():
             if customer_po[0].isalpha():
