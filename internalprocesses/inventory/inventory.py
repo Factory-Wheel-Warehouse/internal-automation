@@ -18,6 +18,7 @@ class Inventory:
             add_inhouse_inventory(self.inventory, fishbowl.getPartsOnHand())
             price_map = self._get_price_map(ftp)
             for vendor in vendor_configs:
+                print(vendor.vendor_name)
                 sku_map = cost_map = None
                 if vendor.sku_map_config:
                     sku_map = build_map_from_config(ftp, vendor.sku_map_config)

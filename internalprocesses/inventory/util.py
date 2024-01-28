@@ -25,8 +25,7 @@ def eval_conditions(condition_1: str,
 
 
 def build_map_from_config(ftp: FTPConnection,
-                          config: SkuMapConfig | CostMapConfig,
-                          **kwargs) -> dict:
+                          config: SkuMapConfig | CostMapConfig) -> dict:
     map_, collisions = {}, {}
     for row in _get_file(ftp, config):
         key = str(row[config.key_column]).upper()
@@ -67,7 +66,10 @@ def get_part_number(row: list[str], part_number_column: int,
     if re.match(ROAD_READY_FINISH_PATTERN, raw_part_num):
         return (raw_part_num[:MATERIAL_CODE_END] +
                 raw_part_num[ROAD_READY_EXTRA_CHAR_END:])
-    return raw_part_num
+    if (re.match(FINISH_PATTERN, raw_part_num) or
+            re.match(CORE_PATTERN, raw_part_num) or
+            re.match(REPLICA_PATTERN, raw_part_num)):
+        return raw_part_num
 
 
 def get_inventory_key_and_min_qty(part_num: str, row: list[str],
@@ -91,9 +93,18 @@ def get_inventory_key_and_min_qty(part_num: str, row: list[str],
     return None, None
 
 
+def _get_inhouse_paint_code(inhouse_part_num: str) -> int:
+    if len(inhouse_part_num) > PAINT_CODE_START:
+        return int(inhouse_part_num[PAINT_CODE_START: PAINT_CODE_END])
+    else:
+        return -1
+
+
 def include_row_item(row: list[str], config: InclusionConfig | None,
-                     cost: float, price: float) -> bool:
+                     cost: float, price: float, part_num: str) -> bool:
     if cost and cost * MINIMUM_MARGIN > price:
+        return False
+    if _get_inhouse_paint_code(part_num) >= 95:
         return False
     if config:
         inclusion_result = eval_conditions(
@@ -161,6 +172,7 @@ def add_vendor_inventory(ftp: FTPConnection, inventory: dict,
         part_number_column = vendor.inventory_file_config.part_number_column
         part_num = get_part_number(row, part_number_column, sku_map)
         if part_num:
+            print(part_num)
             inventory_key, min_qty = get_inventory_key_and_min_qty(
                 part_num, row, vendor.classification_config)
             price = price_map.get(part_num) if price_map.get(part_num) else -1
@@ -168,7 +180,7 @@ def add_vendor_inventory(ftp: FTPConnection, inventory: dict,
             cost = get_adjusted_cost(part_num, cost,
                                      vendor.cost_adjustment_config)
             include = include_row_item(row, vendor.inclusion_config,
-                                       cost, price)
+                                       cost, price, part_num)
             if inventory_key and include:
                 qty = _get_qty(row, vendor)
                 if qty >= min_qty:
@@ -194,13 +206,9 @@ def add_inhouse_inventory(inventory, fishbowl_inventory_report):
                              INHOUSE_VENDOR_KEY, qty, 0.0)
 
 
-def get_core_search_value(part_number: str) -> str | None:
-    if len(part_number) > PAINT_CODE_START:
-        paint_code = int(part_number[PAINT_CODE_START: PAINT_CODE_END])
-    else:
-        paint_code = 0
-    is_replica = re.match(REPLICA_PATTERN, part_number)
-    is_polished = paint_code > POLISHED_PAINT_CODE_START
+def get_core_search_value(part_num: str) -> str | None:
+    is_replica = re.match(REPLICA_PATTERN, part_num)
+    is_polished = _get_inhouse_paint_code(part_num) > POLISHED_PAINT_CODE_START
     if not (is_replica or is_polished):
-        return str(part_number)[:PAINT_CODE_START]
+        return str(part_num)[:PAINT_CODE_START]
     return None
