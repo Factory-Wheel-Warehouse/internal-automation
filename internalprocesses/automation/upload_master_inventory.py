@@ -18,6 +18,7 @@ HEADERS = ["sku", "total_qty", "final_magento_qty", "avg_ht",
 VENDOR_SPECIFIC_HEADERS = ["cost", "fin_qty", "core_qty", "combined_qty", "ht"]
 FTP_SAVE_PATH = "/Magento_upload/source-file-2.csv"
 FTP_PRICING_SHEET = "/Magento_upload/lkq_based_sku_pricing.csv"
+MISSING_SKUS_FILE_PATH = "/Magento_upload/missing_skus.csv"
 
 EBAY_HANDLING_TIMES = [1, 2, 3, 4, 5, 6, 7, 10, 15]
 WALMART_HANDLING_TIMES = [5, 10]
@@ -36,9 +37,14 @@ def get_initial_dataframe(vendor_configs: list[VendorConfig]):
     return DataFrame(columns=headers)
 
 
+def _get_skus_missing_data(ftp: FTPConnection):
+    return ftp.get_file_as_list(MISSING_SKUS_FILE_PATH)
+
+
 def build_total_inventory(inventory: Inventory, ftp: FTPConnection) -> dict:
     total_inventory = {}
     finishes = defaultdict(set)
+    missing_skus = _get_skus_missing_data(ftp)
     for row in ftp.get_file_as_list(FTP_SAVE_PATH):
         total_inventory[row[0]] = {}
         if row[0][-1] != "N":
@@ -46,10 +52,14 @@ def build_total_inventory(inventory: Inventory, ftp: FTPConnection) -> dict:
     for key, value in inventory.inventory[FINISH_INVENTORY_KEY].items():
         if key in total_inventory:
             total_inventory[key] = value
+        else:
+            if key not in missing_skus:
+                missing_skus.append([key])
     for core, availability in inventory.inventory[CORE_INVENTORY_KEY].items():
         add_core_equivalents_to_total(total_inventory,
                                       finishes.get(core),
                                       availability)
+    ftp.write_list_as_csv(MISSING_SKUS_FILE_PATH, missing_skus)
     return total_inventory
 
 

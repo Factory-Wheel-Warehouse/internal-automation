@@ -172,7 +172,6 @@ def add_vendor_inventory(ftp: FTPConnection, inventory: dict,
         part_number_column = vendor.inventory_file_config.part_number_column
         part_num = get_part_number(row, part_number_column, sku_map)
         if part_num:
-            print(part_num)
             inventory_key, min_qty = get_inventory_key_and_min_qty(
                 part_num, row, vendor.classification_config)
             price = price_map.get(part_num) if price_map.get(part_num) else -1
