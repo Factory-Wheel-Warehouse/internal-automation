@@ -104,7 +104,8 @@ def include_row_item(row: list[str], config: InclusionConfig | None,
                      cost: float, price: float, part_num: str) -> bool:
     if cost and cost * MINIMUM_MARGIN > price:
         return False
-    if _get_inhouse_paint_code(part_num) >= 95:
+    paint_code = _get_inhouse_paint_code(part_num)
+    if paint_code >= 95 or paint_code in [85, 86]:
         return False
     if config:
         inclusion_result = eval_conditions(
