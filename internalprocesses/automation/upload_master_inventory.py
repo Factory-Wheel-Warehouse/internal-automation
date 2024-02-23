@@ -47,7 +47,8 @@ def build_total_inventory(inventory: Inventory, ftp: FTPConnection) -> dict:
     missing_skus = _get_skus_missing_data(ftp)
     for row in ftp.get_file_as_list(FTP_SAVE_PATH):
         total_inventory[row[0]] = {}
-        if row[0][-1] != "N":
+        paint_code = row[0][PAINT_CODE_START:]
+        if paint_code[-1] != "N" and int(paint_code) < 95:
             finishes[row[0][:PAINT_CODE_START]].add(row[0].upper())
     for key, value in inventory.inventory[FINISH_INVENTORY_KEY].items():
         if key in total_inventory:
