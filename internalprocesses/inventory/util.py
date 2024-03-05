@@ -1,6 +1,10 @@
 import csv
 import os
 import re
+from abc import ABC
+from enum import Enum
+from typing import Callable
+from typing import T
 
 from internalprocesses.ftpconnection.ftpConnection import FTPConnection
 from internalprocesses.inventory.constants import *
@@ -83,7 +87,7 @@ def get_inventory_key_and_min_qty(part_num: str, row: list[str],
         if condition_result == 1:
             return CORE_INVENTORY_KEY, CORE_MIN_QTY
         elif condition_result == 2:
-            return CORE_INVENTORY_KEY, CORE_MIN_QTY
+            return FINISH_INVENTORY_KEY, FINISHED_MIN_QTY
     if re.match(FINISH_PATTERN, part_num):
         return FINISH_INVENTORY_KEY, FINISHED_MIN_QTY
     elif re.match(CORE_PATTERN, part_num):
