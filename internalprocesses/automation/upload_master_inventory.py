@@ -180,7 +180,7 @@ def upload_coast_based_pricing():
         if sku:
             shipping = 17.5 if sku.startswith("STL") else 12.5
             margin = 1.35 if cost < 350 else 1.27
-            price = round(ceil(cost * margin + shipping) - 0.01, 2)
+            price = round(ceil((cost * margin) + shipping + 4.0) - 0.01, 2)
             prices.append([sku, price])
     ftp.write_list_as_csv(FTP_PRICING_SHEET, prices)
     prices.sort(key=lambda x: x[1])
@@ -188,3 +188,7 @@ def upload_coast_based_pricing():
           f"High: {prices[-1][1]}\n"
           f"Average: {sum([p[1] for p in prices]) / len(prices)}\n"
           f"Median: {prices[len(prices) // 2][1]}")
+
+
+if __name__ == "__main__":
+    upload_coast_based_pricing()
