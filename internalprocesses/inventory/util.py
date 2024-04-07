@@ -1,10 +1,4 @@
-import csv
-import os
 import re
-from abc import ABC
-from enum import Enum
-from typing import Callable
-from typing import T
 
 from internalprocesses.ftpconnection.ftpConnection import FTPConnection
 from internalprocesses.inventory.constants import *
