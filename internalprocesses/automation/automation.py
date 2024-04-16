@@ -181,6 +181,7 @@ class InternalAutomation:
                                   "The following POs have had tracking "
                                   "uploaded but had zero cost PO items:\n\n"
                                   f"{zero_cost_pos}")
+        print("complete")
 
     def connectMagento(self, env: Environment) -> MagentoConnection:
         if env == Environment.STAGING:
@@ -343,8 +344,13 @@ class InternalAutomation:
     def getMagentoAddress(self, orderDetails: dict) -> Address:
         shipping = orderDetails["extension_attributes"] \
             ["shipping_assignments"][0]["shipping"]["address"]
+        if not shipping["firstname"]:
+            shipping["firstname"] = ""
+        if not shipping["lastname"]:
+            shipping["lastname"] = ""
         address = Address(
-            " ".join([shipping["firstname"], shipping["lastname"]]),
+            " ".join([shipping["firstname"] or "",
+                      shipping["lastname"] or ""]),
             shipping["street"][0],
             shipping["city"], shipping["region_code"],
             shipping["postcode"]
@@ -510,8 +516,10 @@ class InternalAutomation:
     def sortOrder(self, order: Order) -> None:
 
         """
-        Checks which vendor has the wheel in stock following a specific order of priority.
-        Order of priority: Warehouse, Coast to Coast, Perfection Wheel, Jante Wheel
+        Checks which vendor has the wheel in stock following a specific
+        order of priority.
+        Order of priority: Warehouse, Coast to Coast, Perfection Wheel,
+        Jante Wheel
 
         Keyword Arguments:
             hollander: str -> hollander to check
@@ -532,7 +540,8 @@ class InternalAutomation:
 
 # if __name__ == "__main__":
 #     automation = InternalAutomation()
-#     customer_pos = input("Enter space separated ebay order numbers:\n").split()
+#     customer_pos = input("Enter space separated ebay order
+#     numbers:\n").split()
 #     tracking_numbers = {}
 #     not_in_fishbowl = []
 #     for customer_po in customer_pos:
@@ -544,5 +553,6 @@ class InternalAutomation:
 #             not_in_fishbowl.append(customer_po)
 #     tuple_tracking = [f"{k}: {v}" for k, v in tracking_numbers.items()]
 #     tracking_numbers_formatted = "\n".join(tuple_tracking)
-#     print(f"\nOrder numbers not in fishbowl: {', '.join(not_in_fishbowl)}\n\n"
+#     print(f"\nOrder numbers not in fishbowl: {', '.join(
+#     not_in_fishbowl)}\n\n"
 #           f"Orders with tracking found:\n{tracking_numbers_formatted}")
