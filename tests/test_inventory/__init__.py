@@ -1,12 +1,13 @@
 import unittest
 
-from internalprocesses.inventory import Inventory
-from src.domain.inventory.constants import CORE_INVENTORY_KEY, \
-    FINISH_INVENTORY_KEY, INHOUSE_VENDOR_KEY
+from src.domain.inventory.inventory import Inventory
+from src.util.constants.inventory import CORE_INVENTORY_KEY
+from src.util.constants.inventory import FINISH_INVENTORY_KEY
+from src.util.constants.inventory import INHOUSE_VENDOR_KEY
 
 
 class TestInventory(unittest.TestCase):
-    inventory = Inventory(None, None, None)
+    inventory = Inventory()
 
     def _reset_inventory(self):
         self.inventory.inventory = {

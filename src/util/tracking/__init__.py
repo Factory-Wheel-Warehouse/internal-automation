@@ -1,4 +1,4 @@
-from internalprocesses import OutlookFacade
+from src.facade.outlook import OutlookFacade
 from src.util.tracking.util import get_tracking_from_outlook
 
 if __name__ == "__main__":
@@ -11,7 +11,7 @@ if __name__ == "__main__":
     )["APIConfig"]["Outlook"]["Danny"]
     password = os.getenv("OUTLOOK-PW")
     consumerSecret = os.getenv("OUTLOOK-CS")
-    outlook = OutlookFacade(config, password, consumerSecret)
+    outlook = OutlookFacade()
 
     tracking = {}
     for po in range(29000, 29010):

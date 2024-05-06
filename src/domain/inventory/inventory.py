@@ -1,9 +1,9 @@
 from math import inf
 
 from src.dao import VendorConfigDAO
-from internalprocesses import FishbowlFacade
 from src.domain.inventory.inventory_entry import InventoryEntry
 from src.domain.inventory.vendor_availability import VendorAvailability
+from src.facade.fishbowl import FishbowlFacade
 from src.facade.ftp.ftp_facade import FTPFacade
 from src.util.constants.inventory import CORE_INVENTORY_KEY
 from src.util.constants.inventory import COST_INDEX

@@ -3,7 +3,7 @@ import unittest
 
 from dacite import from_dict
 
-from internalprocesses.vendor import VendorConfig
+from src.domain.vendor import VendorConfig
 
 
 class TestVendor(unittest.TestCase):
