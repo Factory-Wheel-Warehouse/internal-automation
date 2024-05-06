@@ -125,11 +125,10 @@ class InternalAutomationFacade:
 
         tracking = {}
         for customer_po in self.unfulfilledOrders:
-            try:
-                tracking[customer_po] = self.getTracking(customer_po)
-            except KeyError:
-                print(f"KeyError searching for tracking:\nCustomerPO: "
-                      f"{customer_po}")
+            tracking_num = self.getTracking(customer_po)
+            if tracking_num:
+                tracking[customer_po] = tracking_num
+        print(tracking)
         zero_cost_pos = []
         for customer_po, trackingNumber in tracking.items():
             if customer_po[0].isalpha():

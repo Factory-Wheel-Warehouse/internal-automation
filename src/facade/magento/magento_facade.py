@@ -117,17 +117,21 @@ class MagentoFacade:
             return "amazon"
 
     def getCarrier(self, trackingNumber):
-        if re.findall(r"^1Z[a-z|A-Z|0-9]{8}[0-9]{8}$", trackingNumber):
-            return "ups"
-        elif re.findall(r"^[0-9]{12}$", trackingNumber):
-            return "fedex"
+        try:
+            if re.findall(r"^1Z[a-z|A-Z|0-9]{8}[0-9]{8}$", trackingNumber):
+                return "ups"
+            elif re.findall(r"^[0-9]{12}$", trackingNumber):
+                return "fedex"
+        except Exception as e:
+            print(trackingNumber)
+            raise e
 
     def trackingNumberCarrier(self, trackingNumber):
-        carrier, title = None, None
-        if self.getCarrier(trackingNumber) == "ups":
-            carrier, title = "ups", "United Parcel Service"
+        carrier, title = self.getCarrier(trackingNumber), None
+        if carrier == "ups":
+            title = "United Parcel Service"
         elif self.getCarrier(trackingNumber) == "fedex":
-            carrier, title = "fedex", "Federal Express"
+            title = "Federal Express"
         return [carrier, title]
 
     def buildShipmentUploadPayload(self, carrier, title, trackingNumber,
