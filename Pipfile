@@ -23,6 +23,7 @@ dependency-injector = "*"
 asyncio = "*"
 flask = {extras = ["async"], version = "*"}
 watchtower = "*"
+typing-extensions = "*"
 
 [dev-packages]
 
