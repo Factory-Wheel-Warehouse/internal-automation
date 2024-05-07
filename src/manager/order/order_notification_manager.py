@@ -27,7 +27,7 @@ class OrderNotificationManager(Manager):
 
         message = self._get_sbd_message(orders_to_notify_by_offset)
         if message:
-            self.outlook.sendMail("danny@factorywheelwarehouse.com",
+            self.outlook.sendMail("orders@factorywheelwarehouse.com",
                                   "\"Ship By\" Automated Notifications",
                                   message, contentType="HTML")
         return "Success"
