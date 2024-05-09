@@ -23,6 +23,7 @@ class ReportManager(Manager):
         report_as_list = [["SKU",
                            "Quantity Sold"]] + quantity_sold_by_sku_report(
             fishbowl)
+        fishbowl.close()
         report_as_csv_string = "\n".join(
             [f"{row[0]},{row[1]}" for row in report_as_list])
         report_binary = BytesIO(report_as_csv_string.encode()).read()
@@ -36,4 +37,3 @@ class ReportManager(Manager):
             attachment=report_edm_binary,
             attachmentName="QuantitySoldBySkuReport.csv"
         )
-        fishbowl.close()

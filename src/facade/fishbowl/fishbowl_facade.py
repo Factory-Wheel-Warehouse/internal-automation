@@ -51,9 +51,6 @@ class FishbowlFacade:
         self.general_status = None
         self.request_specific_status = None
 
-    def __del__(self):
-        self.close()
-
     def start(self):
         self.connect()
         self.loginRequest()
@@ -62,7 +59,7 @@ class FishbowlFacade:
 
         """Initializes a socket and connects to the HOST and port."""
         self.stream = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.stream.settimeout(120)
+        self.stream.settimeout(300)
         self.stream.connect((self.HOST, self.PORT))
 
     def close(self):
@@ -266,7 +263,8 @@ class FishbowlFacade:
         """Adds a list of parts into Fishbowl and returns the response."""
 
         data = [
-            '"PartNumber", "PartDescription", "UOM", "PartType", "POItemType", "ConsumptionRate"',
+            '"PartNumber", "PartDescription", "UOM", "PartType", '
+            '"POItemType", "ConsumptionRate"',
         ]
         data.append(
             f'"{partNumber}", "{partNumber}", "ea", "Inventory", "Purchase", 0'
@@ -324,8 +322,16 @@ class FishbowlFacade:
         """Adds a sales order into Fishbowl."""
 
         data = [
-            '"Flag", "SONum", "Status", "CustomerName", "CustomerContact", "BillToName", "BillToAddress", "BillToCity", "BillToState", "BillToZip", "BillToCountry", "ShipToName", "ShipToAddress", "ShipToCity", "ShipToState", "ShipToZip", "ShipToCountry", "ShipToResidential", "CarrierName", "TaxRateName", "PriorityId", "PONum"',
-            '"Flag", "SOItemTypeID", "ProductNumber", "ProductDescription", "ProductQuantity", "UOM", "ProductPrice", "Taxable", "TaxCode", "Note", "ItemQuickBooksClassName", "ItemDateScheduled", "ShowItem", "KitItem", "RevisionLevel", "CustomerPartNumber"'
+            '"Flag", "SONum", "Status", "CustomerName", "CustomerContact", '
+            '"BillToName", "BillToAddress", "BillToCity", "BillToState", '
+            '"BillToZip", "BillToCountry", "ShipToName", "ShipToAddress", '
+            '"ShipToCity", "ShipToState", "ShipToZip", "ShipToCountry", '
+            '"ShipToResidential", "CarrierName", "TaxRateName", '
+            '"PriorityId", "PONum"',
+            '"Flag", "SOItemTypeID", "ProductNumber", "ProductDescription", '
+            '"ProductQuantity", "UOM", "ProductPrice", "Taxable", "TaxCode", '
+            '"Note", "ItemQuickBooksClassName", "ItemDateScheduled", '
+            '"ShowItem", "KitItem", "RevisionLevel", "CustomerPartNumber"'
         ]
         data += soData
         response = self.sendImportRequest(data, "ImportSalesOrder")
@@ -336,8 +342,12 @@ class FishbowlFacade:
         """Adds a purchase order into Fishbowl."""
 
         data = [
-            'Flag, PONum, Status, VendorName, VendorContact, RemitToName, RemitToAddress, RemitToCity, RemitToState, RemitToZip, RemitToCountry, ShipToName, DeliverToName, ShipToAddress, ShipToCity, ShipToState, ShipToZip, ShipToCountry, CarrierName',
-            'Flag, POItemTypeID, PartNumber, VendorPartNumber, PartQuantity, UOM, PartPrice'
+            'Flag, PONum, Status, VendorName, VendorContact, RemitToName, '
+            'RemitToAddress, RemitToCity, RemitToState, RemitToZip, '
+            'RemitToCountry, ShipToName, DeliverToName, ShipToAddress, '
+            'ShipToCity, ShipToState, ShipToZip, ShipToCountry, CarrierName',
+            'Flag, POItemTypeID, PartNumber, VendorPartNumber, PartQuantity, '
+            'UOM, PartPrice'
         ]
         data += poData
         response = self.sendImportRequest(data, "ImportPurchaseOrder")
@@ -494,7 +504,8 @@ class FishbowlFacade:
     def getPartsOnHand(self):
         query = "SELECT STOCK.NUM, STOCK.QTY, PARTCOST.avgCost "
         query += "FROM ( "
-        query += "    SELECT PART.id as id, PART.num as NUM, QOHVIEW.QTY as QTY "
+        query += "    SELECT PART.id as id, PART.num as NUM, QOHVIEW.QTY as " \
+                 "QTY "
         query += "    FROM QOHVIEW "
         query += "    LEFT JOIN PART "
         query += "    ON QOHVIEW.PARTID = PART.id "

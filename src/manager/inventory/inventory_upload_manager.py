@@ -73,11 +73,6 @@ class InventoryUploadManager(Manager):
         self._inventory.build(self._ftp, self._fishbowl_facade)
         self._fishbowl_facade.close()
         self._ftp.close()
-        # self._inventory_dao.delete_all_items()
+        self._inventory_dao.delete_all_items()
         dynamo_inv = self._inventory.convert_to_entries()
-        pprint.pprint([asdict(i) for i in dynamo_inv[:10]])
-        dynamo_inv = [from_dict(InventoryEntry, asdict(i)) for i in
-                      dynamo_inv[:10]]
-        pprint.pprint(dynamo_inv)
-        # self._inventory_dao.batch_write_items(dynamo_inv)
-        self._fishbowl_facade.close()
+        self._inventory_dao.batch_write_items(dynamo_inv)

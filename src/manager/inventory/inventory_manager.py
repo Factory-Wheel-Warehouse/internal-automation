@@ -1,9 +1,6 @@
 from base64 import b64encode
 from datetime import date
 
-from src.dao import VendorConfigDAO
-from src.domain.inventory.inventory import Inventory
-from src.facade.fishbowl import FishbowlFacade
 from src.facade.outlook import OutlookFacade
 from src.manager.inventory.inventory_upload_manager import \
     InventoryUploadManager
@@ -14,9 +11,6 @@ from src.util.constants.inventory import MASTER_INVENTORY_PATH
 
 class InventoryManager(Manager):
     _ftp: FTPFacade = FTPFacade()
-    _vendor_config_dao: VendorConfigDAO = VendorConfigDAO()
-    _fishbowl_facade: FishbowlFacade = FishbowlFacade()
-    _inventory: Inventory = Inventory()
     _outlook_facade: OutlookFacade = OutlookFacade()
 
     @property

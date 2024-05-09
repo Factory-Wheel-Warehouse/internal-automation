@@ -6,7 +6,6 @@ from src.manager.inventory.inventory_manager import InventoryManager
 from src.manager.manager import Manager
 from src.manager.order.order_manager import OrderManager
 from src.manager.report_manager.report_manager import ReportManager
-from src.manager.test_manager import TestManager
 from src.manager.tracking import TrackingManager
 
 
@@ -59,7 +58,6 @@ class FlaskServer:
 app = Flask("InternalAutomationService")
 
 services = [
-    TestManager(),
     InventoryManager(),
     OrderManager(),
     TrackingManager(),
