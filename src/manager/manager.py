@@ -3,7 +3,7 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from threading import Thread
 
-from src.util.logging import log_exceptions
+from src.util.logging.sns_exception_logging_decorator import log_exceptions
 
 
 @dataclass

@@ -7,6 +7,7 @@ from src.manager.manager import Manager
 from src.manager.order.order_manager import OrderManager
 from src.manager.report_manager.report_manager import ReportManager
 from src.manager.tracking import TrackingManager
+from src.util.logging import logger
 
 
 @dataclass
@@ -66,4 +67,5 @@ services = [
 server = FlaskServer(app, services)
 
 if __name__ == "__main__":
+    logger.info("Starting InternalAutomationService application")
     app.run(debug=True)
