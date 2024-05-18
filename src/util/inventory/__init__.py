@@ -19,7 +19,7 @@ from src.util.constants.inventory import FINISH_INVENTORY_KEY
 from src.util.constants.inventory import FINISH_PATTERN
 from src.util.constants.inventory import FWW_CORE_PATTERN
 from src.util.constants.inventory import INHOUSE_VENDOR_KEY
-from src.util.constants.inventory import MASTER_PRICING_MAP
+from src.util.constants.inventory import MASTER_PRICING_PATH
 from src.util.constants.inventory import MATERIAL_CODE_END
 from src.util.constants.inventory import MINIMUM_MARGIN
 from src.util.constants.inventory import PAINT_CODE_END
@@ -226,7 +226,7 @@ def add_inhouse_inventory(inventory, fishbowl_inventory_report):
             inventory_key = FINISH_INVENTORY_KEY
         qty = int(float(qty))
         # Always use cost of zero to prioritize inhouse assignments
-        if inventory_key and inventory_key == CORE_INVENTORY_KEY:
+        if inventory_key:
             _add_to_inventory(inventory, inventory_key, part_num,
                               INHOUSE_VENDOR_KEY, qty, 0.0)
 
@@ -240,5 +240,5 @@ def get_core_search_value(part_num: str) -> str | None:
 
 
 def get_price_map(ftp: FTPFacade):
-    pricing_file = ftp.get_file_as_list(MASTER_PRICING_MAP)
+    pricing_file = ftp.get_file_as_list(MASTER_PRICING_PATH)
     return {r[0]: float(r[1]) for r in pricing_file}

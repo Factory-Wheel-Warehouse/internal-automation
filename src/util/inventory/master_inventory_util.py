@@ -13,12 +13,16 @@ from src.facade.ftp.ftp_facade import FTPFacade
 from src.util.constants.inventory import CORE_INVENTORY_KEY
 from src.util.constants.inventory import EBAY_HANDLING_TIMES
 from src.util.constants.inventory import FINISH_INVENTORY_KEY
-from src.util.constants.inventory import FTP_PRICING_SHEET
-from src.util.constants.inventory import FTP_SAVE_PATH
+from src.util.constants.inventory import HIGH_COST_MARGIN
+from src.util.constants.inventory import HIGH_COST_THRESHOLD
+from src.util.constants.inventory import LOW_COST_MARGIN
+from src.util.constants.inventory import MASTER_PRICING_PATH
+from src.util.constants.inventory import LISTABLE_SKUS_PATH
 from src.util.constants.inventory import HEADERS
-from src.util.constants.inventory import MISSING_SKUS_FILE_PATH
+from src.util.constants.inventory import MISSING_SKUS_PATH
 
 from src.util.constants.inventory import PAINT_CODE_START
+from src.util.constants.inventory import PRICE_BUFFER
 from src.util.constants.inventory import VENDOR_SPECIFIC_HEADERS
 from src.util.constants.inventory import WALMART_HANDLING_TIMES
 
@@ -38,7 +42,7 @@ def get_initial_dataframe(vendor_configs: list[VendorConfig]):
 
 def _get_skus_missing_data(ftp: FTPFacade):
     try:
-        return ftp.get_file_as_list(MISSING_SKUS_FILE_PATH)
+        return ftp.get_file_as_list(MISSING_SKUS_PATH)
     except EmptyDataError:
         return []
 
@@ -47,12 +51,16 @@ def build_total_inventory(inventory: Inventory, ftp: FTPFacade) -> dict:
     total_inventory = {}
     finishes = defaultdict(set)
     missing_skus = _get_skus_missing_data(ftp)
-    for row in ftp.get_file_as_list(FTP_SAVE_PATH):
-        total_inventory[row[0]] = {}
-        paint_code = row[0][PAINT_CODE_START:]
-        if paint_code[-1] != "N" and not (int(paint_code) in [85, 86] or
-                                          int(paint_code) >= 90):
-            finishes[row[0][:PAINT_CODE_START]].add(row[0].upper())
+    for row in ftp.get_file_as_list(LISTABLE_SKUS_PATH):
+        try:
+            total_inventory[row[0]] = {}
+            paint_code = int(row[0][PAINT_CODE_START: PAINT_CODE_START + 2])
+            if "N" not in row[0] and not (int(paint_code) in [85, 86]
+                                          or int(paint_code) >= 90):
+                finishes[row[0][:PAINT_CODE_START]].add(row[0].upper())
+        except ValueError:
+            print(row)
+            continue
     for key, value in inventory.inventory[FINISH_INVENTORY_KEY].items():
         if key in total_inventory:
             total_inventory[key] = value
@@ -63,7 +71,7 @@ def build_total_inventory(inventory: Inventory, ftp: FTPFacade) -> dict:
         add_core_equivalents_to_total(total_inventory,
                                       finishes.get(core),
                                       availability)
-    ftp.write_list_as_csv(MISSING_SKUS_FILE_PATH, missing_skus)
+    ftp.write_list_as_csv(MISSING_SKUS_PATH, missing_skus)
     return total_inventory
 
 
@@ -86,7 +94,7 @@ def add_core_equivalents_to_total(total_inventory: dict, finishes: set[str],
 def populate_dataframe(total_inventory: dict, df: DataFrame,
                        ftp: FTPFacade,
                        vendors: list[VendorConfig]) -> DataFrame:
-    pricing = {r[0]: r[1] for r in ftp.get_file_as_list(FTP_PRICING_SHEET)}
+    pricing = {r[0]: r[1] for r in ftp.get_file_as_list(MASTER_PRICING_PATH)}
     vendor_map = {vendor.vendor_name: vendor for vendor in vendors}
     rows = []
     for sku, availability in total_inventory.items():
@@ -162,12 +170,18 @@ def _get_combined_qty(fin_qty: int, core_qty: int,
     return fin_qty + core_qty
 
 
+def _get_margin(cost: float) -> float:
+    return LOW_COST_MARGIN if cost < HIGH_COST_THRESHOLD else HIGH_COST_MARGIN
+
+
+def _get_price(cost: float, shipping_cost: float) -> float:
+    margin = _get_margin(cost)
+    corrected_raw_price = (cost * margin) + shipping_cost + PRICE_BUFFER
+    return round(ceil(corrected_raw_price) - 0.01, 2)
+
+
 def upload_coast_based_pricing():
-    vendor_configs: list[VendorConfig] = VendorConfigDAO().get_all_items()
-    coast = None
-    for vendor in vendor_configs:
-        if vendor.vendor_name == "Coast To Coast":
-            coast = vendor
+    coast: VendorConfig = VendorConfigDAO().get_item("Coast To Coast")
     ftp = FTPFacade()
     map_file = ftp.get_file_as_list(coast.sku_map_config.file_path)
     map_ = {}
@@ -182,10 +196,9 @@ def upload_coast_based_pricing():
         sku = map_.get(part_num)
         if sku:
             shipping = 17.5 if sku.startswith("STL") else 12.5
-            margin = 1.35 if cost < 350 else 1.27
-            price = round(ceil((cost * margin) + shipping + 4.0) - 0.01, 2)
+            price = _get_price(cost, shipping)
             prices.append([sku, price])
-    ftp.write_list_as_csv(FTP_PRICING_SHEET, prices)
+    ftp.write_list_as_csv(MASTER_PRICING_PATH, prices)
     prices.sort(key=lambda x: x[1])
     print(f"Low: {prices[0][1]}\n"
           f"High: {prices[-1][1]}\n"

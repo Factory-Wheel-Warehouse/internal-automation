@@ -65,7 +65,7 @@ def search_email_pdfs(attachments: list,
     """
     candidates = []
     for attachment in attachments:
-        reader = PdfReader(BytesIO(attachment), strict=False)
+        reader = PdfReader(BytesIO(attachment))
         for page in range(len(reader.pages)):
             text = reader.pages[page].extract_text(0)
             candidates += re.findall(pattern, text)
