@@ -1,19 +1,12 @@
-import pprint
-from dataclasses import asdict
-
-from dacite import from_dict
-
 from src.dao.inventory_dao import InventoryDAO
 from src.dao.vendor_config_dao import VendorConfigDAO
 from src.domain.inventory.inventory import Inventory
-from src.domain.inventory.inventory_entry import InventoryEntry
-from src.domain.inventory.vendor_availability import VendorAvailability
 from src.facade.fishbowl import FishbowlFacade
 from src.facade.ftp.ftp_facade import FTPFacade
 from src.manager.manager import Manager
-from src.util.constants.inventory import COAST_PRICING_SHEET
+from src.util.constants.inventory import COAST_PRICING_PATH
 from src.util.constants.inventory import MASTER_INVENTORY_PATH
-from src.util.constants.inventory import MASTER_PRICING_MAP
+from src.util.constants.inventory import MASTER_PRICING_PATH
 from src.util.inventory.master_inventory_util import build_total_inventory
 from src.util.inventory.master_inventory_util import get_initial_dataframe
 from src.util.inventory.master_inventory_util import populate_dataframe
@@ -55,14 +48,14 @@ class InventoryUploadManager(Manager):
                                                                "Coast")
         prices = []
         map_ = get_sku_map(self._ftp, coast_vendor_config)
-        rows = self._ftp.get_file_as_list(COAST_PRICING_SHEET)
+        rows = self._ftp.get_file_as_list(COAST_PRICING_PATH)
         for row in rows:
             part_num, base_cost = row
             sku = map_.get(part_num)
             if sku:
                 pricing = get_list_price(coast_vendor_config, sku, base_cost)
                 prices.append(pricing)
-        self._ftp.write_list_as_csv(MASTER_PRICING_MAP, prices)
+        self._ftp.write_list_as_csv(MASTER_PRICING_PATH, prices)
         self._ftp.close()
 
     @Manager.action

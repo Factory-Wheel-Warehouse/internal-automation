@@ -12,7 +12,6 @@ twilio = "*"
 gunicorn = "*"
 msal = "*"
 openpyxl = "*"
-pypdf = "*"
 bs4 = "*"
 boto3 = "*"
 retry = "*"
@@ -24,6 +23,7 @@ asyncio = "*"
 flask = {extras = ["async"], version = "*"}
 watchtower = "*"
 typing-extensions = "*"
+pypdf = "*"
 
 [dev-packages]
 

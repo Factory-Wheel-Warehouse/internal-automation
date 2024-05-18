@@ -1,19 +1,23 @@
+# FTP file paths
 MASTER_INVENTORY_PATH = "/Magento_upload/source-file-2.csv"
-MASTER_PRICING_MAP = "/Magento_upload/lkq_based_sku_pricing.csv"
-COAST_PRICING_SHEET = "/lkq/monthly_pricing.xlsx"
+MASTER_PRICING_PATH = "/Magento_upload/lkq_based_sku_pricing.csv"
+COAST_PRICING_PATH = "/lkq/monthly_pricing.xlsx"
+LISTABLE_SKUS_PATH = "/Magento_upload/production_sku.csv"
+MISSING_SKUS_PATH = "/Magento_upload/missing_skus.csv"
 
+# Margins as multipliers
 LOW_COST_MARGIN = 1.35
 HIGH_COST_MARGIN = 1.27
 HIGH_COST_THRESHOLD = 350.0
-MIN_MARGIN = 1.23
+MINIMUM_MARGIN = 1.23
+PRICE_BUFFER = 4.0
 
+# Part number regex patterns
 FINISH_PATTERN = r"(ALY|STL|FWC)[0-9]{5}[A-Z]{1}[0-9]{2}$"
 REPLICA_PATTERN = r"(ALY|STL|FWC)[0-9]{5}[A-Z]{1}[0-9]{2}N{1}$"
 CORE_PATTERN = r"(ALY|STL|FWC)[0-9]{5}[A-Z]{1}$"
 ROAD_READY_FINISH_PATTERN = r"(ALY|STL|FWC)0[0-9]{5}[A-Z]{1}[0-9]{2}N?$"
 FWW_CORE_PATTERN = r"(ALY|STL|FWC)[0-9]{5}[A-Z]{1}[0-9]{2}\*CORE$"
-
-MINIMUM_MARGIN = 1.23
 
 CORE_MIN_QTY = 1
 FINISHED_MIN_QTY = 1
@@ -51,10 +55,6 @@ HEADERS = ["sku", "total_qty", "final_magento_qty", "avg_ht",
            "walmart_ht", "list_price"]
 VENDOR_SPECIFIC_HEADERS = ["cost", "fin_qty", "core_qty",
                            "combined_qty", "ht"]
-
-FTP_SAVE_PATH = "/Magento_upload/source-file-2.csv"
-FTP_PRICING_SHEET = "/Magento_upload/lkq_based_sku_pricing.csv"
-MISSING_SKUS_FILE_PATH = "/Magento_upload/missing_skus.csv"
 
 EBAY_HANDLING_TIMES = [1, 2, 3, 4, 5, 6, 7, 10, 15]
 WALMART_HANDLING_TIMES = [5, 10]
