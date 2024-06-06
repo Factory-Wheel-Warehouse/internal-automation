@@ -226,7 +226,7 @@ def add_inhouse_inventory(inventory, fishbowl_inventory_report):
             inventory_key = FINISH_INVENTORY_KEY
         qty = int(float(qty))
         # Always use cost of zero to prioritize inhouse assignments
-        if inventory_key and inventory_key == CORE_INVENTORY_KEY:
+        if inventory_key:
             _add_to_inventory(inventory, inventory_key, part_num,
                               INHOUSE_VENDOR_KEY, qty, 0.0)
 

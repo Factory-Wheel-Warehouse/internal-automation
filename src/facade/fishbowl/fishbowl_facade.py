@@ -7,39 +7,6 @@ from src.facade.fishbowl.fishbowl_status import status_codes
 
 
 class FishbowlFacade:
-    """
-    Class for facilitating interaction with the Fishbowl API.
-
-    Attributes
-    ----------
-    username : str
-        username of the account to log in as
-
-    password : str
-        password of the account
-
-    HOST : str
-        IPv4 address or domain of Fishbowl server
-
-    port : int
-        port that Fishbowl server is utilizing
-
-    key : str
-        access key granted by Fishbowl API
-
-    general_status : int
-        status code returned from latest request to Fishbowl API (1000 meaning
-        the request succeeded and there are no issues)
-
-    statusDescription : str 
-        brief description of the statusCode as defined in the Fishbowl API
-        documentation
-    
-    Methods
-    -------
-
-    """
-
     USERNAME: str = "danny"
     PASSWORD: str = os.getenv("FISHBOWL-PW")
     HOST: str = "factorywheelwarehouse.myfishbowl.com"
@@ -185,8 +152,10 @@ class FishbowlFacade:
             self.key = response["FbiJson"]["Ticket"]["Key"]
         else:
             status = {
-                "code": str(self.general_status),
-                "description": str(self.statusDescription)
+                "general_code": str(self.general_status),
+                "general_description": status_codes.get(self.general_status),
+                "code": str(self.request_specific_status),
+                "description": status_codes.get(self.request_specific_status)
             }
             self.close()
             raise Exception(f"{status}")
@@ -502,17 +471,21 @@ class FishbowlFacade:
             return [number.strip('"') for number in tracking_numbers]
 
     def getPartsOnHand(self):
-        query = "SELECT STOCK.NUM, STOCK.QTY, PARTCOST.avgCost "
-        query += "FROM ( "
-        query += "    SELECT PART.id as id, PART.num as NUM, QOHVIEW.QTY as " \
-                 "QTY "
-        query += "    FROM QOHVIEW "
-        query += "    LEFT JOIN PART "
-        query += "    ON QOHVIEW.PARTID = PART.id "
-        query += "    WHERE QOHVIEW.QTY > 0"
-        query += ") as STOCK "
-        query += "LEFT JOIN PARTCOST "
-        query += "ON STOCK.id = PARTCOST.id;"
+        query = """
+        SELECT STOCK.num, STOCK.qty, PARTCOST.avgCost
+        FROM (
+            SELECT PART.id as id, PART.num as num, QOHVIEW.qty as qty
+            FROM QOHVIEW
+            LEFT JOIN PART
+                ON QOHVIEW.partid = PART.id
+                WHERE QOHVIEW.qty > 0
+        ) as STOCK
+        LEFT JOIN PARTCOST
+        ON STOCK.id = PARTCOST.id
+        WHERE num LIKE "ALY%"
+            OR num LIKE "STL%"
+            OR num LIKE "FWC%";
+        """
         response = self.sendQueryRequest(query)
         return response["FbiJson"]["FbiMsgsRs"]["ExecuteQueryRs"] \
             ["Rows"]["Row"]
