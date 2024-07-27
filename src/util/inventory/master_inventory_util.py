@@ -19,6 +19,7 @@ from src.util.constants.inventory import LOW_COST_MARGIN
 from src.util.constants.inventory import MASTER_PRICING_PATH
 from src.util.constants.inventory import LISTABLE_SKUS_PATH
 from src.util.constants.inventory import HEADERS
+from src.util.constants.inventory import MAX_SKU_LISTING_QTY
 from src.util.constants.inventory import MISSING_SKUS_PATH
 
 from src.util.constants.inventory import PAINT_CODE_START
@@ -150,8 +151,14 @@ def _get_formatted_row(sku: str, availability: dict, price: float,
                 formatted_vendor_name = vendor.lower().replace(" ", "_")
                 row[f"{formatted_vendor_name}_{header}"] = locals()[header]
     final_ht = round(avg_ht[0] / avg_ht[1]) if avg_ht[1] else 3
+
+    if total_qty > MAX_SKU_LISTING_QTY:
+        final_magento_qty = MAX_SKU_LISTING_QTY
+    else:
+        final_magento_qty = total_qty
+
     row.update({"total_qty": total_qty,
-                "final_magento_qty": 3 if total_qty > 3 else total_qty,
+                "final_magento_qty": final_magento_qty,
                 "avg_ht": final_ht if final_ht <= 10 else 15,
                 "ebay_ht": _get_acceptable_ht(final_ht, EBAY_HANDLING_TIMES),
                 "walmart_ht": _get_acceptable_ht(final_ht,
