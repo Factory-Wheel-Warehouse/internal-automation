@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import json
@@ -128,8 +129,10 @@ class InternalAutomationFacade:
             tracking_num = self.getTracking(customer_po)
             if tracking_num:
                 tracking[customer_po] = tracking_num
-        print(tracking)
+        logging.info(f"Found tracking numbers for {len(tracking)} orders"
+                     f"\nTracking: {tracking}")
         zero_cost_pos = []
+        uploaded = 0
         for customer_po, trackingNumber in tracking.items():
             if customer_po[0].isalpha():
                 po = self.fishbowl.getPONum(customer_po[0])
@@ -139,6 +142,7 @@ class InternalAutomationFacade:
                 self.add_tracking_number_and_fulfill(customer_po,
                                                      trackingNumber, po,
                                                      zero_cost_pos)
+                uploaded += 1
             else:
                 carrier = self.magento.getCarrier(trackingNumber)
                 status = self.checkTrackingStatus(
@@ -154,7 +158,10 @@ class InternalAutomationFacade:
                                   "The following POs have had tracking "
                                   "uploaded but had zero cost PO items:\n\n"
                                   f"{zero_cost_pos}")
-        print("complete")
+            uploaded += 1
+
+        logging.info(f"Tracking completed successfully with {uploaded}"
+                     f" tracking uploaded")
 
     def buildSOItemString(self, order: str, vendor: str) -> str:
 

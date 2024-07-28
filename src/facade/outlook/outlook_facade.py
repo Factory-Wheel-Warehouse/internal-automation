@@ -1,3 +1,4 @@
+import logging
 import os
 
 import requests
@@ -88,11 +89,16 @@ class OutlookFacade:
         if self.accessToken:
             self.headers = {'Authorization': f'Bearer {self.accessToken}'}
 
-    def getEmailAttachments(self, emailID):
-        return requests.get(
+    def get_email_attachments(self, emailID: str) -> list | None:
+        email = requests.get(
             self.endpoint + "/messages/" + emailID + "/attachments",
             headers=self.headers
-        ).json()["value"]
+        ).json()
+        attachments = email.get("value")
+        if not attachments:
+            logging.debug(f"Email with ID {emailID} had no attachments"
+                          f"\nResponse: {email}")
+        return attachments
 
     def getEmailAttachmentContent(self, emailId, attachmentId):
         return requests.get(

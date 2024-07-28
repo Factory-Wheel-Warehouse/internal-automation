@@ -43,7 +43,7 @@ def get_pdf_attachments(email_id: str,
     :return: list of pdf attachments as bytes
     """
     attachments_as_bytes = []
-    for attachment in outlook.getEmailAttachments(email_id):
+    for attachment in outlook.get_email_attachments(email_id):
         type_ = attachment[ATTACHMENT_CONTENT_TYPE_KEY]
         id_ = attachment[ATTACHMENT_ID_KEY]
         if type_ == PDF_CONTENT_TYPE:
