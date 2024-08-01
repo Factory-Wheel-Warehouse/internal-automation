@@ -6,10 +6,10 @@ LISTABLE_SKUS_PATH = "/Magento_upload/production_sku.csv"
 MISSING_SKUS_PATH = "/Magento_upload/missing_skus.csv"
 
 # Margins as multipliers
-LOW_COST_MARGIN = 1.35
-HIGH_COST_MARGIN = 1.27
+MINIMUM_MARGIN = 1.40
+LOW_COST_MARGIN = MINIMUM_MARGIN + 0.1
+HIGH_COST_MARGIN = MINIMUM_MARGIN + 0.05
 HIGH_COST_THRESHOLD = 350.0
-MINIMUM_MARGIN = 1.23
 PRICE_BUFFER = 4.0
 
 # Part number regex patterns
