@@ -98,6 +98,7 @@ class OutlookFacade:
         if not attachments:
             logging.debug(f"Email with ID {emailID} had no attachments"
                           f"\nResponse: {email}")
+            return []
         return attachments
 
     def getEmailAttachmentContent(self, emailId, attachmentId):
