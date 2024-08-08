@@ -151,11 +151,7 @@ def _get_formatted_row(sku: str, availability: dict, price: float,
                 formatted_vendor_name = vendor.lower().replace(" ", "_")
                 row[f"{formatted_vendor_name}_{header}"] = locals()[header]
     final_ht = round(avg_ht[0] / avg_ht[1]) if avg_ht[1] else 3
-
-    if total_qty > MAX_SKU_LISTING_QTY:
-        final_magento_qty = MAX_SKU_LISTING_QTY
-    else:
-        final_magento_qty = total_qty
+    final_magento_qty = min(total_qty, MAX_SKU_LISTING_QTY)
 
     row.update({"total_qty": total_qty,
                 "final_magento_qty": final_magento_qty,
