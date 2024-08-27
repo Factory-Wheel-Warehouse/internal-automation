@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 
 from src.dao.processed_order_dao import ProcessedOrderDAO
 from src.dao.vendor_config_dao import VendorConfigDAO
+from src.domain.fishbowl.sales_order_item_type import SalesOrderItemType
 from src.domain.inventory.inventory import Inventory
 from src.domain.order.address import Address
 from src.domain.order.order import Order
@@ -18,6 +19,7 @@ from src.facade.magento.magento_facade import Environment
 from src.facade.magento.magento_facade import MagentoFacade
 from src.facade.outlook import OutlookFacade
 from src.util.constants.inventory import PAINT_CODE_START
+from src.util.order.magento_parsing_utils import get_channel_fee
 from src.util.tracking import get_tracking_from_outlook
 from src.util.tracking.tracking_checker import TrackingChecker
 
@@ -179,12 +181,18 @@ class InternalAutomationFacade:
             str : formatted row describing the item
         """
 
-        itemType = 10
+        itemType = SalesOrderItemType.DROP_SHIP
         if vendor != "Warehouse":
-            itemType = 12
+            itemType = SalesOrderItemType.SALE
         string = f'"Item", {itemType}, "{order.hollander}", , {order.qty}, '
         string += f'"ea", {order.price}, , , , , , , , , '
         return string
+
+    @staticmethod
+    def add_channel_fee(order: Order) -> str:
+        return f'"Item", {SalesOrderItemType.DISCOUNT_AMOUNT}, ' \
+               f', , , , ' \
+               f'{order.channel_fee}, , , , , , , , , '
 
     def buildSOString(self, customer: str, order: Order) -> str:
 
@@ -236,7 +244,8 @@ class InternalAutomationFacade:
 
         return [
             self.buildSOString(customer, order),
-            self.buildSOItemString(order, vendor)
+            self.buildSOItemString(order, vendor),
+
         ]
 
     def buildPOItemString(self, order: Order) -> str:
@@ -362,7 +371,8 @@ class InternalAutomationFacade:
                     "qty": int(item["qty_ordered"]),
                     "price": float(item["price"]),
                     "platform": self.magento.get_platform(orderID),
-                    "account": account
+                    "account": account,
+                    "channel_fee": get_channel_fee(orderDetails)
                 }
                 return Order(**order)
         if not self.fishbowl.isSO(orderID):

@@ -22,6 +22,7 @@ class Order:
     ship_by_date: str | None = None
     shipped: bool = False
     date_shipped: str | None = None
+    channel_fee: float = 0.0
 
     def __str__(self):
         if self.poNum:
