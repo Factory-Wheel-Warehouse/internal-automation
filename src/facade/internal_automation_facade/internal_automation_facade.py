@@ -19,6 +19,7 @@ from src.facade.magento.magento_facade import Environment
 from src.facade.magento.magento_facade import MagentoFacade
 from src.facade.outlook import OutlookFacade
 from src.util.constants.inventory import PAINT_CODE_START
+from src.util.constants.order import CHANNEL_FEE
 from src.util.order.magento_parsing_utils import get_channel_fee
 from src.util.tracking import get_tracking_from_outlook
 from src.util.tracking.tracking_checker import TrackingChecker
@@ -165,7 +166,7 @@ class InternalAutomationFacade:
         logging.info(f"Tracking completed successfully with {uploaded}"
                      f" tracking uploaded")
 
-    def buildSOItemString(self, order: str, vendor: str) -> str:
+    def buildSOItemString(self, order: Order, vendor: str) -> str:
 
         """
         Takes in an Order object and builds the row to be used in the Fishbowl 
@@ -181,18 +182,17 @@ class InternalAutomationFacade:
             str : formatted row describing the item
         """
 
-        itemType = SalesOrderItemType.DROP_SHIP
+        itemType = SalesOrderItemType.SALE
         if vendor != "Warehouse":
-            itemType = SalesOrderItemType.SALE
+            itemType = SalesOrderItemType.DROP_SHIP
         string = f'"Item", {itemType}, "{order.hollander}", , {order.qty}, '
         string += f'"ea", {order.price}, , , , , , , , , '
         return string
 
     @staticmethod
-    def add_channel_fee(order: Order) -> str:
+    def get_channel_fee_so_line(channel_fee: float) -> str:
         return f'"Item", {SalesOrderItemType.DISCOUNT_AMOUNT}, ' \
-               f', , , , ' \
-               f'{order.channel_fee}, , , , , , , , , '
+               f'"{CHANNEL_FEE}", , , , {-1 * channel_fee}, , , , , , , , , '
 
     def buildSOString(self, customer: str, order: Order) -> str:
 
@@ -223,7 +223,8 @@ class InternalAutomationFacade:
         string += f'"UPS", "None", 30, "{order.customer_po}"'
         return string
 
-    def buildSOData(self, customer: str, order: str, vendor: str) -> list[str]:
+    def buildSOData(self, customer: str, order: Order,
+                    vendor: str) -> list[str]:
 
         """
         Returns the formatted sales order and item data for import given an
@@ -245,7 +246,7 @@ class InternalAutomationFacade:
         return [
             self.buildSOString(customer, order),
             self.buildSOItemString(order, vendor),
-
+            self.get_channel_fee_so_line(order.channel_fee)
         ]
 
     def buildPOItemString(self, order: Order) -> str:
