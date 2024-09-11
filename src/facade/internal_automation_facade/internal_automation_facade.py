@@ -20,6 +20,7 @@ from src.facade.magento.magento_facade import MagentoFacade
 from src.facade.outlook import OutlookFacade
 from src.util.constants.inventory import PAINT_CODE_START
 from src.util.constants.order import CHANNEL_FEE
+from src.util.constants.order import WALMART_FEE
 from src.util.order.magento_parsing_utils import get_channel_fee
 from src.util.tracking import get_tracking_from_outlook
 from src.util.tracking.tracking_checker import TrackingChecker
@@ -194,6 +195,11 @@ class InternalAutomationFacade:
         return f'"Item", {SalesOrderItemType.DISCOUNT_AMOUNT}, ' \
                f'"{CHANNEL_FEE}", , , , {-1 * channel_fee}, , , , , , , , , '
 
+    @staticmethod
+    def get_walmart_discount_percent_line() -> str:
+        return f'"Item", {SalesOrderItemType.DISCOUNT_PERCENTAGE}, ' \
+               f'"{WALMART_FEE}", , , , , , , , , , , , , '
+
     def buildSOString(self, customer: str, order: Order) -> str:
 
         """
@@ -243,10 +249,15 @@ class InternalAutomationFacade:
             list : list consisting of the rows as strings [soDetails, item]
         """
 
+        if not order.channel_fee and order.account == "walmart":
+            channel_fee = self.get_walmart_discount_percent_line()
+        else:
+            channel_fee = self.get_channel_fee_so_line(order.channel_fee)
+
         return [
             self.buildSOString(customer, order),
             self.buildSOItemString(order, vendor),
-            self.get_channel_fee_so_line(order.channel_fee)
+            channel_fee
         ]
 
     def buildPOItemString(self, order: Order) -> str:
