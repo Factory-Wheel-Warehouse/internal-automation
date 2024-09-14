@@ -471,14 +471,21 @@ class FishbowlFacade:
             return [number.strip('"') for number in tracking_numbers]
 
     def getPartsOnHand(self):
+        """
+        Inventory ranges taken from fishbowl "location" table
+        """
         query = """
         SELECT STOCK.num, STOCK.qty, PARTCOST.avgCost
         FROM (
             SELECT PART.id as id, PART.num as num, QOHVIEW.qty as qty
             FROM QOHVIEW
             LEFT JOIN PART
-                ON QOHVIEW.partid = PART.id
-                WHERE QOHVIEW.qty > 0
+            ON QOHVIEW.partid = PART.id
+            WHERE QOHVIEW.qty > 0
+            AND (
+                QOHVIEW.LOCATIONID BETWEEN 612 AND 1053
+                OR QOHVIEW.LOCATIONID BETWEEN 1062 AND 1477
+            )
         ) as STOCK
         LEFT JOIN PARTCOST
         ON STOCK.id = PARTCOST.id
