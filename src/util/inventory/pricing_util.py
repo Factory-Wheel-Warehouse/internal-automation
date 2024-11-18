@@ -4,7 +4,6 @@ from src.util.constants.inventory import DOLLAR_ROUND_DIGITS
 from src.util.constants.inventory import HIGH_COST_MARGIN
 from src.util.constants.inventory import HIGH_COST_THRESHOLD
 from src.util.constants.inventory import LOW_COST_MARGIN
-from src.util.inventory import get_adjusted_cost
 
 
 def get_margin(cost: float):
@@ -14,13 +13,13 @@ def get_margin(cost: float):
         return HIGH_COST_MARGIN
 
 
-def get_list_price(coast_vendor_config: VendorConfig,
-                   sku: str, base_cost: float):
-    cost_config = coast_vendor_config.cost_adjustment_config
-    adjusted_cost = get_adjusted_cost(sku, base_cost, cost_config)
-    shipping = adjusted_cost - base_cost
-    margin = get_margin(adjusted_cost)
-    return [sku, round(base_cost * margin + shipping, DOLLAR_ROUND_DIGITS)]
+def get_marked_up_price(cost: float, shipping: float = 0.0) -> float:
+    margin = get_margin(cost)
+    return round(cost * margin + shipping, DOLLAR_ROUND_DIGITS)
+
+
+def get_list_price(sku: str, base_cost: float, cost_adjustment: float):
+    return [sku, get_marked_up_price(base_cost, cost_adjustment)]
 
 
 def get_sku_map(ftp: FTPFacade, coast_vendor_config: VendorConfig):

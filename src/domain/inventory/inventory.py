@@ -12,11 +12,11 @@ from src.util.constants.inventory import INHOUSE_VENDOR_KEY
 from src.util.constants.inventory import NO_VENDOR
 from src.util.constants.inventory import PAINT_CODE_START
 from src.util.constants.inventory import QUANTITY_INDEX
-from src.util.inventory import add_inhouse_inventory
-from src.util.inventory import add_vendor_inventory
-from src.util.inventory import build_map_from_config
-from src.util.inventory import get_core_search_value
-from src.util.inventory import get_price_map
+from src.util.inventory.inventory_util import add_inhouse_inventory
+from src.util.inventory.inventory_util import add_vendor_inventory
+from src.util.inventory.inventory_util import build_map_from_config
+from src.util.inventory.inventory_util import get_core_search_value
+from src.util.inventory.inventory_util import get_price_map
 
 
 class Inventory:

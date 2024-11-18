@@ -7,6 +7,7 @@ from src.manager.manager import Manager
 from src.util.constants.inventory import COAST_PRICING_PATH
 from src.util.constants.inventory import MASTER_INVENTORY_PATH
 from src.util.constants.inventory import MASTER_PRICING_PATH
+from src.util.inventory.inventory_util import get_adjusted_cost
 from src.util.inventory.master_inventory_util import build_total_inventory
 from src.util.inventory.master_inventory_util import get_initial_dataframe
 from src.util.inventory.master_inventory_util import populate_dataframe
@@ -46,14 +47,19 @@ class InventoryUploadManager(Manager):
         self._ftp.start()
         coast_vendor_config = self._vendor_config_dao.get_item("Coast To "
                                                                "Coast")
+        cost_adjustment_config = coast_vendor_config.cost_adjustment_config
         prices = []
         map_ = get_sku_map(self._ftp, coast_vendor_config)
         rows = self._ftp.get_file_as_list(COAST_PRICING_PATH)
         for row in rows:
             part_num, base_cost = row
             sku = map_.get(part_num)
+            adjusted_cost = get_adjusted_cost(sku,
+                                              base_cost,
+                                              cost_adjustment_config)
             if sku:
-                pricing = get_list_price(coast_vendor_config, sku, base_cost)
+                cost_adjustment = adjusted_cost - base_cost
+                pricing = get_list_price(sku, base_cost, cost_adjustment)
                 prices.append(pricing)
         self._ftp.write_list_as_csv(MASTER_PRICING_PATH, prices)
         self._ftp.close()
