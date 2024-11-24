@@ -28,7 +28,7 @@ pypdf = "*"
 [dev-packages]
 
 [requires]
-python_version = ">=3.10"
+python_version = "3.10"
 
 [scripts]
 test = "pipenv run python -m unittest tests"
