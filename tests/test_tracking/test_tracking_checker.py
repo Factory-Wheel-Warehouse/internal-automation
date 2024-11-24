@@ -13,7 +13,7 @@ class TestTrackingChecker(unittest.TestCase):
 
     def test_check_tracking(self):
         tracking_checker = TrackingChecker()
-        tracking_checker.check_tracking("394648002863", FEDEX)
+        tracking_checker.get_tracking_details("394648002863", FEDEX)
         self.assertEqual(200, tracking_checker.status_code)
 
     # Failing due to 500 server error? Look into

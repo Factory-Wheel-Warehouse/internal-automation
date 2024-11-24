@@ -32,7 +32,8 @@ class FTPFacade:
                                 quoting=csv.QUOTE_NONE,
                                 on_bad_lines="skip",
                                 index_col=False,
-                                encoding=encoding)
+                                encoding=encoding,
+                                low_memory=False)
             csv_file.columns = csv_file.columns
             return csv_file.values.tolist()
         elif extension == ".xlsx":

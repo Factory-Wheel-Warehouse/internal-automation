@@ -3,6 +3,7 @@ import os
 import re
 import json
 from datetime import date
+from datetime import datetime
 from datetime import timedelta
 
 from dotenv import load_dotenv
@@ -86,17 +87,22 @@ class InternalAutomationFacade:
                             trackingNumber: str,
                             carrier: str,
                             customer_po: str
-                            ) -> str:
+                            ) -> tuple[str, datetime]:
 
         """
         Checks the tracking status of a tracking number
         """
 
-        trackingData = self.trackingChecker.check_tracking(
+        trackingData = self.trackingChecker.get_tracking_details(
             trackingNumber, carrier
         )
         if self.trackingChecker.status_code == 200:
-            return trackingData["data"][0]["status"]
+            status = trackingData["data"][0]["status"]
+            received_date = datetime.strptime(
+                trackingData["data"]["0"]["origin_info"]["ItemReceived"],
+                "%Y-%m-%d %H:%M:%S"
+            )
+            return status, received_date
         else:
             self.trackingChecker.add_single_tracking(
                 trackingNumber, carrier, customer_po
@@ -142,27 +148,23 @@ class InternalAutomationFacade:
                 po = self.fishbowl.getPONum(customer_po[0])
             else:
                 po = self.fishbowl.getPONum(customer_po)
-            if not self.magento.is_amazon_order(customer_po):
+            carrier = self.magento.getCarrier(trackingNumber)
+            status, received_date = self.checkTrackingStatus(
+                trackingNumber, carrier, customer_po
+            )
+            status_is_valid = status in ["transit", "pickup", "delivered"]
+            three_days_ago = datetime.today() - timedelta(days=3)
+            received_date_is_valid = received_date >= three_days_ago
+            if status_is_valid and received_date_is_valid:
                 self.add_tracking_number_and_fulfill(customer_po,
                                                      trackingNumber, po,
                                                      zero_cost_pos)
-                uploaded += 1
-            else:
-                carrier = self.magento.getCarrier(trackingNumber)
-                status = self.checkTrackingStatus(
-                    trackingNumber, carrier, customer_po
-                )
-                if status in ["transit", "pickup", "delivered"]:
-                    self.add_tracking_number_and_fulfill(customer_po,
-                                                         trackingNumber, po,
-                                                         zero_cost_pos)
         if zero_cost_pos:
             self.outlook.sendMail("sales@factorywheelwarehouse.com",
                                   "Unfulfilled POs with Tracking Received",
                                   "The following POs have had tracking "
                                   "uploaded but had zero cost PO items:\n\n"
                                   f"{zero_cost_pos}")
-            uploaded += 1
 
         logging.info(f"Tracking completed successfully with {uploaded}"
                      f" tracking uploaded")

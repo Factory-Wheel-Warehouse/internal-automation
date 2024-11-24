@@ -13,15 +13,7 @@ class TrackingChecker:
             "Tracktry-Api-Key": os.getenv("TRACKTRY-KEY")
         }
         self._baseURL = "https://api.tracktry.com/v1/trackings"
-        self._status_code = 0
-
-    @property
-    def status_code(self):
-        return self._status_code
-
-    @status_code.setter
-    def status_code(self, status_code):
-        self._status_code = status_code
+        self.status_code = 0
 
     def _request(self,
                  relative_url,
@@ -99,13 +91,14 @@ class TrackingChecker:
             )
         return responses
 
-    def check_tracking(self, tracking_number: str, carrier: str) -> dict:
+    def get_tracking_details(self, tracking_number: str, carrier: str) -> dict:
         """
         Returns the JSON response describing the tracking number
 
         :param tracking_number: tracking number to check
         :param carrier: tracking number carrier
-        :return: JSON response
+        :return: JSON response (see
+        https://www.tracktry.com/api-track-get-a-single-tracking-results)
         """
         url = f'/{carrier}/{tracking_number}'
         return self._request(url)

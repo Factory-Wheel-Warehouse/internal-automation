@@ -20,7 +20,7 @@ botocore = "*"
 dacite = "*"
 dependency-injector = "*"
 asyncio = "*"
-flask = {extras = ["async"], version = "*"}
+flask = { extras = ["async"], version = "*" }
 watchtower = "*"
 typing-extensions = "*"
 pypdf = "*"
@@ -28,7 +28,7 @@ pypdf = "*"
 [dev-packages]
 
 [requires]
-python_version = "3"
+python_version = ">=3.10"
 
 [scripts]
 test = "pipenv run python -m unittest tests"
