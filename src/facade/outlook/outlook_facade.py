@@ -1,9 +1,10 @@
-import logging
 import os
 
 import requests
 import msal
 from datetime import date
+
+from src.util.logging.cloudwatch_logger import LOGGER
 
 
 # TODO: Refactor with `from msgraph import GraphServiceClient`
@@ -96,8 +97,8 @@ class OutlookFacade:
         ).json()
         attachments = email.get("value")
         if not attachments:
-            logging.debug(f"Email with ID {emailID} had no attachments"
-                          f"\nResponse: {email}")
+            LOGGER.debug(f"Email with ID {emailID} had no attachments"
+                         f"\nResponse: {email}")
             return []
         return attachments
 

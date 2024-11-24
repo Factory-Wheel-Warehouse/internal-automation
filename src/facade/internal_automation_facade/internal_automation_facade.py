@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import json
@@ -22,6 +21,7 @@ from src.facade.outlook import OutlookFacade
 from src.util.constants.inventory import PAINT_CODE_START
 from src.util.constants.order import CHANNEL_FEE
 from src.util.constants.order import WALMART_FEE
+from src.util.logging.cloudwatch_logger import LOGGER
 from src.util.order.magento_parsing_utils import get_channel_fee
 from src.util.tracking import get_tracking_from_outlook
 from src.util.tracking.tracking_checker import TrackingChecker
@@ -139,8 +139,8 @@ class InternalAutomationFacade:
             tracking_num = self.getTracking(customer_po)
             if tracking_num:
                 tracking[customer_po] = tracking_num
-        logging.info(f"Found tracking numbers for {len(tracking)} orders"
-                     f"\nTracking: {tracking}")
+        LOGGER.info(f"Found tracking numbers for {len(tracking)} orders"
+                    f"\nTracking: {tracking}")
         zero_cost_pos = []
         uploaded = 0
         for customer_po, trackingNumber in tracking.items():
@@ -166,8 +166,8 @@ class InternalAutomationFacade:
                                   "uploaded but had zero cost PO items:\n\n"
                                   f"{zero_cost_pos}")
 
-        logging.info(f"Tracking completed successfully with {uploaded}"
-                     f" tracking uploaded")
+        LOGGER.info(f"Tracking completed successfully with {uploaded}"
+                    f" tracking uploaded")
 
     def buildSOItemString(self, order: Order, vendor: str) -> str:
 
