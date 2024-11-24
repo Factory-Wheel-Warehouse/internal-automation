@@ -23,8 +23,8 @@ from src.util.constants.order import CHANNEL_FEE
 from src.util.constants.order import WALMART_FEE
 from src.util.logging.cloudwatch_logger import LOGGER
 from src.util.order.magento_parsing_utils import get_channel_fee
-from src.util.tracking import get_tracking_from_outlook
 from src.util.tracking.tracking_checker import TrackingChecker
+from src.util.tracking.util import get_tracking_from_outlook
 
 
 class InternalAutomationFacade:
