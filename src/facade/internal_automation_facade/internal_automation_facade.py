@@ -99,7 +99,7 @@ class InternalAutomationFacade:
         if self.trackingChecker.status_code == 200:
             status = trackingData["data"][0]["status"]
             received_date = datetime.strptime(
-                trackingData["data"]["0"]["origin_info"]["ItemReceived"],
+                trackingData["data"][0]["origin_info"]["ItemReceived"],
                 "%Y-%m-%d %H:%M:%S"
             )
             return status, received_date
@@ -153,8 +153,8 @@ class InternalAutomationFacade:
                 trackingNumber, carrier, customer_po
             )
             status_is_valid = status in ["transit", "pickup", "delivered"]
-            three_days_ago = datetime.today() - timedelta(days=3)
-            received_date_is_valid = received_date >= three_days_ago
+            lookback_window = datetime.today() - timedelta(days=10)
+            received_date_is_valid = received_date >= lookback_window
             if status_is_valid and received_date_is_valid:
                 self.add_tracking_number_and_fulfill(customer_po,
                                                      trackingNumber, po,
