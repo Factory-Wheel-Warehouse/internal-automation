@@ -13,6 +13,7 @@ from src.util.inventory.master_inventory_util import get_initial_dataframe
 from src.util.inventory.master_inventory_util import populate_dataframe
 from src.util.inventory.pricing_util import get_list_price
 from src.util.inventory.pricing_util import get_sku_map
+from src.util.logging import log_exceptions
 
 
 class InventoryUploadManager(Manager):
@@ -28,6 +29,7 @@ class InventoryUploadManager(Manager):
 
     @Manager.action
     @Manager.asynchronous()
+    @log_exceptions
     def ftp(self):
         self._ftp.start()
         self._fishbowl_facade.start()
@@ -43,6 +45,7 @@ class InventoryUploadManager(Manager):
 
     @Manager.action
     @Manager.asynchronous()
+    @log_exceptions
     def pricing_ftp(self):
         self._ftp.start()
         coast_vendor_config = self._vendor_config_dao.get_item("Coast To "
@@ -66,6 +69,7 @@ class InventoryUploadManager(Manager):
 
     @Manager.action
     @Manager.asynchronous()
+    @log_exceptions
     def dynamo(self):
         self._fishbowl_facade.start()
         self._ftp.start()

@@ -5,6 +5,7 @@ from src.facade.fishbowl import FishbowlFacade
 from src.facade.fishbowl import quantity_sold_by_sku_report
 from src.facade.outlook import OutlookFacade
 from src.manager.manager import Manager
+from src.util.logging import log_exceptions
 
 
 class ReportManager(Manager):
@@ -15,6 +16,7 @@ class ReportManager(Manager):
 
     @Manager.action
     @Manager.asynchronous()
+    @log_exceptions
     def quantity_sold(self):
         outlook = OutlookFacade()
         fishbowl = FishbowlFacade()

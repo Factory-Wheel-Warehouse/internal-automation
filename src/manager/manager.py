@@ -3,8 +3,6 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from threading import Thread
 
-from src.util.logging.sns_exception_logging_decorator import log_exceptions
-
 
 @dataclass
 class Manager(ABC):
@@ -49,15 +47,6 @@ class Manager(ABC):
             return run
 
         return decorator
-
-    def _wrap_actions(self):
-        attrs = [[name, getattr(type(self), name, None)] for name in dir(self)]
-        for attr_name, attr in attrs:
-            if hasattr(attr, "__call__"):
-                if getattr(attr, "is_action", False):
-                    setattr(self,
-                            attr_name,
-                            log_exceptions(getattr(self, attr_name)))
 
     def get_actions(self):
         attrs = [[name, getattr(type(self), name, None)] for name in dir(self)]

@@ -1,4 +1,5 @@
 import os
+import pprint
 import re
 import json
 from datetime import date
@@ -98,10 +99,14 @@ class InternalAutomationFacade:
         )
         if self.trackingChecker.status_code == 200:
             status = trackingData["data"][0]["status"]
-            received_date = datetime.strptime(
-                trackingData["data"][0]["origin_info"]["ItemReceived"],
-                "%Y-%m-%d %H:%M:%S"
-            )
+            origin_info = trackingData["data"][0].get("origin_info")
+            if origin_info and origin_info.get("ItemReceived"):
+                received_date = datetime.strptime(
+                    trackingData["data"][0]["origin_info"]["ItemReceived"],
+                    "%Y-%m-%d %H:%M:%S"
+                )
+            else:
+                received_date = datetime.now()
             return status, received_date
         else:
             self.trackingChecker.add_single_tracking(

@@ -5,6 +5,7 @@ from src.dao.processed_order_dao import ProcessedOrderDAO
 from src.domain.order.order import Order
 from src.facade.outlook import OutlookFacade
 from src.manager.manager import Manager
+from src.util.logging import log_exceptions
 
 
 class OrderNotificationManager(Manager):
@@ -16,6 +17,7 @@ class OrderNotificationManager(Manager):
         return "notification"
 
     @Manager.action
+    @log_exceptions
     def ship_by(self):
         self.outlook.login()
         orders_to_notify_by_offset = {}

@@ -3,6 +3,7 @@ from src.facade.internal_automation_facade.internal_automation_facade import \
 from src.manager.manager import Manager
 from src.manager.order.order_notification_manager import \
     OrderNotificationManager
+from src.util.logging import log_exceptions
 
 
 class OrderManager(Manager):
@@ -17,6 +18,7 @@ class OrderManager(Manager):
 
     @Manager.action
     @Manager.asynchronous()
+    @log_exceptions
     def import_new(self):
         automation = InternalAutomationFacade()
         automation.getOrders()
@@ -30,6 +32,7 @@ class OrderManager(Manager):
 
     @Manager.action
     @Manager.asynchronous()
+    @log_exceptions
     def import_test(self):
         automation = InternalAutomationFacade()
         automation.getOrders()

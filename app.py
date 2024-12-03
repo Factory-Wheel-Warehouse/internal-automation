@@ -51,7 +51,8 @@ class FlaskServer:
         for name in manager.get_actions():
             route = path + [name]
             func = getattr(manager, name)
-            self.app.add_url_rule(self.get_url(route), view_func=func)
+            self.app.add_url_rule(self.get_url(route),
+                                  view_func=func)
         for sub_manager in manager.get_sub_managers():
             self._add_routes(sub_manager, prefix=path)
 

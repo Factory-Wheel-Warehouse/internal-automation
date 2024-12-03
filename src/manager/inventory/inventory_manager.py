@@ -7,6 +7,7 @@ from src.manager.inventory.inventory_upload_manager import \
 from src.manager.manager import Manager
 from src.facade.ftp.ftp_facade import FTPFacade
 from src.util.constants.inventory import MASTER_INVENTORY_PATH
+from src.util.logging import log_exceptions
 
 
 class InventoryManager(Manager):
@@ -23,6 +24,7 @@ class InventoryManager(Manager):
 
     @Manager.action
     @Manager.asynchronous()
+    @log_exceptions
     def email_inventory_file(self):
         self._ftp.start()
         self._outlook_facade.login()
