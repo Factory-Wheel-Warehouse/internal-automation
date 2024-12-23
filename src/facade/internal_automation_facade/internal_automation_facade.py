@@ -160,7 +160,7 @@ class InternalAutomationFacade:
             status_is_valid = status in ["transit", "pickup", "delivered"]
             lookback_window = datetime.today() - timedelta(days=10)
             received_date_is_valid = received_date >= lookback_window
-            if status_is_valid and received_date_is_valid:
+            if status_is_valid:
                 self.add_tracking_number_and_fulfill(customer_po,
                                                      trackingNumber, po,
                                                      zero_cost_pos)
