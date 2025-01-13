@@ -1,5 +1,9 @@
+import logging
+import sys
 from dataclasses import dataclass
+from datetime import date
 
+import watchtower
 from flask import Flask
 
 from src.manager.inventory.inventory_manager import InventoryManager
@@ -7,7 +11,8 @@ from src.manager.manager import Manager
 from src.manager.order.order_manager import OrderManager
 from src.manager.report_manager.report_manager import ReportManager
 from src.manager.tracking import TrackingManager
-from src.util.logging.cloudwatch_logger import LOGGER
+from src.util.aws import boto3_session
+from src.util.constants.aws import DEFAULT_REGION
 
 
 @dataclass
@@ -68,5 +73,21 @@ services = [
 server = FlaskServer(app, services)
 
 if __name__ == "__main__":
-    LOGGER.info("Starting InternalAutomationService application")
+    # Set up logging
+    logging.basicConfig(
+        handlers=[
+            watchtower.CloudWatchLogHandler(
+                boto3_client=boto3_session.client(
+                    "logs", region_name=DEFAULT_REGION
+                ),
+                log_group_name="/ext/heroku/InternalAutomationService",
+                log_stream_name=f"application.{date.today().isoformat()}.log"
+            ),
+            logging.StreamHandler(sys.stdout)
+        ],
+        level="INFO"
+    )
+
+    logging.info("Starting InternalAutomationService application")
+
     app.run(debug=True)
