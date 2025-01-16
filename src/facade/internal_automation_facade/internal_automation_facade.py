@@ -144,8 +144,8 @@ class InternalAutomationFacade:
             tracking_num = self.getTracking(customer_po)
             if tracking_num:
                 tracking[customer_po] = tracking_num
-        logging.info(f"Found tracking numbers for {len(tracking)} orders"
-                     f"\nTracking: {tracking}")
+        print(f"Found tracking numbers for {len(tracking)} orders"
+              f"\nTracking: {tracking}")
         zero_cost_pos = []
         added_tracking = []
         for customer_po, trackingNumber in tracking.items():
@@ -173,7 +173,7 @@ class InternalAutomationFacade:
                                   "uploaded but had zero cost PO items:\n\n"
                                   f"{zero_cost_pos}")
 
-        logging.info(
+        print(
             f"Tracking completed successfully with {added_tracking}"
             f" tracking uploaded")
 

@@ -88,6 +88,6 @@ if __name__ == "__main__":
         level="INFO"
     )
 
-    logging.info("Starting InternalAutomationService application")
+    print("Starting InternalAutomationService application")
 
     app.run(debug=True)
