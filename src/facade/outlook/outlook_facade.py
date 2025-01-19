@@ -96,8 +96,6 @@ class OutlookFacade:
         ).json()
         attachments = email.get("value")
         if not attachments:
-            print(f"Email with ID {emailID} had no attachments"
-                  f"\nResponse: {email}")
             return []
         return attachments
 

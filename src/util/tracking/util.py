@@ -130,7 +130,10 @@ def tracking_is_valid(tracking_number: str, carrier: str) -> bool:
         TRACKING_NUMBER_KEY: tracking_number,
         CARRIER_KEY: carrier
     }
-    response = requests.get(url, params=params)
+    headers = {
+        "User-Agent": "PostmanRuntime/7.29.0"
+    }
+    response = requests.get(url, params=params, headers=headers)
     return len(response.text) > 0
 
 

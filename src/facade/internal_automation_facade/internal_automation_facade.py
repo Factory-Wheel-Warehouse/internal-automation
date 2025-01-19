@@ -96,7 +96,6 @@ class InternalAutomationFacade:
         trackingData = self.trackingChecker.get_tracking_details(
             trackingNumber, carrier
         )
-        print(json.dumps(trackingData))
         if self.trackingChecker.status_code == 200:
             status = trackingData["data"][0]["status"]
             origin_info = trackingData["data"][0].get("origin_info")
@@ -144,8 +143,8 @@ class InternalAutomationFacade:
             tracking_num = self.getTracking(customer_po)
             if tracking_num:
                 tracking[customer_po] = tracking_num
-        print(f"Found tracking numbers for {len(tracking)} orders"
-              f"\nTracking: {tracking}")
+        print(f"Found tracking numbers for {len(tracking)} of "
+              f"{len(self.unfulfilledOrders)} orders: {tracking}")
         zero_cost_pos = []
         added_tracking = []
         for customer_po, trackingNumber in tracking.items():
@@ -158,9 +157,9 @@ class InternalAutomationFacade:
                 trackingNumber, carrier, customer_po
             )
             status_is_valid = status not in ["expired", "notfound"]
-            # lookback_window = datetime.today() - timedelta(days=10)
-            # received_date_is_valid = received_date >= lookback_window
-            if status_is_valid:
+            lookback_window = datetime.today() - timedelta(days=5)
+            received_date_is_valid = received_date >= lookback_window
+            if status_is_valid and received_date_is_valid:
                 self.add_tracking_number_and_fulfill(customer_po,
                                                      trackingNumber, po,
                                                      zero_cost_pos)

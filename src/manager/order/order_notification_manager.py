@@ -17,6 +17,7 @@ class OrderNotificationManager(Manager):
         return "notification"
 
     @Manager.action
+    @Manager.asynchronous()
     @log_exceptions
     def ship_by(self):
         self.outlook.login()
@@ -32,10 +33,9 @@ class OrderNotificationManager(Manager):
             self.outlook.sendMail("orders@factorywheelwarehouse.com",
                                   "\"Ship By\" Automated Notifications",
                                   message, contentType="HTML")
-        return "Success"
 
-    def _get_sbd_message(self,
-                         orders_by_offset: dict[int, list[Order]]) -> str:
+    @staticmethod
+    def _get_sbd_message(orders_by_offset: dict[int, list[Order]]) -> str:
         message_lines = []
         for offset, orders in orders_by_offset.items():
             if offset == 0:
