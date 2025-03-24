@@ -157,7 +157,7 @@ class InternalAutomationFacade:
                 trackingNumber, carrier, customer_po
             )
             status_is_valid = status not in ["expired", "notfound"]
-            lookback_window = datetime.today() - timedelta(days=5)
+            lookback_window = datetime.today() - timedelta(days=30)
             received_date_is_valid = received_date >= lookback_window
             if status_is_valid and received_date_is_valid:
                 self.add_tracking_number_and_fulfill(customer_po,
