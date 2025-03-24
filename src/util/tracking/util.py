@@ -131,9 +131,12 @@ def tracking_is_valid(tracking_number: str, carrier: str) -> bool:
         CARRIER_KEY: carrier
     }
     headers = {
-        "User-Agent": "PostmanRuntime/7.29.0"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                      "AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/134.0.0.0 Safari/537.36"
     }
     response = requests.get(url, params=params, headers=headers)
+    print(response.text)
     return len(response.text) > 0
 
 
