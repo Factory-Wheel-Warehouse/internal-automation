@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "61df548fea16ddfedad3cb3a3ef45b16a38eb262fd2df9c74125cbf9840ebfb7"
+            "sha256": "d2a674135438d06e902a977b6fb3f1f4fdc0bba81153c8a1ff4f151ec523db6f"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -381,6 +381,15 @@
             ],
             "markers": "python_full_version >= '3.7.0'",
             "version": "==3.4.0"
+        },
+        "chromedriver-autoinstaller": {
+            "hashes": [
+                "sha256:1b4df04b87e6107c730085b98e5fd541db3d1777c32b8bd08e2ca4b1244050af",
+                "sha256:b12ed187ca9fac4d744deb588d221222ed50836384607e5303e6eab98bb9dc64"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.6'",
+            "version": "==0.6.4"
         },
         "click": {
             "hashes": [

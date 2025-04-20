@@ -186,6 +186,7 @@ def _get_price(cost: float, shipping_cost: float) -> float:
 def upload_coast_based_pricing():
     coast: VendorConfig = VendorConfigDAO().get_item("Coast To Coast")
     ftp = FTPFacade()
+    ftp.start()
     map_file = ftp.get_file_as_list(coast.sku_map_config.file_path)
     map_ = {}
     for row in map_file:

@@ -1,67 +1,91 @@
+import re
 from abc import ABC
-from abc import abstractmethod
-from dataclasses import dataclass
-from threading import Thread
+from concurrent.futures import ThreadPoolExecutor
+
+from flask import Blueprint
+from flask import copy_current_request_context
+from flask import request
+
+from src.action.action import Action
+
+executor = ThreadPoolExecutor(max_workers=10)
 
 
-@dataclass
 class Manager(ABC):
 
+    def __init__(self):
+        self.blueprint = Blueprint(
+            self.name,
+            __name__,
+            url_prefix=f"/ms/{self.name}"
+        )
+        self._register_actions()
+        self._register_sub_managers()
+
     @property
-    @abstractmethod
-    def endpoint(self):
-        return NotImplementedError
+    def name(self):
+        name_ = self.__class__.__name__.replace("Manager", "")
+        name_ = re.sub(r'(?<!^)(?=[A-Z])', '-', name_).lower()
+        return name_
+
+    def get_actions(self) -> list[Action]:
+        return []
+
+    def get_sub_managers(self) -> list["Manager"]:
+        return []
+
+    @staticmethod
+    def make_handler(action_):
+        def handler():
+            if action_.async_:
+                @copy_current_request_context
+                def run_in_context():
+                    action_.trigger(request)
+
+                future = executor.submit(run_in_context)
+                future.add_done_callback(
+                    lambda f: f.exception() and print(
+                        f"ERROR: {f.exception()}"
+                    )
+                )
+                return "Submitted", 202
+
+            try:
+                return action_.run(request)
+            except Exception as e:
+                return {"error": str(e)}, 500
+
+        return handler
+
+    def _register_actions(self):
+        for i, action in enumerate(self.get_actions()):
+            route = getattr(action, "route")
+            method = getattr(action, "method")
+
+            self.blueprint.add_url_rule(
+                f"/{route}",
+                view_func=self.make_handler(action),
+                methods=[method],
+                endpoint=route
+            )
+
+        self.blueprint.add_url_rule("", view_func=lambda: self.list(),
+                                    methods=["GET"], )
+
+    def _register_sub_managers(self):
+        for sub_manager in self.get_sub_managers():
+            self.blueprint.register_blueprint(
+                sub_manager.blueprint,
+                url_prefix=f"/{sub_manager.name}"
+            )
 
     def list(self):
-        actions = [f"/{action}/" for action in self.get_actions()]
-        sub_managers = [f"/{sm.endpoint}/" for sm in self.get_sub_managers()]
-        outp = ""
-        if actions:
-            outp += f"Process manager actions are {actions}"
-        if sub_managers:
-            outp += f"Process manager actions are {sub_managers}"
+        outp = {}
+        if self.get_actions():
+            outp["actions"] = [action.route for action in self.get_actions()]
+        if self.get_sub_managers():
+            outp["managers"] = [sm.name for sm in self.get_sub_managers()]
         if outp:
             return outp
         else:
-            "No endpoints implemented for this process yet"
-
-    @staticmethod
-    def action(func: callable):
-        func.is_action = True
-        return func
-
-    @staticmethod
-    def sub_manager(func: callable):
-        func.is_sub_manager = True
-        return func
-
-    @staticmethod
-    def asynchronous(response: str = "Action successfully triggered!"):
-        def decorator(fn: callable):
-            def run(*args, **kwargs):
-                t = Thread(target=fn, args=args, kwargs=kwargs)
-                t.start()
-                return response
-
-            run.__name__ = fn.__name__
-            return run
-
-        return decorator
-
-    def get_actions(self):
-        attrs = [[name, getattr(type(self), name, None)] for name in dir(self)]
-        actions = []
-        for attr_name, attr in attrs:
-            if hasattr(attr, "__call__"):
-                if getattr(attr, "is_action", False):
-                    actions.append(attr_name)
-        return actions
-
-    def get_sub_managers(self):
-        attrs = [[name, getattr(type(self), name, None)] for name in dir(self)]
-        sub_managers = []
-        for attr_name, attr in attrs:
-            if hasattr(attr, "__call__"):
-                if getattr(attr, "is_sub_manager", False):
-                    sub_managers.append(attr(self))
-        return sub_managers
+            return "No endpoints implemented for this process yet"

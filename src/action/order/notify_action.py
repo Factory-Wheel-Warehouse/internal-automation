@@ -1,31 +1,28 @@
+from dataclasses import dataclass
 from datetime import date
 from datetime import timedelta
 
-from src.dao.processed_order_dao import ProcessedOrderDAO
+from flask import request
+
+from src.action.action import Action
+from src.dao import ProcessedOrderDAO
 from src.domain.order.order import Order
 from src.facade.outlook import OutlookFacade
-from src.manager.manager import Manager
-from src.util.logging import log_exceptions
 
 
-class OrderNotificationManager(Manager):
+@dataclass
+class NotifyAction(Action):
     outlook: OutlookFacade = OutlookFacade()
     order_dao: ProcessedOrderDAO = ProcessedOrderDAO()
 
-    @property
-    def endpoint(self):
-        return "notification"
-
-    @Manager.action
-    @Manager.asynchronous()
-    @log_exceptions
-    def ship_by(self):
+    def run(self, request_: request):
         self.outlook.login()
         orders_to_notify_by_offset = {}
         for day_offset in range(2):
             ship_by_date = str(date.today() + timedelta(days=day_offset))
             orders = self.order_dao.get_orders_by_sbd(ship_by_date)
-            unshipped_orders = filter(lambda order: not order.shipped, orders)
+            unshipped_orders = filter(lambda order: not order.shipped,
+                                      orders)
             orders_to_notify_by_offset[day_offset] = list(unshipped_orders)
 
         message = self._get_sbd_message(orders_to_notify_by_offset)
