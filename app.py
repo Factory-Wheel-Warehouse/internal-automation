@@ -60,12 +60,12 @@ LOGGING_CONFG = {
     "level": "INFO"
 }
 
+# Set up logging
+logging.basicConfig(**LOGGING_CONFG)
+
 server = Server()
 
+logging.info(f"Starting {server.service_name}")
+
 if __name__ == "__main__":
-    # Set up logging
-    logging.basicConfig(**LOGGING_CONFG)
-
-    logging.info("Starting InternalAutomationService application")
-
     server.run(debug=True)
