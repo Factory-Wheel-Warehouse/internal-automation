@@ -136,7 +136,6 @@ def tracking_is_valid(tracking_number: str, carrier: str) -> bool:
                       "Chrome/134.0.0.0 Safari/537.36"
     }
     response = requests.get(url, params=params, headers=headers)
-    print(response.text)
     return len(response.text) > 0
 
 

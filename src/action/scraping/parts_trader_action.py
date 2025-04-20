@@ -65,7 +65,6 @@ class PartsTraderAction(SeleniumAction):
             self.explicit_wait_get(PARTS_TRADER_QUOTES_URL)
             self.sort_quotes_by_parts()
             pending_quotes = self.get_pending_quotes()
-            print(len(pending_quotes))
             for pending_quote in pending_quotes:
                 self.accept_pending_quote(pending_quote)
             if len(pending_quotes) < 1:

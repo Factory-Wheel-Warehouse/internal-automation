@@ -1,4 +1,5 @@
 import json
+import logging
 import pprint
 
 from src.util.constants.order import ADDITIONAL_PAYMENT_INFO
@@ -28,7 +29,12 @@ def get_channel_fee(raw_order_json: dict) -> float:
         if kv_pair_map.get(KEY) == CHANNEL_FEE:
             try:
                 return float(kv_pair_map.get(VALUE))
-            except ValueError:
-                print("value error")
+            except ValueError as e:
+                logging.error(
+                    f"Exception {e} thrown during channel fee "
+                    f"determination for value {kv_pair_map.get(VALUE)} "
+                    f"defaulting to 0.0",
+                    exc_info=e.__traceback__
+                )
                 return 0.0
     return 0.0

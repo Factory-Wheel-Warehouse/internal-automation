@@ -1,3 +1,4 @@
+import logging
 import re
 from abc import ABC
 from concurrent.futures import ThreadPoolExecutor
@@ -44,8 +45,9 @@ class Manager(ABC):
 
                 future = executor.submit(run_in_context)
                 future.add_done_callback(
-                    lambda f: f.exception() and print(
-                        f"ERROR: {f.exception()}"
+                    lambda f: f.exception() and logging.error(
+                        f"Exception running {action_.route}",
+                        exc_info=f.exception().__traceback__
                     )
                 )
                 return "Submitted", 202
@@ -53,6 +55,10 @@ class Manager(ABC):
             try:
                 return action_.run(request)
             except Exception as e:
+                logging.error(
+                    f"Exception {e} thrown during {action_.route}",
+                    exc_info=e.__traceback__
+                )
                 return {"error": str(e)}, 500
 
         return handler
@@ -84,7 +90,8 @@ class Manager(ABC):
         if self.get_actions():
             outp["actions"] = [action.route for action in self.get_actions()]
         if self.get_sub_managers():
-            outp["managers"] = [sm.name for sm in self.get_sub_managers()]
+            for sm in self.get_sub_managers():
+                outp["managers"] = {sm.name: sm.list()}
         if outp:
             return outp
         else:

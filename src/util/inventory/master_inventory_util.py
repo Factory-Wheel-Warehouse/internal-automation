@@ -1,3 +1,4 @@
+import logging
 from collections import defaultdict
 from math import ceil
 
@@ -56,11 +57,14 @@ def build_total_inventory(inventory: Inventory, ftp: FTPFacade) -> dict:
         try:
             total_inventory[row[0]] = {}
             paint_code = int(row[0][PAINT_CODE_START: PAINT_CODE_START + 2])
-            if "N" not in row[0] and not (int(paint_code) in [85, 86]
-                                          or int(paint_code) >= 90):
+            if "N" not in row[0] and not (paint_code in [85, 86]
+                                          or paint_code >= 90):
                 finishes[row[0][:PAINT_CODE_START]].add(row[0].upper())
-        except ValueError:
-            print(row)
+        except ValueError as e:
+            logging.error(
+                f"Exception {e} thrown during inventory creation",
+                exc_info=e.__traceback__
+            )
             continue
     for key, value in inventory.inventory[FINISH_INVENTORY_KEY].items():
         if key in total_inventory:
@@ -204,10 +208,10 @@ def upload_coast_based_pricing():
             prices.append([sku, price])
     ftp.write_list_as_csv(MASTER_PRICING_PATH, prices)
     prices.sort(key=lambda x: x[1])
-    print(f"Low: {prices[0][1]}\n"
-          f"High: {prices[-1][1]}\n"
-          f"Average: {sum([p[1] for p in prices]) / len(prices)}\n"
-          f"Median: {prices[len(prices) // 2][1]}")
+    logging.info(f"Low: {prices[0][1]}\n"
+                 f"High: {prices[-1][1]}\n"
+                 f"Average: {sum([p[1] for p in prices]) / len(prices)}\n"
+                 f"Median: {prices[len(prices) // 2][1]}")
 
 
 if __name__ == "__main__":

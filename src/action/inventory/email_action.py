@@ -11,7 +11,7 @@ from src.util.constants.inventory import MASTER_INVENTORY_PATH
 
 
 @dataclass
-class EmailInventoryAction(Action):
+class EmailAction(Action):
     ftp: FTPFacade = None
     outlook_facade: OutlookFacade = None
 

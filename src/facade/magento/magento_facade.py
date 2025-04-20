@@ -1,6 +1,6 @@
+import logging
 import os
 import re
-import traceback
 from enum import Enum
 
 import requests
@@ -61,8 +61,11 @@ class MagentoFacade:
             return [order["increment_id"] for order in
                     response.json()["items"]]
         except JSONDecodeError as e:
-            traceback.print_stack()
-            print(response.text)
+            logging.error(
+                f"Exception {e} thrown during pending order retrieval",
+                exc_info=e.__traceback__
+            )
+            logging.info(response.text)
             raise JSONDecodeError(e)
 
     def get_order(self, incrementID):
@@ -123,7 +126,11 @@ class MagentoFacade:
             elif re.findall(r"^[0-9]{12}$", trackingNumber):
                 return "fedex"
         except Exception as e:
-            print(trackingNumber)
+            logging.error(
+                f"Exception {e} thrown during tracking number carrier "
+                f"classification for candidate: {trackingNumber}",
+                exc_info=e.__traceback__
+            )
             raise e
 
     def trackingNumberCarrier(self, trackingNumber):

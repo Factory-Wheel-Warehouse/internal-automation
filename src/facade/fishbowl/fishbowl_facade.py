@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import socket
 import struct
@@ -347,7 +348,10 @@ class FishbowlFacade:
                     data.append(f"{po_num}, {True}, {vendor_part_num}, {qty}")
                     return self.sendImportRequest(data, "ImportReceivingData")
         except IndexError as e:
-            print(e)
+            logging.error(
+                f"exception {e} thrown during PO fulfillment",
+                exc_info=e.__traceback__
+            )
             return None
 
     def _parse_query_request_response(self, response: dict):
