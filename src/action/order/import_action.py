@@ -17,7 +17,7 @@ class ImportAction(Action):
         automation.importOrders(self._is_test(request_))
         email = "orders@factorywheelwarehouse.com"
         if self._is_test(request_):
-            email = "danny@@factorywheelwarehouse.com"
+            email = "danny@factorywheelwarehouse.com"
         for vendor in automation.ordersByVendor:
             automation.emailDropships(automation.ordersByVendor[vendor],
                                       vendor, email)
