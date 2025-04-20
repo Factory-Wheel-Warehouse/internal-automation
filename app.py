@@ -13,6 +13,7 @@ from src.manager.scraping.scraping_manager import ScrapingManager
 from src.manager.tracking import TrackingManager
 from src.util.aws import boto3_session
 from src.util.constants.aws import DEFAULT_REGION
+from src.util.logging import set_up_logging
 
 
 class Server(Flask):
@@ -35,6 +36,8 @@ class Server(Flask):
             return self._registry
 
     def __init__(self):
+        set_up_logging()
+
         super().__init__(self.service_name)
 
         self.add_url_rule(
@@ -45,23 +48,6 @@ class Server(Flask):
         for manager in self.managers:
             self.register_blueprint(manager.blueprint)
 
-
-LOGGING_CONFG = {
-    "handlers": [
-        watchtower.CloudWatchLogHandler(
-            boto3_client=boto3_session.client(
-                "logs", region_name=DEFAULT_REGION
-            ),
-            log_group_name="/ext/heroku/InternalAutomationService",
-            log_stream_name=f"application.{date.today().isoformat()}.log"
-        ),
-        logging.StreamHandler(sys.stdout)
-    ],
-    "level": "INFO"
-}
-
-# Set up logging
-logging.basicConfig(**LOGGING_CONFG)
 
 server = Server()
 
