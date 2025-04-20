@@ -24,8 +24,8 @@ flask = { extras = ["async"], version = "*" }
 watchtower = "*"
 typing-extensions = "*"
 pypdf = "*"
-selenium = "*"
 chromedriver-autoinstaller = "*"
+selenium = "*"
 
 [dev-packages]
 

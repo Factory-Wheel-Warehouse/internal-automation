@@ -28,7 +28,7 @@ class SeleniumAction(Action, ABC):
     @staticmethod
     def _get_webdriver_options():
         webdriver_options = Options()
-        # webdriver_options.add_argument(SELENIUM_HEADLESS_ARGUMENT)
+        webdriver_options.add_argument(SELENIUM_HEADLESS_ARGUMENT)
 
     def get_element(self, by=By.ID,
                     value: str | None = None) -> WebElement | None:
