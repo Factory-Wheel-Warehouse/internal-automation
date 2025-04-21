@@ -24,7 +24,7 @@ class FtpAction(Action):
         if not self.ftp:
             self.ftp = FTPFacade()
         if not self.fishbowl_facade:
-            self.outlook_facade = FishbowlFacade()
+            self.fishbowl_facade = FishbowlFacade()
 
     def run(self, request_: request):
         self.ftp.start()
