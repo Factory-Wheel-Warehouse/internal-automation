@@ -140,9 +140,10 @@ class InternalAutomationFacade:
 
         tracking = {}
         for customer_po in self.unfulfilledOrders:
-            tracking_num = self.getTracking(customer_po)
-            if tracking_num:
-                tracking[customer_po] = tracking_num
+            if not self.magento.isWalmartOrder(customer_po):
+                tracking_num = self.getTracking(customer_po)
+                if tracking_num:
+                    tracking[customer_po] = tracking_num
         logging.info(f"Found tracking numbers for {len(tracking)} of "
                      f"{len(self.unfulfilledOrders)} orders: {tracking}")
         zero_cost_pos = []
