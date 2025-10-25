@@ -21,14 +21,15 @@ class SeleniumAction(Action, ABC):
 
     def setup(self):
         chromedriver_autoinstaller.install()
-        self.chrome_driver = webdriver.Chrome(**{
-            "options": SeleniumAction._get_webdriver_options()
-        })
+        self.chrome_driver = webdriver.Chrome(
+            options=SeleniumAction._get_webdriver_options()
+        )
 
     @staticmethod
     def _get_webdriver_options():
         webdriver_options = Options()
         webdriver_options.add_argument(SELENIUM_HEADLESS_ARGUMENT)
+        return webdriver_options
 
     def get_element(self, by=By.ID,
                     value: str | None = None) -> WebElement | None:
