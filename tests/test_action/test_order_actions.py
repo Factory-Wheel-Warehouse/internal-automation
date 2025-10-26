@@ -68,20 +68,11 @@ def test_notify_action_sends_email_for_upcoming_orders(mocker):
     assert "<li>Ebay order #PO999 - Customer</li>" in args[2]
 
 
-def test_quantity_sold_action_builds_and_sends_report(mocker):
-    outlook = mocker.Mock()
-    fishbowl = mocker.Mock()
-    mocker.patch(
-        "src.action.report.quatity_sold_action.quantity_sold_by_sku_report",
-        return_value=[["SKU1", 5]],
-    )
+def test_quantity_sold_action_uses_reporting_service(mocker):
+    reporting = mocker.patch(
+        "src.action.report.quatity_sold_action.ReportingService"
+    ).return_value
 
-    action = QuantitySoldAction(outlook=outlook, fishbowl=fishbowl)
-    action.run(DummyRequest())
+    QuantitySoldAction().run(DummyRequest())
 
-    fishbowl.start.assert_called_once()
-    fishbowl.close.assert_called_once()
-    assert outlook.sendMail.called
-    attachment = outlook.sendMail.call_args.kwargs["attachment"]
-    decoded = __import__("base64").b64decode(attachment.encode()).decode()
-    assert "SKU1,5" in decoded
+    reporting.send_quantity_sold_report.assert_called_once()

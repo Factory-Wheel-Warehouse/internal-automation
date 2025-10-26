@@ -1,9 +1,15 @@
+import os
+import sys
 from pathlib import Path
 from typing import Dict
 from unittest.mock import MagicMock
 
 import pytest
 from freezegun import freeze_time
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 DEFAULT_ENV = {
     "AWS_ACCESS_KEY_ID": "test-access-key",
@@ -18,7 +24,12 @@ DEFAULT_ENV = {
 
 @pytest.fixture(scope="session")
 def project_root() -> Path:
-    return Path(__file__).resolve().parents[1]
+    return PROJECT_ROOT
+
+
+@pytest.fixture(scope="session")
+def tests_data_dir(project_root: Path) -> Path:
+    return project_root / "tests" / "mock"
 
 
 @pytest.fixture(autouse=True)
@@ -30,9 +41,6 @@ def _test_env(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def stubbed_boto3_session(monkeypatch):
-    """
-    Prevent real AWS calls by replacing boto3.Session with a lightweight stub.
-    """
     import boto3
 
     class _StubSession:
@@ -53,21 +61,10 @@ def stubbed_boto3_session(monkeypatch):
 
 @pytest.fixture
 def fake_selenium_element():
-    """
-    Minimal stand-in for selenium WebElement objects used in scraping actions.
-    """
     return MagicMock()
 
 
 @pytest.fixture
 def freezer():
-    """
-    Provide a FrozenDateTimeFactory so tests can adjust time deterministically.
-    """
     with freeze_time("2020-01-01T00:00:00Z") as frozen_datetime:
         yield frozen_datetime
-
-
-@pytest.fixture(scope="session")
-def tests_data_dir(project_root: Path) -> Path:
-    return project_root / "tests" / "mock"

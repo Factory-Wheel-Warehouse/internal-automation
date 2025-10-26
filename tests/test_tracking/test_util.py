@@ -9,6 +9,7 @@ from src.util.tracking.util import (
     get_tracking_candidates,
     search_email_pdfs,
     tracking_is_valid,
+    get_pdf_attachments,
 )
 
 MOCK_DIR = Path(__file__).resolve().parents[1] / "mock" / "tracking"
@@ -31,10 +32,8 @@ class TestUtil(unittest.TestCase):
             self.assertTrue(tracking_is_valid(tracking_numbers[2], UPS))
 
     def test_search_email_pdfs_fedex(self):
-        with (MOCK_DIR / "email_pdf_1.pdf").open("rb") as f:
-            mock_pdf_1 = f.read()
-        with (MOCK_DIR / "email_pdf_2.pdf").open("rb") as f:
-            mock_pdf_2 = f.read()
+        mock_pdf_1 = (MOCK_DIR / "email_pdf_1.pdf").read_bytes()
+        mock_pdf_2 = (MOCK_DIR / "email_pdf_2.pdf").read_bytes()
 
         self.assertEqual(
             ["394648002863"],
@@ -50,10 +49,8 @@ class TestUtil(unittest.TestCase):
         )
 
     def test_get_tracking_candidates_with_candidates(self):
-        with (MOCK_DIR / "mock_email_1.json").open() as file:
-            mock_email_1 = json.load(file)
-        with (MOCK_DIR / "mock_email_2.json").open() as file:
-            mock_email_2 = json.load(file)
+        mock_email_1 = json.loads((MOCK_DIR / "mock_email_1.json").read_text())
+        mock_email_2 = json.loads((MOCK_DIR / "mock_email_2.json").read_text())
 
         self.assertEqual(
             {"394648002863"},
@@ -75,8 +72,7 @@ class TestUtil(unittest.TestCase):
         )
 
     def test_get_tracking_candidates_no_candidates(self):
-        with (MOCK_DIR / "mock_email_1.json").open() as file:
-            mock_email_1 = json.load(file)
+        mock_email_1 = json.loads((MOCK_DIR / "mock_email_1.json").read_text())
 
         self.assertRaises(
             AttributeError,
@@ -106,7 +102,7 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(attachments, [b"data"])
 
     @patch("src.util.tracking.util.get_valid_tracking_numbers", return_value=["123"])
-    @patch("src.util.tracking.util.get_tracking_candidates", return_value={"123"})
+    @patch("src.util.tracking.util.get_tracking_candidates", return_value=["123"])
     @patch("src.util.tracking.util.CarrierPatterns.map", return_value=[("FEDEX", r"\\d+")])
     @patch("src.util.tracking.util.po_num_email_search", return_value=["email"])
     def test_get_tracking_from_outlook(self, mock_search, mock_map, mock_candidates, mock_valid):

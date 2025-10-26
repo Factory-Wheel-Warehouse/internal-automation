@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from src.util.tracking import TrackingChecker
 from src.util.tracking.constants import FEDEX
@@ -31,23 +31,16 @@ class TestTrackingChecker(unittest.TestCase):
 
     def test_batch_add_tracking_chunks(self):
         checker = TrackingChecker()
-        checker._request = unittest.mock.Mock(return_value={"meta": {"code": 200}})
+        checker._request = MagicMock(return_value={"meta": {"code": 200}})
 
         tracker_data = [(str(i), FEDEX, f"order-{i}") for i in range(45)]
         checker.batch_add_tracking(tracker_data)
 
-        # Should be split into two batches (chunk size logic populates chunked list)
-        self.assertTrue(checker._request.called)
+        checker._request.assert_called()
 
     def test_delete_tracking_calls_request(self):
         checker = TrackingChecker()
-        checker._request = unittest.mock.Mock(return_value={"meta": {"code": 200}})
+        checker._request = MagicMock(return_value={"meta": {"code": 200}})
 
         checker.delete_tracking("123", FEDEX)
         checker._request.assert_called_once()
-
-    # Failing due to 500 server error? Look into
-    # def test_delete_tracking(self):
-    #     tracking_checker = TrackingChecker()
-    #     tracking_checker.delete_tracking("394648002863", FEDEX)
-    #     self.assertEqual(200, tracking_checker.status_code)

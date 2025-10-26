@@ -34,7 +34,6 @@ class SampleDAO(DAO):
 
 @pytest.fixture
 def sample_dao(monkeypatch, stubbed_boto3_session):
-    # Ensure the fake dynamodb client exists before DAO usage
     stubbed_boto3_session.client("dynamodb")
     monkeypatch.setattr(SampleDAO, "_marshall", staticmethod(lambda data: data))
     monkeypatch.setattr(SampleDAO, "_unmarshall", staticmethod(lambda data: data))

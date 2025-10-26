@@ -1,2 +1,1 @@
-from tests.test_tracking.test_util import TestUtil
-from tests.test_tracking.test_tracking_checker import TestTrackingChecker
+"""Tracking tests package."""

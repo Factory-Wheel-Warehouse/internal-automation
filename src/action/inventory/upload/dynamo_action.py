@@ -3,30 +3,16 @@ from dataclasses import dataclass
 from flask import request
 
 from src.action.action import Action
-from src.dao import InventoryDAO
-from src.domain.inventory.inventory import Inventory
-from src.facade.fishbowl import FishbowlFacade
-from src.facade.ftp.ftp_facade import FTPFacade
+from src.services.inventory_sync_service import InventorySyncService
 
 
 @dataclass
 class DynamoAction(Action):
-    ftp: FTPFacade = None
-    fishbowl_facade: FishbowlFacade = None
-    inventory: Inventory | None = None
-    inventory_dao: InventoryDAO = InventoryDAO()
+    inventory_service: InventorySyncService | None = None
 
     def __post_init__(self):
-        if self.inventory is None:
-            self.inventory = Inventory()
+        if not self.inventory_service:
+            self.inventory_service = InventorySyncService()
 
     def run(self, request_: request):
-        self.fishbowl_facade.start()
-        self.ftp.start()
-        self.inventory.build(self.ftp, self.fishbowl_facade)
-        self.fishbowl_facade.close()
-        self.ftp.close()
-        self.inventory_dao.delete_all_items()
-        self.inventory_dao.batch_write_items(
-            self.inventory.convert_to_entries()
-        )
+        self.inventory_service.sync_dynamo()
