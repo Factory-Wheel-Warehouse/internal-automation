@@ -36,14 +36,17 @@ class TrackingUpdateService:
         Fetch unfulfilled Magento orders, locate available tracking numbers,
         and update Magento / ProcessedOrder records accordingly.
         """
+        self.logger.info("Starting tracking update run")
         self.outlook.login()
         self.fishbowl.start()
         try:
             unfulfilled_orders = self.magento.get_pending_orders()
+            self.logger.info("Retrieved %s unfulfilled orders", len(unfulfilled_orders))
             tracking_candidates = self._collect_tracking_candidates(unfulfilled_orders)
             self._process_tracking_updates(tracking_candidates)
         finally:
             self.fishbowl.close()
+            self.logger.info("Tracking update run complete")
 
     # --- internal helpers -------------------------------------------------
 
@@ -51,10 +54,13 @@ class TrackingUpdateService:
         tracking = {}
         for customer_po in unfulfilled_orders:
             if self.magento.isWalmartOrder(customer_po):
+                self.logger.debug("Skipping Walmart order %s", customer_po)
                 continue
             tracking_info = self._get_tracking(customer_po)
             if tracking_info:
                 tracking[customer_po] = tracking_info
+            else:
+                self.logger.debug("No tracking located for %s", customer_po)
         self.logger.info(
             "Found tracking numbers for %s of %s orders",
             len(tracking),
@@ -71,11 +77,19 @@ class TrackingUpdateService:
             tracking_numbers = get_tracking_from_outlook(po_num, self.outlook)
             for carrier, numbers in tracking_numbers.items():
                 if numbers:
+                    self.logger.debug(
+                        "Using Outlook tracking %s (%s) for %s",
+                        numbers[0], carrier, customer_po
+                    )
                     return {"number": numbers[0], "carrier": carrier.lower()}
         tracking_numbers = self.fishbowl.getTracking(identifier)
         if tracking_numbers:
             number = tracking_numbers[0]
             carrier = self.magento.getCarrier(number)
+            self.logger.debug(
+                "Falling back to Fishbowl tracking %s (%s) for %s",
+                number, carrier, customer_po
+            )
             return {"number": number, "carrier": carrier}
         return None
 
@@ -98,6 +112,18 @@ class TrackingUpdateService:
                     customer_po, tracking_number, po_num, zero_cost_pos
                 )
                 added_tracking.append(customer_po)
+                self.logger.info(
+                    "Uploaded tracking %s (%s) for %s",
+                    tracking_number, carrier, customer_po
+                )
+            else:
+                self.logger.warning(
+                    "Skipping tracking %s for %s due to status '%s' or stale date %s",
+                    tracking_number, customer_po, status, received_date,
+                )
+
+        if not tracking_map:
+            self.logger.info("No tracking candidates identified")
 
         if zero_cost_pos:
             self.outlook.sendMail(
@@ -106,6 +132,7 @@ class TrackingUpdateService:
                 "The following POs have had tracking uploaded but had zero cost "
                 f"PO items:\n\n{zero_cost_pos}",
             )
+            self.logger.warning("POs with zero cost encountered: %s", zero_cost_pos)
 
         self.logger.info(
             "Tracking completed successfully with %s tracking numbers uploaded",

@@ -61,6 +61,7 @@ class OrderImportService:
 
     def prepare_orders(self):
         """Load pending Magento orders, build inventory, and classify vendors."""
+        self.logger.info("Preparing Magento orders for import")
         self._ensure_resources()
         self.orders_by_vendor = defaultdict(list)
         self.exception_orders = []
@@ -71,8 +72,10 @@ class OrderImportService:
             order = self._build_magento_order(order_details, order_id, address)
             if order and not self.fishbowl.isSO(order.customer_po):
                 self._sort_order(order)
+        self.logger.info("Prepared %s vendor buckets", len(self.orders_by_vendor))
 
     def import_orders(self, test: bool = False):
+        self.logger.info("Importing orders (test=%s)", test)
         for vendor, orders in self.orders_by_vendor.items():
             for order in orders:
                 if not self.fishbowl.isProduct(order.hollander):
@@ -94,16 +97,19 @@ class OrderImportService:
                     processed_orders.append(order)
             if processed_orders:
                 self.processed_order_dao.batch_write_items(processed_orders)
+                self.logger.info("Persisted %s processed orders", len(processed_orders))
 
     def send_vendor_notifications(self, email_address: str):
         for vendor, orders in self.orders_by_vendor.items():
             if orders:
                 self._email_dropships(orders, vendor, email_address)
+                self.logger.info("Sent drop-ship email to %s with %s orders", vendor, len(orders))
 
     def send_exception_notifications(self, email_address: str):
         if self.exception_orders:
             body = "".join(self.exception_orders)
             self.outlook.sendMail(email_address, "Multiline/Exception Orders", body)
+            self.logger.warning("Notified exceptions for %s orders", len(self.exception_orders))
 
     def close(self):
         if self._resources_started:

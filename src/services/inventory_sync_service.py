@@ -41,6 +41,7 @@ class InventorySyncService:
     # Public operations -------------------------------------------------
 
     def publish_master_inventory(self):
+        self.logger.info("Publishing master inventory to %s", self.master_inventory_path)
         self._start_inventory_sources()
         try:
             df = self._build_master_inventory_dataframe()
@@ -50,6 +51,7 @@ class InventorySyncService:
             self._stop_inventory_sources()
 
     def sync_dynamo(self):
+        self.logger.info("Synchronizing inventory table in DynamoDB")
         self._start_inventory_sources()
         try:
             self.inventory.build(self.ftp, self.fishbowl)
@@ -60,6 +62,7 @@ class InventorySyncService:
         self.logger.info("Dynamo inventory synced")
 
     def email_master_inventory(self):
+        self.logger.info("Sending master inventory sheet via email")
         self.ftp.start()
         try:
             self.outlook.login()

@@ -1,3 +1,4 @@
+import logging
 from base64 import b64encode
 from io import BytesIO
 
@@ -13,11 +14,14 @@ class ReportingService:
             self,
             outlook: OutlookFacade | None = None,
             fishbowl: FishbowlFacade | None = None,
+            logger: logging.Logger | None = None,
     ):
         self.outlook = outlook or OutlookFacade()
         self.fishbowl = fishbowl or FishbowlFacade()
+        self.logger = logger or logging.getLogger(__name__)
 
     def send_quantity_sold_report(self, recipient: str = "sales@factorywheelwarehouse.com"):
+        self.logger.info("Generating quantity sold report for %s", recipient)
         self.outlook.login()
         self.fishbowl.start()
         try:
@@ -39,3 +43,4 @@ class ReportingService:
             attachment=attachment,
             attachmentName="QuantitySoldBySkuReport.csv",
         )
+        self.logger.info("Quantity sold report emailed to %s", recipient)
