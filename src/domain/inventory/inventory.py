@@ -21,8 +21,9 @@ from src.util.inventory.inventory_util import get_price_map
 
 class Inventory:
 
-    def __init__(self):
-        self._vendor_configs = VendorConfigDAO().get_all_items()
+    def __init__(self, vendor_config_dao: VendorConfigDAO | None = None):
+        self._vendor_config_dao = vendor_config_dao or VendorConfigDAO()
+        self._vendor_configs = self._vendor_config_dao.get_all_items()
         self.inventory = {CORE_INVENTORY_KEY: {},
                           FINISH_INVENTORY_KEY: {}}
 

@@ -17,7 +17,7 @@ from src.util.inventory.master_inventory_util import populate_dataframe
 class FtpAction(Action):
     ftp: FTPFacade = None
     fishbowl_facade: FishbowlFacade = None
-    inventory: Inventory = Inventory()
+    inventory: Inventory | None = None
     vendor_config_dao: VendorConfigDAO = VendorConfigDAO()
 
     def __post_init__(self):
@@ -25,6 +25,8 @@ class FtpAction(Action):
             self.ftp = FTPFacade()
         if not self.fishbowl_facade:
             self.fishbowl_facade = FishbowlFacade()
+        if self.inventory is None:
+            self.inventory = Inventory(vendor_config_dao=self.vendor_config_dao)
 
     def run(self, request_: request):
         self.ftp.start()

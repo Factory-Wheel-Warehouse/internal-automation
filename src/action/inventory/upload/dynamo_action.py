@@ -13,8 +13,12 @@ from src.facade.ftp.ftp_facade import FTPFacade
 class DynamoAction(Action):
     ftp: FTPFacade = None
     fishbowl_facade: FishbowlFacade = None
-    inventory: Inventory = Inventory()
+    inventory: Inventory | None = None
     inventory_dao: InventoryDAO = InventoryDAO()
+
+    def __post_init__(self):
+        if self.inventory is None:
+            self.inventory = Inventory()
 
     def run(self, request_: request):
         self.fishbowl_facade.start()
