@@ -75,7 +75,7 @@ def search_email_pdfs(attachments: list,
 def get_tracking_candidates(emails: list,
                             outlook: OutlookFacade,
                             pattern: str,
-                            ) -> set[str]:
+                            ) -> list[str]:
     """
     Searches emails for tracking number candidates matching the pattern. If
     no candidates are found in the email body, pdf attachments are searched
@@ -87,20 +87,23 @@ def get_tracking_candidates(emails: list,
     :return: set of tracking number candidates
     """
     candidates = []
+    seen = set()
     for email in emails:
         id_ = email[EMAIL_ID_KEY]
         body = email[EMAIL_BODY_KEY][EMAIL_BODY_CONTENT_KEY]
-        candidates += re.findall(pattern, body)
-        # Many vendors provide PDF invoices and textual summaries, if this
-        # is the case pdf parsing is unnecessary. However, if not
-        # found then attachment parsing is necessary
-        if not candidates:
+        email_candidates = re.findall(pattern, body)
+        if not email_candidates:
             pdf_attachments = get_pdf_attachments(id_, outlook)
-            candidates += search_email_pdfs(pdf_attachments, pattern)
-    return set(candidates)
+            email_candidates = search_email_pdfs(pdf_attachments, pattern)
+        for candidate in email_candidates:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+            candidates.append(candidate)
+    return candidates
 
 
-def get_valid_tracking_numbers(tracking_candidates: set[str],
+def get_valid_tracking_numbers(tracking_candidates: list[str],
                                carrier: str) -> list[str]:
     """
     Checks each tracking candidate number for validity
@@ -110,7 +113,11 @@ def get_valid_tracking_numbers(tracking_candidates: set[str],
     :return: list of valid tracking numbers
     """
     valid_tracking_numbers = []
+    seen = set()
     for candidate in tracking_candidates:
+        if candidate in seen:
+            continue
+        seen.add(candidate)
         if tracking_is_valid(candidate, carrier):
             valid_tracking_numbers.append(candidate)
     return valid_tracking_numbers

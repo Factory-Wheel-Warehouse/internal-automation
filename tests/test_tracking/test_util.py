@@ -53,19 +53,19 @@ class TestUtil(unittest.TestCase):
         mock_email_2 = json.loads((MOCK_DIR / "mock_email_2.json").read_text())
 
         self.assertEqual(
-            {"394648002863"},
+            ["394648002863"],
             get_tracking_candidates(
                 [mock_email_1], outlook=None, pattern=TRACKING_PATTERNS[FEDEX]
             ),
         )
         self.assertEqual(
-            {"1ZRW16610308553851", "1ZRW16610308553860"},
+            ["1ZRW16610308553851", "1ZRW16610308553860"],
             get_tracking_candidates(
                 [mock_email_2], outlook=None, pattern=TRACKING_PATTERNS[UPS]
             ),
         )
         self.assertEqual(
-            {"166103085538"},
+            ["166103085538"],
             get_tracking_candidates(
                 [mock_email_2], outlook=None, pattern=TRACKING_PATTERNS[FEDEX]
             ),

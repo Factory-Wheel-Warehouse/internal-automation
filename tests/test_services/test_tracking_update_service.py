@@ -35,10 +35,6 @@ def dependencies(mocker):
 
 def test_tracking_update_service_processes_orders(mocker, dependencies):
     magento, fishbowl, outlook, tracking_checker, processed_order_dao = dependencies
-    mocker.patch(
-        "src.services.tracking_update_service.get_tracking_from_outlook",
-        return_value={"FEDEX": ["1Z123"]},
-    )
 
     service = TrackingUpdateService(
         magento=magento,
@@ -47,6 +43,7 @@ def test_tracking_update_service_processes_orders(mocker, dependencies):
         tracking_checker=tracking_checker,
         processed_order_dao=processed_order_dao,
     )
+    mocker.patch.object(service, "_get_tracking", return_value={"number": "1Z123", "carrier": "fedex"})
 
     service.run()
 
@@ -71,7 +68,7 @@ def test_get_tracking_falls_back_to_fishbowl(mocker, dependencies):
     )
 
     result = service._get_tracking("PO123")
-    assert result == "TRACK"
+    assert result == {"number": "TRACK", "carrier": "fedex"}
 
 
 def test_check_tracking_status_retries_when_not_found(mocker, dependencies):

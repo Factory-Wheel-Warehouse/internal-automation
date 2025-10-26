@@ -47,14 +47,14 @@ class TrackingUpdateService:
 
     # --- internal helpers -------------------------------------------------
 
-    def _collect_tracking_candidates(self, unfulfilled_orders: list[str]) -> dict[str, str]:
+    def _collect_tracking_candidates(self, unfulfilled_orders: list[str]) -> dict[str, dict]:
         tracking = {}
         for customer_po in unfulfilled_orders:
             if self.magento.isWalmartOrder(customer_po):
                 continue
-            tracking_num = self._get_tracking(customer_po)
-            if tracking_num:
-                tracking[customer_po] = tracking_num
+            tracking_info = self._get_tracking(customer_po)
+            if tracking_info:
+                tracking[customer_po] = tracking_info
         self.logger.info(
             "Found tracking numbers for %s of %s orders",
             len(tracking),
@@ -62,31 +62,34 @@ class TrackingUpdateService:
         )
         return tracking
 
-    def _get_tracking(self, customer_po: str) -> str | None:
-        po_lookup = customer_po[1:] if customer_po and customer_po[0].isalpha() else customer_po
-        if not self.fishbowl.isSO(po_lookup):
+    def _get_tracking(self, customer_po: str) -> dict | None:
+        identifier = customer_po[1:] if customer_po and customer_po[0].isalpha() else customer_po
+        if not self.fishbowl.isSO(identifier):
             return None
-        po_num = self.fishbowl.getPONum(po_lookup)
+        po_num = self.fishbowl.getPONum(identifier)
         if po_num:
             tracking_numbers = get_tracking_from_outlook(po_num, self.outlook)
-            if len(tracking_numbers) == 1:
-                return list(tracking_numbers.values())[0][0]
-        else:
-            tracking_numbers = self.fishbowl.getTracking(po_lookup)
-            if tracking_numbers:
-                return tracking_numbers[0]
+            for carrier, numbers in tracking_numbers.items():
+                if numbers:
+                    return {"number": numbers[0], "carrier": carrier.lower()}
+        tracking_numbers = self.fishbowl.getTracking(identifier)
+        if tracking_numbers:
+            number = tracking_numbers[0]
+            carrier = self.magento.getCarrier(number)
+            return {"number": number, "carrier": carrier}
         return None
 
-    def _process_tracking_updates(self, tracking_map: dict[str, str]):
+    def _process_tracking_updates(self, tracking_map: dict[str, dict]):
         zero_cost_pos: list[str] = []
         added_tracking: list[str] = []
-        for customer_po, tracking_number in tracking_map.items():
+        for customer_po, tracking_info in tracking_map.items():
+            tracking_number = tracking_info["number"]
+            carrier = tracking_info.get("carrier") or self.magento.getCarrier(tracking_number)
             po_num = (
-                self.fishbowl.getPONum(customer_po[0])
+                self.fishbowl.getPONum(customer_po[1:])
                 if customer_po and customer_po[0].isalpha()
                 else self.fishbowl.getPONum(customer_po)
             )
-            carrier = self.magento.getCarrier(tracking_number)
             status, received_date = self._check_tracking_status(
                 tracking_number, carrier, customer_po
             )
