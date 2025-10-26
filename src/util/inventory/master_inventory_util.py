@@ -105,7 +105,14 @@ def populate_dataframe(total_inventory: dict, df: DataFrame,
     for sku, availability in total_inventory.items():
         price = pricing.get(sku)
         rows.append(_get_formatted_row(sku, availability, price, vendor_map))
-    df = pd.concat([df, DataFrame(rows)], ignore_index=True)
+    rows = [row for row in rows if row]
+    if not rows:
+        return df
+    new_rows_df = DataFrame(rows).dropna(axis=1, how="all")
+    new_rows_df = new_rows_df.reindex(columns=df.columns)
+    if df.empty:
+        return new_rows_df
+    df = pd.concat([df, new_rows_df], ignore_index=True)
     df.reset_index()
     return df
 
