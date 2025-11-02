@@ -9,6 +9,7 @@ class TestTrackingChecker(unittest.TestCase):
 
     def _mock_response(self, mock_request, code=200):
         response = MagicMock()
+        response.status_code = code
         response.json.return_value = {
             "meta": {"code": code},
             "data": [{"status": "delivered"}]
@@ -44,3 +45,17 @@ class TestTrackingChecker(unittest.TestCase):
 
         checker.delete_tracking("123", FEDEX)
         checker._request.assert_called_once()
+
+    @patch("src.util.tracking.tracking_checker.requests.request")
+    def test_get_tracking_handles_invalid_json(self, mock_request):
+        response = MagicMock()
+        response.status_code = 200
+        response.text = "invalid"
+        response.json.side_effect = ValueError("bad json")
+        mock_request.return_value = response
+
+        checker = TrackingChecker()
+        result = checker.get_tracking_details("123", FEDEX)
+
+        self.assertIsNone(result)
+        self.assertNotEqual(200, checker.status_code)

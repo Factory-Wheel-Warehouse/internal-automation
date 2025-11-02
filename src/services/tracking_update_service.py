@@ -143,19 +143,33 @@ class TrackingUpdateService:
             self, tracking_number: str, carrier: str, customer_po: str
     ) -> tuple[str, datetime]:
         tracking_data = self.tracking_checker.get_tracking_details(tracking_number, carrier)
-        if self.tracking_checker.status_code == 200:
-            status = tracking_data["data"][0]["status"]
-            origin_info = tracking_data["data"][0].get("origin_info")
-            if origin_info and origin_info.get("ItemReceived"):
-                received_date = datetime.strptime(
-                    origin_info["ItemReceived"],
-                    "%Y-%m-%d %H:%M:%S",
-                )
-            else:
-                received_date = datetime.now()
-            return status, received_date
-        self.tracking_checker.add_single_tracking(tracking_number, carrier, customer_po)
-        return self._check_tracking_status(tracking_number, carrier, customer_po)
+        if self.tracking_checker.status_code == 200 and tracking_data:
+            tracking_entries = tracking_data.get("data") or []
+            if tracking_entries:
+                origin_info = tracking_entries[0].get("origin_info")
+                status = tracking_entries[0]["status"]
+                if origin_info and origin_info.get("ItemReceived"):
+                    received_date = datetime.strptime(
+                        origin_info["ItemReceived"],
+                        "%Y-%m-%d %H:%M:%S",
+                    )
+                else:
+                    received_date = datetime.now()
+                return status, received_date
+            self.logger.warning(
+                "Tracktry responded with status 200 but no tracking data for %s",
+                tracking_number,
+            )
+            return "notfound", datetime.now()
+        if self.tracking_checker.status_code != 200:
+            self.tracking_checker.add_single_tracking(tracking_number, carrier, customer_po)
+            return self._check_tracking_status(tracking_number, carrier, customer_po)
+        self.logger.warning(
+            "Unable to parse Tracktry response for %s (status %s)",
+            tracking_number,
+            self.tracking_checker.status_code,
+        )
+        return "notfound", datetime.now()
 
     @staticmethod
     def _is_recent_valid_tracking(status: str, received_date: datetime) -> bool:

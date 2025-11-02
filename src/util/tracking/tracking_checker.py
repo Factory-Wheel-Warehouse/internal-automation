@@ -1,8 +1,12 @@
+import logging
 import os
 
 import requests
 
 from src.domain.generic.http_methods import HTTPMethods
+
+
+logger = logging.getLogger(__name__)
 
 
 class TrackingChecker:
@@ -29,13 +33,30 @@ class TrackingChecker:
         :param method: HTTP method
         :return: JSON response from API
         """
-        response = requests.request(
+        http_response = requests.request(
             method=method.value,
             url=self._baseURL + relative_url,
             headers=self._headers,
             json=json
-        ).json()
-        self.status_code = response["meta"]["code"]
+        )
+        self.status_code = http_response.status_code
+
+        try:
+            response = http_response.json()
+            print(response)
+        except ValueError:
+            print(http_response)
+            if self.status_code == 200:
+                self.status_code = 500
+            logger.warning(
+                "Tracktry response for %s returned invalid JSON (status %s)",
+                relative_url,
+                http_response.status_code,
+            )
+            logger.debug("Tracktry raw response: %s", http_response.text)
+            return None
+
+        self.status_code = response.get("meta", {}).get("code", self.status_code)
         return response
 
     def add_single_tracking(self,
